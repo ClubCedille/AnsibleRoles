@@ -1,0 +1,54 @@
+- name: Backup existing APT sources list
+  ansible.builtin.copy:
+    src: /etc/apt/sources.list
+    dest: /etc/apt/sources.list.bak
+    backup: true
+    mode: '0644'
+    user: root
+    group: root
+  become: true
+
+- name: Ensure separate Proxmox sources list file do not exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  with_fileglob:
+    - /etc/apt/sources.list.d/*
+  become: true
+
+- name: Delete existing file if not managed by Ansible
+  ansible.builtin.file:
+    path: /etc/apt/sources.list
+    state: absent
+  when: "'# ANSIBLE MANAGED' not in lookup('file', '/etc/apt/sources.list')"
+  become: true
+
+- name: Delete deb822 formatted APT source if not managed by Ansible
+  ansible.builtin.find:
+    paths: /etc/apt/sources.list.d/
+    patterns: 'debian.sources'
+  register: deb822_sources
+  become: true
+  when: "'# ANSIBLE MANAGED' not in lookup('file', '/etc/apt/sources.list.d/debian.sources', errors='ignore')"
+
+- name: Creating a blank APT sources list file if it does not exist
+  ansible.builtin.file:
+    path: /etc/apt/sources.list
+    mode: '0644'
+    owner: root
+    group: root
+    state: touch
+  become: true
+
+- name: Add Proxmox APT sources list
+  ansible.builtin.blockinfile:
+    path: /etc/apt/sources.list
+    marker: "# {mark} ANSIBLE MANAGED PROXMOX APT SOURCES {{ item.description }}"
+    block: |
+      Types: {{ item.type }}
+      URIs: {{ item.url }}
+      Suites: {{ item.suites }}
+      Components: {{ item.components }}
+      Signed-By: {{ item.cert_location }}
+  loop: "{{ apt_sources_repositories }}"
+  become: true

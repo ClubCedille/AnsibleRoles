@@ -1,0 +1,37 @@
+apt_sources_debian_version: trixie
+apt_sources_pve_repository: no-subscription
+
+apt_sources_ceph_repository: squid
+
+apt_sources_repositories:
+  - type: deb
+    description: pve-no-subscription
+    components: "pve-{{ apt_sources_pve_repository }}"
+    suites: "{{ apt_sources_debian_version }}"
+    cert_location: /usr/share/keyrings/proxmox-archive-keyring.gpg
+    url: http://download.proxmox.com/debian/pve
+  - type: deb
+    description: debian-base
+    components: main contrib
+    suites: "{{ apt_sources_debian_version }}"
+    cert_location: /usr/share/keyrings/debian-archive-keyring.gpg
+    url: http://ftp.debian.org/debian
+  - type: deb
+    description: debian-updates
+    components: main contrib
+    suites: "{{ apt_sources_debian_version }}-updates"
+    cert_location: /usr/share/keyrings/debian-archive-keyring.gpg
+    url: http://ftp.debian.org/debian
+  - type: deb
+    description: debian-security
+    components: main contrib
+    suites: "{{ apt_sources_debian_version }}-security"
+    cert_location: /usr/share/keyrings/debian-archive-keyring.gpg
+    url: http://security.debian.org
+  - type: deb
+    description: proxmox-ceph
+    components: "{{ apt_sources_pve_repository }}"
+    suites: "{{ apt_sources_debian_version }}"
+    cert_location: /usr/share/keyrings/proxmox-archive-keyring.gpg
+    url: "http://download.proxmox.com/debian/ceph-{{ apt_sources_ceph_repository }}"
+

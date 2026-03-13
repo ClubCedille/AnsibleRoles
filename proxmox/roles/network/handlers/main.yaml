@@ -1,0 +1,7 @@
+- name: Restart networking
+  ansible.builtin.command:
+    cmd: ifreload -a
+  become: true
+  register: restart_networking
+  failed_when: restart_networking.rc != 0
+  changed_when: restart_networking.rc == 0

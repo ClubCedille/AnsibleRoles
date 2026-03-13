@@ -1,0 +1,5 @@
+- name: Configure network interfaces
+  ansible.builtin.include_tasks:
+    file: network_interfaces.yaml
+  notify: Restart networking
+  become: true

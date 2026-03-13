@@ -1,0 +1,31 @@
+---
+
+# FIRST - ENABLE THE HA IN THE GUI
+
+- name: Enable the control agent
+  oxlorg.opnsense.dhcp_controlagent:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    enabled: true
+
+- name: Enable the DHCP server on selected interfaces
+  oxlorg.opnsense.dhcp_general:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    interfaces: "{{ opnsense_dhcp_interfaces }}"
+    lifetime: "{{ opnsense_dhcp_lease_time | default('7200') }}"
+
+- name: Create pools for DHCP server
+  oxlorg.opnsense.dhcp_subnet:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    description: "DHCP Pool for VLAN{{ item.id }}"
+    subnet: "{{ item.network }}/{{ item.mask }}"
+    pools: "{{ item.pools }}"
+    gateway: "{{ item.vip }}"
+    dns: "{{ opnsense_dhcp_dns_servers | default(['1.1.1.1']) }}"
+    domain: "{{ opnsense_dhcp_domain | default('localdomain') }}"
+  loop: "{{ vm_net_trunk.vlans }}"

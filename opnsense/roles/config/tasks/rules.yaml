@@ -1,0 +1,13 @@
+---
+
+- name: Allow management to access Production
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    interface: "opt3" # Production
+    action: "pass"
+    direction: "in"
+    ip_protocol: "inet"
+

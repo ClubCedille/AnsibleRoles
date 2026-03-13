@@ -1,0 +1,43 @@
+{
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "keep",
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.defaultColorDecorators": "never",
+    "editor.quickSuggestions": {
+      "strings": true,
+      "other": true,
+      "comments": false
+    },
+    "gitlens.codeLens.scopes": [
+      "document"
+    ]
+  },
+  "[ansible]": {
+    "gitlens.codeLens.scopes": [
+      "document"
+    ],
+    "editor.detectIndentation": false,
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.quickSuggestions": {
+      "comments": true,
+      "other": true,
+      "strings": true
+    },
+    "editor.autoIndent": "advanced"
+  },
+  // Distinction between YAML and Ansible files to properly work with Ansible extensions
+  "files.associations": {
+    "*.j2": "ansible",
+    "*.yaml": "ansible",
+    "*.yml": "yaml"
+  },
+  // Ansible default settings
+  "editor.rulers": [
+    160
+  ],
+  "python-envs.defaultEnvManager": "ms-python.python:system"
+}
