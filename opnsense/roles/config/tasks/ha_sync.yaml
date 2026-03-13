@@ -1,0 +1,67 @@
+---
+
+# - name: Listing config
+#   oxlorg.opnsense.list:
+#     firewall: "{{ vm_net.ip }}"
+#     api_key: "{{ api_key }}"
+#     api_secret: "{{ api_secret }}"
+#     target: "hasync_general"
+#   register: hasync_config
+
+# - name: Printing
+#   ansible.builtin.debug:
+#     var: hasync_config.data
+
+# Used to troubleshoot common names for sync modules [undocumented]
+
+# - name: Crash
+#   ansible.builtin.fail:
+#     msg: debug fail
+#   when: true
+
+- name: Add rule for HA sync traffic
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    interface: "{{ opnsense_ha_interface }}"
+    action: "pass"
+    direction: "in"
+    ip_protocol: "inet"
+    source_net: "{{ opnsense_ha_peer_net }}"
+    destination_net: "{{ opnsense_ha_device_ip }}"
+    protocol: "any"
+    description: "Allow HA sync traffic from peer for XMLRPC and PFSYNC"
+    uuid: "c493dac7-69da-4c37-93fc-e63a9eab35dc"
+
+- name: Setup HA sync
+  oxlorg.opnsense.hasync_general:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    preempt: true
+    disconnect_ppps: true
+    username: "{{ vm_user }}"
+    password: "{{ vm_password }}"
+    pfsync_interface: "{{ opnsense_ha_interface }}"
+    pfsync_peer_ip: "{{ opnsense_ha_peer_ip }}"
+
+- name: Sync selected items
+  oxlorg.opnsense.hasync_general:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    preempt: true
+    disconnect_ppps: true
+    pfsync_interface: "{{ opnsense_ha_interface }}"
+    pfsync_peer_ip: "{{ opnsense_ha_peer_ip }}"
+    synchronize_to_ip: "{% if vm_is_master %}{{ opnsense_ha_peer_ip }}{% else %}{{ omit }}{% endif %}"
+    username: "{{ vm_user }}"
+    password: "{{ vm_password }}"
+    syncitems:
+      - "certs"
+      - "kea"
+      - "nat"
+      # - "virtualip" # Conflicts and already setup via Ansible
+  when: vm_is_master

@@ -1,0 +1,24 @@
+---
+galaxy_info:
+  author: "Louis Raymond <lraymond@lanets.ca>"
+  description: >
+    Rôle Ansible pour configurer les interfaces réseau, les bridges, bonds et VLANs
+    sur des hôtes Proxmox
+  company: "Cedille"
+  license: "GPL-3.0-or-later"
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+  galaxy_tags:
+    - proxmox
+    - network
+
+dependencies: []

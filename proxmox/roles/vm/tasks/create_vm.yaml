@@ -1,0 +1,139 @@
+---
+
+
+- name: Stop the VMs if to be deleted
+  community.proxmox.proxmox_kvm:
+    # Proxmox API connection details
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    # VM identification
+    vmid: "{{ vm_id }}"
+    # Delete the VM
+    state: stopped
+  when: vm_delete_if_exists | default(false)
+  delegate_to: localhost
+
+
+- name: Delete the VM if needed
+  community.proxmox.proxmox_kvm:
+    # Proxmox API connection details
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    # VM identification
+    vmid: "{{ vm_id }}"
+    # Delete the VM
+    state: absent
+  when: vm_delete_if_exists | default(false)
+  delegate_to: localhost
+
+- name: Create the basic VM
+  community.proxmox.proxmox_kvm:
+    description: "=== ANSIBLE MANAGED VM ==="
+    # Proxmox API connection details
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    # VM identification
+    vmid: "{{ vm_id }}"
+    name: "{{ vm_name }}"
+    node: "{{ vm_proxmox_node }}"
+    # VM resources
+    machine: "q35"
+    cpu: "{{ vm_cpu_type | default('host') }}"
+    cores: "{{ vm_cpu_cores }}"
+    memory: "{{ vm_memory_mb }}"
+    net:
+      # VLAN 247 - Public IP
+      net0: "{{ vm_net.device | default('virtio') }},bridge={{ vm_net.bridge }},tag={{ vm_net.vlan | default('1') }}"
+      # # Trunk - Internal Networks
+      # To setup manually on VMs that need it
+      # net1: "{{ vm_net_trunk.device | default('virtio') }},bridge={{ vm_net_trunk.bridge }}"
+    # Cloud Init configuration
+    # Will not apply on OPNsense VMs as they do not support cloud-init
+    ide:
+      ide0: "{{ vm_cloud_init_storage }}:cloudinit,format={{ vm_disk_format }}"
+    ciuser: "{{ vm_user }}"
+    cipassword: "{{ vm_password }}"
+    searchdomains: "{{ vm_net.search_domain | default('localdomain') }}"
+    nameservers: "{{ omit if vm_net.nameservers is not defined else vm_net.nameservers }}"
+    ipconfig:
+      ipconfig0: "ip={{ vm_net.ip }}/{{ vm_net.netmask }},gw={{ vm_net.gateway }}"
+    ostype: "{{ vm_os_type | default('l26') }}"
+    onboot: "{{ vm_onboot | default(true) }}"
+    agent: true
+    state: present
+  when: not (vm_delete_if_exists | default(false))
+  delegate_to: localhost
+
+- name: Attach disk to the VM
+  community.proxmox.proxmox_disk:
+    # Proxmox API connection details
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    # VM identification
+    vmid: "{{ vm_id }}"
+    # Disk configuration
+    disk: "{{ vm_disk_device | default('virtio0') }}"
+    import_from: "{{ vm_disk_image_path }}"
+    storage: "{{ vm_disk_storage }}"
+    format: "{{ vm_disk_format | default('qcow2') }}"
+    discard: true
+    state: present
+  when: not (vm_delete_if_exists | default(false))
+  delegate_to: localhost
+
+- name: Resize the VM disk
+  community.proxmox.proxmox_disk:
+    # Proxmox API connection details
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    # VM identification
+    vmid: "{{ vm_id }}"
+    # Disk resizing
+    disk: "{{ vm_disk_device | default('virtio0') }}"
+    size: "{{ vm_disk_size | default('15G') }}" # Can't be shrunk and needs useable
+    state: resized
+  when: vm_disk_size is defined and not (vm_delete_if_exists | default(false))
+  delegate_to: localhost
+
+- name: Change the boot order
+  community.proxmox.proxmox_kvm:
+    # Proxmox API connection details
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    # VM identification
+    vmid: "{{ vm_id }}"
+    node: "{{ vm_proxmox_node }}"
+    # Boot order configuration
+    boot: "order={{ vm_disk_device | default('virtio0') }}"
+    update: true
+  when: not (vm_delete_if_exists | default(false))
+  delegate_to: localhost
+
+- name: Start the VM
+  community.proxmox.proxmox_kvm:
+    # Proxmox API connection details
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    # VM identification
+    vmid: "{{ vm_id }}"
+    # Start the VM
+    state: started
+  when: (vm_start_after_creation | default(false)) and not (vm_delete_if_exists | default(false))
+  delegate_to: localhost
+
+- name: Wait for SSH to become available
+  ansible.builtin.wait_for:
+    host: "{{ vm_net.ip }}"
+    port: 22
+    delay: 10
+    timeout: 300
+    state: started
+  when: (vm_start_after_creation | default(false)) and not (vm_delete_if_exists | default(false))
+  delegate_to: localhost

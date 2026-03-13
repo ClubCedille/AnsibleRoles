@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  author: "Louis"
+  description: >
+    Rôle Ansible pour configurer une instance de OPNsense après l'installation
+  company: "Cedille"
+  license: "GPL-3.0-or-later"
+  min_ansible_version: "2.11"
+  platforms:
+    - name: OpenBSD
+  galaxy_tags:
+    - opnsense
+    - post-install
+    - config
+
+dependencies: []

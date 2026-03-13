@@ -1,0 +1,140 @@
+---
+
+- name: Create the static key for OpenVPN
+  oxlorg.opnsense.openvpn_static_key:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    name: "{{ item.name }} - key"
+    mode: "auth"
+  loop: "{{ opnsense_openvpn }}"
+
+# - name: List existing servers
+#   oxlorg.opnsense.list:
+#     firewall: "{{ vm_net.ip }}"
+#     api_key: "{{ api_key }}"
+#     api_secret: "{{ api_secret }}"
+#     target: "openvpn_instance"
+#   register: openvpn_config
+
+# - name: Printing
+#   ansible.builtin.debug:
+#     var: openvpn_config.data
+
+# - name: Crash
+#   ansible.builtin.fail:
+#     msg: debug fail
+#   when: true
+
+- name: Create the OpenVPN server
+  oxlorg.opnsense.openvpn_server:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    name: "{{ item.name }}"
+    server_ip4: "{{ item.subnet }}"
+    protocol: "udp4"
+    port: "{{ item.port }}"
+    address: "{{ vm_net.vip }}"
+    mode: "tun"
+    topology: "subnet"
+    certificate: "{{ item.certificate }}"
+    key: "{{ item.name }} - key"
+    verify_remote_certificate: true
+    network_local: "{{ item.local_networks }}"
+    auth_mode:
+      - "Local Database"
+    auth_group: "{{ item.user_group }}"
+    push_options:
+      - "register-dns"
+    domain: "etsmtl.club"
+    dns_servers:
+      - "1.1.1.1"
+      - "8.8.8.8"
+    verify_client_cert: "require"
+    cert_depth: 2
+    register_dns: true
+    user_as_cn: true
+    user_cn_strict: false
+    state: present
+  loop: "{{ opnsense_openvpn }}"
+
+- name: Allow inbound OpenVPN traffic on WAN
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    interface: "wan"
+    action: "pass"
+    direction: "in"
+    ip_protocol: "inet"
+    source_net: "any"
+    destination_net: "{{ vm_net.vip }}"
+    destination_port: "{{ item.port }}"
+    protocol: "UDP"
+    description: "Allow OpenVPN inbound traffic - {{ item.name }}"
+  loop: "{{ opnsense_openvpn }}"
+
+- name: Allow OpenVPN traffic to local networks
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    interface: "openvpn"
+    action: "pass"
+    direction: "in"
+    ip_protocol: "inet"
+    source_net: "{{ item.subnet }}"
+    destination_net: "any"
+    protocol: "any"
+    description: "Allow local networks traffic to OpenVPN clients"
+  loop: "{{ opnsense_openvpn }}"
+
+# - name: Allow traffic back to OpenVPN clients from local networks
+#   oxlorg.opnsense.rule:
+#     firewall: "{{ vm_net.ip }}"
+#     api_key: "{{ api_key }}"
+#     api_secret: "{{ api_secret }}"
+#     match_fields: ["description"]
+#     interface: "openvpn"
+#     action: "pass"
+#     direction: "in"
+#     ip_protocol: "inet"
+#     source_net: "any"
+#     destination_net: "any"
+#     protocol: "any"
+#     description: "Allow OpenVPN traffic to local networks"
+
+- name: Allow OpenVPN traffic via the interface
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    interface: "{{ item.interface_name }}"
+    action: "pass"
+    direction: "in"
+    source_net: "{{ item.subnet }}"
+    destination_net: "any"
+    ip_protocol: "inet"
+    protocol: "any"
+    description: "Allow OpenVPN traffic via {{ item.interface_name }} - {{ item.name }} in"
+  loop: "{{ opnsense_openvpn }}"
+
+- name: Allow OpenVPN traffic via the interface
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    interface: "{{ item.interface_name }}"
+    action: "pass"
+    direction: "out"
+    source_net: "{{ item.subnet }}"
+    destination_net: "any"
+    ip_protocol: "inet"
+    protocol: "any"
+    description: "Allow OpenVPN traffic via {{ item.interface_name }} - {{ item.name }} out"
+  loop: "{{ opnsense_openvpn }}"

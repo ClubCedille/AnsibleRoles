@@ -1,0 +1,28 @@
+---
+
+- name: Manually add generic users and groups
+  ansible.builtin.include_tasks:
+    file: manual_users_groups.yaml
+
+- name: Configure VIPs and NAT
+  ansible.builtin.include_tasks:
+    file: vip_nat.yaml
+
+- name: Configure DHCP Server
+  ansible.builtin.include_tasks:
+    file: dhcp.yaml
+
+- name: Setup HA sync
+  ansible.builtin.include_tasks:
+    file: ha_sync.yaml
+
+# Setup a certificate authority and certificates maually
+# as OPNsense does not support it via API yet
+
+- name: Setup OpenVPN
+  ansible.builtin.include_tasks:
+    file: openvpn.yaml
+
+- name: Rules
+  ansible.builtin.include_tasks:
+    file: rules.yaml

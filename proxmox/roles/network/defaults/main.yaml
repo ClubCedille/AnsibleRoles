@@ -1,0 +1,18 @@
+network_mgmt:
+  name: "eth0"
+  bridge: "vmbr0"
+  address: "0.0.0.0/24"
+  gateway: "0.0.0.1"
+
+network_trunk:
+  names:
+    - "eth1"
+    - "eth2"
+  bond: "bond0"
+  bridge: "vmbr1"
+  vlans:
+    - id: 10
+      comment: "VLAN de gestion"
+    - id: 20
+      ip_address: "0.0.0.0/24"
+      comment: "VLAN de données"

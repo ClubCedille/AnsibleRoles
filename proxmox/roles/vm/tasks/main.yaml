@@ -1,0 +1,5 @@
+---
+
+- name: Create VM on Proxmox
+  ansible.builtin.include_tasks:
+    file: create_vm.yaml

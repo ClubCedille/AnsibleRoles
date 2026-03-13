@@ -1,0 +1,4 @@
+- name: Manage APT sources for Proxmox hosts
+  ansible.builtin.include_tasks:
+    file: apt-sources.yaml
+  become: true

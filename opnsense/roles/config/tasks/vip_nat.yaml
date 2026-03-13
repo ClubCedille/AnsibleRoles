@@ -1,0 +1,62 @@
+---
+
+# The interfaces are manually set up because the OPNsense API module does not support it yet.
+
+- name: Setup Virtual IP for the Public IPs
+  oxlorg.opnsense.interface_vip:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    address: "{{ vm_net.vip }}/{{ vm_net.netmask }}"
+    interface: "{{ vm_net.custom_name }}"
+    mode: "carp"
+    bind: true
+    gateway: "{{ vm_net.gateway }}"
+    advertising_base: "{% if vm_is_master %}1{% else %}5{% endif %}"
+    description: "Public VIP"
+    password: "{{ vip_password }}"
+    vhid: 1
+
+- name: Setup Virtual IPs
+  oxlorg.opnsense.interface_vip:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    address: "{{ item.vip }}/{{ item.mask }}"
+    interface: "{{ item.interface_name }}"
+    mode: "carp"
+    bind: true
+    advertising_base: "{% if vm_is_master %}1{% else %}5{% endif %}"
+    description: "Trunk VLAN {{ item.id }} VIP"
+    password: "{{ vip_password }}"
+    vhid: "{{ loop_index + 10 }}"
+  loop: "{{ vm_net_trunk.vlans }}"
+  loop_control:
+    index_var: loop_index
+
+### IMPORTANT NOTE ###
+# THIS SETUP CLASHES WITH THE NAT: OUTBOUND RULES
+# DO NOT CREATE ANY OUTBOUND RULES MANUALLY IF YOU USE THIS SETUP
+######################
+- name: Setup Outbound NAT for the Public VIP
+  oxlorg.opnsense.nat_source:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    description: "Outbound NAT for Public VIP - VLAN {{ item.id }}"
+    sequence: "{{ 1000 + loop_index }}"
+    interface: "wan"
+    ip_protocol: "inet"
+    protocol: "any"
+    source_net: "{{ item.network }}/{{ item.mask }}"
+    destination_net: "any"
+    target: "{{ vm_net.vip }}"
+    log: false
+    state: present
+    enabled: true
+  loop: "{{ vm_net_trunk.vlans }}"
+  loop_control:
+    index_var: loop_index

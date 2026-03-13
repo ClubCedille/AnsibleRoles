@@ -1,0 +1,102 @@
+- name: Backup existing /etc/network/interfaces
+  ansible.builtin.copy:
+    src: /etc/network/interfaces
+    dest: /etc/network/interfaces.bak
+    backup: true
+    mode: '0644'
+    user: root
+    group: root
+  become: true
+
+- name: Template base /etc/network/interfaces file if no 'ANSIBLE MANAGED' blocks exist
+  ansible.builtin.template:
+    src: interfaces.j2
+    dest: /etc/network/interfaces
+    mode: '0644'
+    user: root
+    group: root
+  when: "'# BEGIN ANSIBLE MANAGED' not in lookup('file', '/etc/network/interfaces')"
+  become: true
+
+- name: Cleanup
+  ansible.builtin.replace:
+    path: /etc/network/interfaces
+    regexp: '# BEGIN ANSIBLE MANAGED .*?\n(.*?)# END ANSIBLE MANAGED .*?\n'
+    replace: ''
+  when: "'# BEGIN ANSIBLE MANAGED' in lookup('file', '/etc/network/interfaces')"
+  become: true
+
+- name: Configure management network interface
+  ansible.builtin.blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR MGMT INTERFACE {{ network_mgmt.name }}"
+    block: |
+      auto {{ network_mgmt.name }}
+      iface {{ network_mgmt.name }} inet manual
+  become: true
+
+- name: Configure management bridge interface
+  ansible.builtin.blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR MGMT BRIDGE {{ network_mgmt.bridge }}"
+    block: |
+      auto {{ network_mgmt.bridge }}
+      iface {{ network_mgmt.bridge }} inet static
+          address {{ network_mgmt.address }}
+          gateway {{ network_mgmt.gateway }}
+          bridge_ports {{ network_mgmt.name }}
+          bridge_stp off
+          bridge_fd 0
+  become: true
+
+- name: Configure trunk trunk interfaces
+  ansible.builtin.blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR TRUNK INTERFACE {{ network_trunk.names }}"
+    block: |
+      auto {{ item }}
+      iface {{ item }} inet manual
+  become: true
+  loop: "{{ network_trunk.names }}"
+
+- name: Create bond interface for trunk
+  ansible.builtin.blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR TRUNK BOND {{ network_trunk.bond }}"
+    block: |
+      auto {{ network_trunk.bond }}
+      iface {{ network_trunk.bond }} inet manual
+          bond-slaves {{ network_trunk.names | join(' ') }}
+          bond-miimon 100
+          bond-mode 802.3ad
+  become: true
+
+- name: Configure trunk bridge interface
+  ansible.builtin.blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR TRUNK BRIDGE {{ network_trunk.bridge }}"
+    block: |
+      auto {{ network_trunk.bridge }}
+      iface {{ network_trunk.bridge }} inet manual
+          bridge_ports {{ network_trunk.bond }}
+          bridge_stp off
+          bridge_fd 0
+          bridge_vlan_aware yes
+          bridge-vids 2-4094
+  become: true
+
+- name: Configure VLAN interfaces on trunk
+  ansible.builtin.blockinfile:
+    path: /etc/network/interfaces
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR TRUNK VLAN {{ item.id }}"
+    block: |
+      auto {{ network_trunk.bridge }}.{{ item.id }}
+      iface {{ network_trunk.bridge }}.{{ item.id }} inet manual
+      {% if item.ip_address is defined %}
+          address {{ item.ip_address }}
+      {% endif %}
+      {% if item.comment is defined %}
+      # {{ item.comment }}
+      {% endif %}
+  become: true
+  loop: "{{ network_trunk.vlans }}"

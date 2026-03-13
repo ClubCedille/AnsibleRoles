@@ -1,0 +1,24 @@
+---
+
+- name: Create the folder for images
+  ansible.builtin.file:
+    path: "{{ pull_disk_image_path | default('/var/lib/vz/images/pulled_disks') }}"
+    state: directory
+    recurse: true
+    mode: '0755'
+    owner: root
+    group: root
+  become: true
+
+- name: Pull all disk images needed
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ pull_disk_image_path | default('/var/lib/vz/images/pulled_disks') }}/{{ item.dest_filename | default(item.url | basename) }}"
+    checksum: "{{ item.checksum | default(omit) }}"
+    mode: '0644'
+    owner: root
+    group: root
+    force: false
+  become: true
+  loop: "{{ pull_disk_images }}"
+  when: pull_disk_images is defined

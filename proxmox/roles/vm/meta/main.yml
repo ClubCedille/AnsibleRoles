@@ -1,0 +1,25 @@
+---
+galaxy_info:
+  author: "Louis"
+  description: >
+    Rôle Ansible pour créer une machine virtuelle sur un hôte Proxmox
+  company: "Lan ETS"
+  license: "MIT"
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+        - trixie
+  galaxy_tags:
+    - proxmox
+    - vm
+    - virtualization
+
+dependencies: []

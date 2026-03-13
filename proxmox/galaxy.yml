@@ -1,0 +1,15 @@
+namespace: "cedille"
+name: "proxmox"
+description: "Collection de rôles Ansible pour gérer Proxmox"
+version: "1.0.1"
+readme: "./docs/README.md"
+authors:
+  - "Louis Raymond <lraymond@lanets.ca>"
+dependencies: {}
+license:
+  - "GPL-3.0-or-later"
+tags:
+  - "proxmox"
+  - "vm"
+  - "infra"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"
