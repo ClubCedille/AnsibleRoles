@@ -1,0 +1,9 @@
+---
+
+- name: Include generic management configuration
+  ansible.builtin.include_tasks:
+    file: management.yaml
+
+- name: Allow for SSH access
+  ansible.builtin.include_tasks:
+    file: remote_management.yaml

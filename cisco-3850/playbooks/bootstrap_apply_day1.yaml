@@ -1,0 +1,19 @@
+---
+
+- name: Apply Cisco 3850 Day-1 configuration after bootstrap
+  hosts: cisco_bootstrapped
+  gather_facts: false
+  serial: 10
+
+  vars:
+    ansible_connection: ansible.netcommon.network_cli
+    ansible_network_os: cisco.ios.ios
+
+  pre_tasks:
+    - name: Wait for switch SSH reachability
+      ansible.builtin.wait_for_connection:
+        delay: 5
+        timeout: 300
+
+  roles:
+    - role: config

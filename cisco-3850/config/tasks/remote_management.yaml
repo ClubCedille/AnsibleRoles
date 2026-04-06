@@ -1,0 +1,91 @@
+---
+
+- name: Create admin user
+  cisco.ios.ios_user:
+    name: admin
+    configured_password: "{{ admin_password }}"
+    privilege: 15
+    state: present
+  when: admin_password is defined and admin_password | length > 0
+
+- name: Purge users if needed
+  cisco.ios.ios_user:
+    purge: true
+  when:
+    - users_purged is defined
+    - users_purged
+
+- name: Create users
+  cisco.ios.ios_user:
+    name: "{{ item.name }}"
+    configured_password: "{{ item.password }}"
+    privilege: "{{ item.privilege | default(1) }}"
+    state: present
+  loop: "{{ users | default([]) }}"
+  when: users is defined
+
+- name: Configure management ACL
+  cisco.ios.ios_acls:
+    config:
+      - afi: ipv4
+        acls:
+          - name: "{{ mgmt_acl.id }}"
+            acl_type: standard
+            aces: "{{ mgmt_acl.aces }}"
+    state: "{{ 'replaced' if mgmt_acl.replace else 'merged' }}"
+  when:
+    - mgmt_acl.enabled | bool
+    - mgmt_acl.aces is defined
+    - mgmt_acl.aces | length > 0
+
+- name: Configure console line settings
+  cisco.ios.ios_config:
+    parents: line con 0
+    lines:
+      - "{{ 'logging synchronous' if console_logging_synchronous else 'no logging synchronous' }}"
+      - "{{ 'login local' if console_login_local else 'no login local' }}"
+  when: console_enabled | bool
+
+- name: Remove default access-class from VTY lines
+  cisco.ios.ios_config:
+    parents: "line vty {{ vty.line_range }}"
+    lines:
+      - "no access-class {{ vty.remove_default_access_class }} in"
+  when:
+    - vty.enabled | bool
+    - vty.remove_default_access_class is defined
+    - vty.remove_default_access_class | length > 0
+
+- name: Configure VTY access-class
+  cisco.ios.ios_config:
+    parents: "line vty {{ vty.line_range }}"
+    lines:
+      - "access-class {{ vty.access_class_in }} in"
+  when:
+    - vty.enabled | bool
+    - vty.access_class_in is defined
+    - vty.access_class_in | string | length > 0
+
+- name: Configure VTY line settings
+  cisco.ios.ios_config:
+    parents: "line vty {{ vty.line_range }}"
+    lines:
+      - "exec-timeout {{ vty.exec_timeout.minutes }} {{ vty.exec_timeout.seconds }}"
+      - "{{ 'logging synchronous' if vty.logging_synchronous else 'no logging synchronous' }}"
+      - "{{ 'login local' if vty.login_local else 'no login local' }}"
+      - "transport input {{ vty.transport_input | join(' ') }}"
+  when: vty.enabled | bool
+
+- name: Configure login block policy
+  cisco.ios.ios_config:
+    lines:
+      - "login block-for {{ login_policy.block_for }} attempts {{ login_policy.attempts }} within {{ login_policy.within }}"
+      - "login delay {{ login_policy.delay }}"
+      - "{{ 'login on-failure log' if login_policy.on_failure_log else 'no login on-failure log' }}"
+      - "{{ 'login on-success log' if login_policy.on_success_log else 'no login on-success log' }}"
+  when: login_policy.enabled | bool
+
+- name: Configure service password encryption
+  cisco.ios.ios_config:
+    lines:
+      - "{{ 'service password-encryption' if service_password_encryption else 'no service password-encryption' }}"
