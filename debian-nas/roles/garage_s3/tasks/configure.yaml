@@ -24,6 +24,7 @@
     - "{{ garage_config_dir }}"
     - "{{ garage_data_dir }}"
     - "{{ garage_metadata_dir }}"
+    - "{{ garage_metadata_snapshots_dir }}"
 
 - name: Deploy Garage configuration
   ansible.builtin.template:
