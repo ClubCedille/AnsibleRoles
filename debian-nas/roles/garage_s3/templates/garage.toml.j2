@@ -1,0 +1,13 @@
+metadata_dir = "{{ garage_metadata_dir }}"
+data_dir = "{{ garage_data_dir }}"
+node_name = "{{ garage_node_name }}"
+rpc_bind_addr = "{{ garage_rpc_bind }}"
+rpc_secret = "{{ garage_rpc_secret }}"
+
+[s3_api]
+bind_addr = "{{ garage_s3_bind }}"
+region = "{{ garage_s3_region }}"
+admin_token = "{{ garage_admin_token }}"
+
+[admin]
+bind_addr = "{{ garage_api_bind }}"

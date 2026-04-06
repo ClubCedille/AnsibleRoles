@@ -1,0 +1,2 @@
+file_sharing_enable_samba: false
+file_sharing_enable_nfs: false

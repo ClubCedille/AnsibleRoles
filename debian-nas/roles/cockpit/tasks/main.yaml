@@ -1,0 +1,12 @@
+---
+- name: Configure 45Drives repository
+  ansible.builtin.include_tasks:
+    file: 45drives_repo.yaml
+    apply:
+      become: true
+
+- name: Install Cockpit
+  ansible.builtin.include_tasks:
+    file: install.yaml
+    apply:
+      become: true

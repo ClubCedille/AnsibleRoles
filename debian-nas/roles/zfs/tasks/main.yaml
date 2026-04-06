@@ -1,0 +1,12 @@
+---
+- name: Configure ZFS apt preferences
+  ansible.builtin.include_tasks:
+    file: apt_preferences.yaml
+    apply:
+      become: true
+
+- name: Install ZFS packages
+  ansible.builtin.include_tasks:
+    file: install.yaml
+    apply:
+      become: true

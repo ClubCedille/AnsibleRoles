@@ -1,0 +1,6 @@
+zfs_backports_release: "{{ ansible_distribution_release }}-backports"
+zfs_pin_priority: 1001
+zfs_packages:
+  - zfs-dkms
+  - zfsutils-linux
+zfs_kernel_headers_package: linux-headers-amd64

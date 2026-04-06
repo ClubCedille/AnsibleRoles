@@ -1,0 +1,13 @@
+---
+- name: Download 45Drives repository key
+  ansible.builtin.get_url:
+    url: "{{ cockpit_45drives_key_url }}"
+    dest: "{{ cockpit_45drives_keyring }}"
+    mode: "0644"
+
+- name: Add 45Drives repository
+  ansible.builtin.apt_repository:
+    repo: "{{ cockpit_45drives_repo }}"
+    filename: 45drives
+    state: present
+    update_cache: true

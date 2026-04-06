@@ -1,0 +1,22 @@
+---
+galaxy_info:
+  author: "Louis Raymond <lraymond@lanets.ca>"
+  description: >
+    Rôle Ansible pour déployer Garage S3 avec binaire, configuration et service
+    systemd
+  company: "Cedille"
+  license: "GPL-3.0-or-later"
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+        - trixie
+  galaxy_tags:
+    - debian
+    - storage
+    - s3
+    - garage
+
+dependencies: []

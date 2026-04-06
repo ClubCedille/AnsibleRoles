@@ -1,0 +1,9 @@
+---
+- name: Configure ZFS apt preference file
+  ansible.builtin.copy:
+    dest: /etc/apt/preferences.d/90_zfs
+    mode: "0644"
+    content: |
+      Package: zfs-dkms zfsutils-linux
+      Pin: release n={{ zfs_backports_release }}
+      Pin-Priority: {{ zfs_pin_priority }}

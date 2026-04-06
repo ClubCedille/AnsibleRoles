@@ -1,0 +1,14 @@
+garage_version: "1.0.0"
+garage_binary_url: ""
+garage_install_path: /usr/local/bin/garage
+garage_config_dir: /etc/garage
+garage_config_path: /etc/garage.toml
+garage_data_dir: /var/lib/garage
+garage_metadata_dir: /var/lib/garage/meta
+garage_s3_bind: 0.0.0.0:3900
+garage_rpc_bind: 0.0.0.0:3901
+garage_api_bind: 0.0.0.0:3903
+garage_s3_region: eu-west-1
+garage_node_name: garage-node
+garage_rpc_secret: ""
+garage_admin_token: ""

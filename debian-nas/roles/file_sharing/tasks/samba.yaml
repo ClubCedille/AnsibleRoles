@@ -1,0 +1,7 @@
+---
+- name: Install Samba packages
+  ansible.builtin.apt:
+    name:
+      - samba
+      - samba-common-bin
+    state: present

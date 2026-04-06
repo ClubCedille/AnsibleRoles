@@ -1,0 +1,5 @@
+---
+- name: Install ZFS packages and kernel headers
+  ansible.builtin.apt:
+    name: "{{ zfs_packages + [zfs_kernel_headers_package] }}"
+    state: present
