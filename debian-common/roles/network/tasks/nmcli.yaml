@@ -1,0 +1,52 @@
+---
+- name: Check existing NetworkManager connections
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - -t
+      - -f
+      - NAME
+      - connection
+      - show
+  register: network_nmcli_connections
+  changed_when: false
+
+- name: Build DNS search string
+  ansible.builtin.set_fact:
+    network_dns_search_value: "{{ network_dns_search | join(' ') }}"
+
+- name: Create static NetworkManager connection
+  ansible.builtin.shell: >
+    nmcli connection add type ethernet ifname "{{ network_interface_name }}"
+    con-name "{{ network_connection_name }}"
+    ipv4.method manual
+    ipv4.addresses "{{ network_ip_address }}/{{ network_prefix }}"
+    ipv4.gateway "{{ network_gateway }}"
+    ipv4.dns "{{ network_dns_servers | join(' ') }}"
+    connection.autoconnect "{{ 'yes' if network_autoconnect else 'no' }}"
+  when: network_connection_name not in network_nmcli_connections.stdout_lines
+  notify: restart NetworkManager
+
+- name: Update static NetworkManager connection
+  ansible.builtin.shell: >
+    nmcli connection modify "{{ network_connection_name }}"
+    connection.interface-name "{{ network_interface_name }}"
+    ipv4.method manual
+    ipv4.addresses "{{ network_ip_address }}/{{ network_prefix }}"
+    ipv4.gateway "{{ network_gateway }}"
+    ipv4.dns "{{ network_dns_servers | join(' ') }}"
+    connection.autoconnect "{{ 'yes' if network_autoconnect else 'no' }}"
+  when: network_connection_name in network_nmcli_connections.stdout_lines
+  notify: restart NetworkManager
+
+- name: Set NetworkManager DNS search domains
+  ansible.builtin.command:
+    argv:
+      - nmcli
+      - connection
+      - modify
+      - "{{ network_connection_name }}"
+      - ipv4.dns-search
+      - "{{ network_dns_search_value }}"
+  when: network_dns_search | length > 0
+  notify: restart NetworkManager

@@ -1,0 +1,7 @@
+---
+- name: Refresh package cache and upgrade the system
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+    autoremove: true
+    autoclean: true

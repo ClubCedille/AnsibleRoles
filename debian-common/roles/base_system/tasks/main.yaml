@@ -1,0 +1,19 @@
+---
+- name: Configure apt sources
+  ansible.builtin.include_tasks:
+    file: apt_sources.yaml
+    apply:
+      become: true
+  when: base_system_backports_enabled | bool
+
+- name: Upgrade apt packages
+  ansible.builtin.include_tasks:
+    file: apt_upgrade.yaml
+    apply:
+      become: true
+
+- name: Install base packages
+  ansible.builtin.include_tasks:
+    file: packages.yaml
+    apply:
+      become: true

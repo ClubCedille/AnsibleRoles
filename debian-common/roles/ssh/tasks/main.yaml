@@ -1,0 +1,6 @@
+---
+- name: Install SSH server
+  ansible.builtin.include_tasks:
+    file: install.yaml
+    apply:
+      become: true
