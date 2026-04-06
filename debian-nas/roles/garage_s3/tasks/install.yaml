@@ -2,18 +2,18 @@
 - name: Ensure Garage binary URL is defined
   ansible.builtin.assert:
     that:
-      - garage_binary_url | length > 0
-    fail_msg: "garage_binary_url must be defined before installing Garage"
+      - garage.binary_url | length > 0
+    fail_msg: "garage.binary_url must be defined before installing Garage"
 
 - name: Download Garage binary
   ansible.builtin.get_url:
-    url: "{{ garage_binary_url }}"
-    dest: "/tmp/garage-{{ garage_version }}"
+    url: "{{ garage.binary_url }}"
+    dest: "/tmp/garage-{{ garage.version }}"
     mode: "0755"
 
 - name: Install Garage binary
   ansible.builtin.copy:
-    src: "/tmp/garage-{{ garage_version }}"
-    dest: "{{ garage_install_path }}"
+    src: "/tmp/garage-{{ garage.version }}"
+    dest: "{{ garage.paths.install }}"
     remote_src: true
     mode: "0755"

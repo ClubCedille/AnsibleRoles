@@ -1,35 +1,46 @@
-garage_version: "1.0.0"
-garage_binary_url: ""
-garage_install_path: /usr/local/bin/garage
-garage_config_dir: /etc/garage
-garage_config_path: /etc/garage.toml
-garage_data_dir: /var/lib/garage/data
-garage_metadata_dir: /var/lib/garage/meta
-garage_metadata_snapshots_dir: /var/lib/garage/snapshots
-garage_metadata_fsync: true
-garage_data_fsync: false
-garage_disable_scrub: false
-garage_use_local_tz: false
-garage_metadata_auto_snapshot_interval: "6h"
-garage_db_engine: lmdb
-garage_replication_factor: 1
-garage_block_size: 1M
-garage_block_ram_buffer_max: 256MiB
-garage_block_max_concurrent_reads: 16
-garage_block_max_concurrent_writes_per_request: 10
-garage_lmdb_map_size: 1T
-garage_compression_level: 1
-garage_s3_bind: "[::]:3900"
-garage_rpc_bind: "[::]:3901"
-garage_rpc_public_addr: "127.0.0.1:3901"
-garage_api_bind: "[::]:3903"
-garage_s3_region: garage
-garage_s3_root_domain: .s3.garage.etsmtl.club
-garage_s3_web_bind: "[::]:3902"
-garage_s3_web_root_domain: .web.garage.etsmtl.club
-garage_s3_web_index: index.html
-garage_k2v_bind: "[::]:3904"
-garage_node_name: garage-node
-garage_rpc_secret: ""
-garage_admin_token: ""
-garage_metrics_token: ""
+---
+garage:
+  version: "1.0.0"
+  binary_url: ""
+  paths:
+    install: /usr/local/bin/garage
+    config: /etc/garage.toml
+    data_dir: /var/lib/garage/data
+    metadata_dir: /var/lib/garage/meta
+    metadata_snapshots_dir: /var/lib/garage/snapshots
+  storage:
+    metadata_fsync: true
+    data_fsync: false
+    disable_scrub: false
+    use_local_tz: false
+    metadata_auto_snapshot_interval: "6h"
+    db_engine: lmdb
+    lmdb_map_size: 1T
+    compression_level: 1
+  cluster:
+    node_name: garage-node
+    replication_factor: 1
+  perf:
+    block_size: 1M
+    block_ram_buffer_max: 256MiB
+    block_max_concurrent_reads: 16
+    block_max_concurrent_writes_per_request: 10
+  rpc:
+    bind: "[::]:3901"
+    public_addr: "127.0.0.1:3901"
+    secret: ""
+  api:
+    s3:
+      bind: "[::]:3900"
+      region: garage
+      root_domain: .s3.garage.etsmtl.club
+    web:
+      bind: "[::]:3902"
+      root_domain: .web.garage.etsmtl.club
+      index: index.html
+    k2v:
+      bind: "[::]:3904"
+    admin:
+      bind: "[::]:3903"
+      admin_token: ""
+      metrics_token: ""

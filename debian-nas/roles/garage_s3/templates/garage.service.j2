@@ -7,8 +7,8 @@ Wants=network-online.target
 Type=simple
 User=garage
 Group=garage
-Environment=GARAGE_CONFIG_FILE={{ garage_config_path }}
-ExecStart={{ garage_install_path }} server
+Environment=GARAGE_CONFIG_FILE={{ garage.paths.config }}
+ExecStart={{ garage.paths.install }} server
 Restart=on-failure
 RestartSec=5
 

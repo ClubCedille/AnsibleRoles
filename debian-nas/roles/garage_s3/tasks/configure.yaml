@@ -11,7 +11,7 @@
     system: true
     shell: /usr/sbin/nologin
     create_home: false
-    home: "{{ garage_data_dir }}"
+    home: "{{ garage.paths.data_dir }}"
 
 - name: Create Garage directories
   ansible.builtin.file:
@@ -21,15 +21,15 @@
     group: garage
     mode: "0755"
   loop:
-    - "{{ garage_config_dir }}"
-    - "{{ garage_data_dir }}"
-    - "{{ garage_metadata_dir }}"
-    - "{{ garage_metadata_snapshots_dir }}"
+    - "{{ garage.paths.config | dirname }}"
+    - "{{ garage.paths.data_dir }}"
+    - "{{ garage.paths.metadata_dir }}"
+    - "{{ garage.paths.metadata_snapshots_dir }}"
 
 - name: Deploy Garage configuration
   ansible.builtin.template:
     src: garage.toml.j2
-    dest: "{{ garage_config_path }}"
+    dest: "{{ garage.paths.config }}"
     owner: garage
     group: garage
     mode: "0640"

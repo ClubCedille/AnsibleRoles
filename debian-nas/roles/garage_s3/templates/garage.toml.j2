@@ -1,42 +1,42 @@
-metadata_dir = "{{ garage_metadata_dir }}"
-data_dir = "{{ garage_data_dir }}"
-metadata_snapshots_dir = "{{ garage_metadata_snapshots_dir }}"
-metadata_fsync = {{ garage_metadata_fsync | bool | to_json }}
-data_fsync = {{ garage_data_fsync | bool | to_json }}
-disable_scrub = {{ garage_disable_scrub | bool | to_json }}
-use_local_tz = {{ garage_use_local_tz | bool | to_json }}
-metadata_auto_snapshot_interval = "{{ garage_metadata_auto_snapshot_interval }}"
+metadata_dir = "{{ garage.paths.metadata_dir }}"
+data_dir = "{{ garage.paths.data_dir }}"
+metadata_snapshots_dir = "{{ garage.paths.metadata_snapshots_dir }}"
+metadata_fsync = {{ garage.storage.metadata_fsync | bool | to_json }}
+data_fsync = {{ garage.storage.data_fsync | bool | to_json }}
+disable_scrub = {{ garage.storage.disable_scrub | bool | to_json }}
+use_local_tz = {{ garage.storage.use_local_tz | bool | to_json }}
+metadata_auto_snapshot_interval = "{{ garage.storage.metadata_auto_snapshot_interval }}"
 
-db_engine = "{{ garage_db_engine }}"
+db_engine = "{{ garage.storage.db_engine }}"
 
-replication_factor = {{ garage_replication_factor }}
-block_size = "{{ garage_block_size }}"
-block_ram_buffer_max = "{{ garage_block_ram_buffer_max }}"
-block_max_concurrent_reads = {{ garage_block_max_concurrent_reads }}
-block_max_concurrent_writes_per_request = {{ garage_block_max_concurrent_writes_per_request }}
-lmdb_map_size = "{{ garage_lmdb_map_size }}"
+replication_factor = {{ garage.cluster.replication_factor }}
+block_size = "{{ garage.perf.block_size }}"
+block_ram_buffer_max = "{{ garage.perf.block_ram_buffer_max }}"
+block_max_concurrent_reads = {{ garage.perf.block_max_concurrent_reads }}
+block_max_concurrent_writes_per_request = {{ garage.perf.block_max_concurrent_writes_per_request }}
+lmdb_map_size = "{{ garage.storage.lmdb_map_size }}"
 
-compression_level = {{ garage_compression_level }}
+compression_level = {{ garage.storage.compression_level }}
 
-node_name = "{{ garage_node_name }}"
-rpc_bind_addr = "{{ garage_rpc_bind }}"
-rpc_public_addr = "{{ garage_rpc_public_addr }}"
-rpc_secret = "{{ garage_rpc_secret }}"
+node_name = "{{ garage.cluster.node_name }}"
+rpc_bind_addr = "{{ garage.rpc.bind }}"
+rpc_public_addr = "{{ garage.rpc.public_addr }}"
+rpc_secret = "{{ garage.rpc.secret }}"
 
 [s3_api]
-s3_region = "{{ garage_s3_region }}"
-api_bind_addr = "{{ garage_s3_bind }}"
-root_domain = "{{ garage_s3_root_domain }}"
+s3_region = "{{ garage.api.s3.region }}"
+api_bind_addr = "{{ garage.api.s3.bind }}"
+root_domain = "{{ garage.api.s3.root_domain }}"
 
 [s3_web]
-bind_addr = "{{ garage_s3_web_bind }}"
-root_domain = "{{ garage_s3_web_root_domain }}"
-index = "{{ garage_s3_web_index }}"
+bind_addr = "{{ garage.api.web.bind }}"
+root_domain = "{{ garage.api.web.root_domain }}"
+index = "{{ garage.api.web.index }}"
 
 [k2v_api]
-api_bind_addr = "{{ garage_k2v_bind }}"
+api_bind_addr = "{{ garage.api.k2v.bind }}"
 
 [admin]
-api_bind_addr = "{{ garage_api_bind }}"
-admin_token = "{{ garage_admin_token }}"
-metrics_token = "{{ garage_metrics_token }}"
+api_bind_addr = "{{ garage.api.admin.bind }}"
+admin_token = "{{ garage.api.admin.admin_token }}"
+metrics_token = "{{ garage.api.admin.metrics_token }}"
