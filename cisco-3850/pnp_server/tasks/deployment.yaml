@@ -47,7 +47,7 @@
     src: "{{ pnp_server_profiles_src_dir }}/"
     dest: "{{ pnp_server_docroot }}/profiles/"
     remote_src: true
-    mode: "0644"
+    mode: "0640"
     owner: www-data
     group: www-data
 
