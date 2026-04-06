@@ -6,7 +6,15 @@ galaxy_info:
   min_ansible_version: "2.11"
   platforms:
     - name: Debian
-    - name: EL
+      versions:
+        - bullseye
+        - bookworm
+        - trixie
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - kinetic
   galaxy_tags:
     - cisco
     - pnp
