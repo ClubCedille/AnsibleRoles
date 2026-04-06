@@ -5,7 +5,8 @@ version: "1.0.1"
 readme: "./docs/README.md"
 authors:
   - "Louis Raymond <lraymond@lanets.ca>"
-dependencies: {}
+dependencies:
+  community.general: ">=3.0.0"
 license:
   - "GPL-3.0-or-later"
 tags:
