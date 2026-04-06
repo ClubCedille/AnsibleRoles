@@ -31,8 +31,8 @@
     that:
       - item.profile is defined
       - item.profile | string | trim | length > 0
-      - (item.serial is defined and item.serial | string | trim | length > 0) or (item.mac is defined and item.mac | string | trim | length > 0)
-    fail_msg: "Each pnp_server_day0_devices item must define profile and either serial or mac."
+      - (not (pnp_server_day0_require_identifier | bool)) or ((item.serial is defined and item.serial | string | trim | length > 0) or (item.mac is defined and item.mac | string | trim | length > 0))
+    fail_msg: "Each pnp_server_day0_devices item must define profile and, when pnp_server_day0_require_identifier is true, either serial or mac."
   loop: "{{ _pnp_server_day0_devices_effective }}"
   loop_control:
     label: "{{ item.profile | default('missing-profile') }}"
