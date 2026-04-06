@@ -1,0 +1,79 @@
+---
+- name: Validate ZFS pool variables
+  ansible.builtin.assert:
+    that:
+      - zfs_pool.name | length > 0
+      - zfs_pool.disks | length > 0
+      - zfs_pool.mode in ['stripe', 'mirror', 'raidz', 'raidz1', 'raidz2', 'raidz3']
+    fail_msg: >-
+      Invalid ZFS pool configuration. Set zfs_pool.name, at least one entry in
+      zfs_pool.disks, and zfs_pool.mode in
+      [stripe, mirror, raidz, raidz1, raidz2, raidz3].
+
+- name: Check if ZFS pool already exists
+  ansible.builtin.command:
+    argv:
+      - zpool
+      - list
+      - -H
+      - -o
+      - name
+        - "{{ zfs_pool.name }}"
+  register: zfs_pool_check
+  changed_when: false
+  failed_when: false
+
+- name: Build ZFS pool vdev arguments
+  ansible.builtin.set_fact:
+    zfs_pool_vdev_arguments: >-
+      {{
+        ((zfs_pool.mode != 'stripe') | ternary([
+          {
+            'raidz1': 'raidz'
+          }.get(zfs_pool.mode, zfs_pool.mode)
+        ], []))
+        + zfs_pool.disks
+      }}
+
+- name: Create ZFS pool from declared disks
+  ansible.builtin.command:
+    argv: >-
+      {{
+        ['zpool', 'create']
+        + ((zfs_pool.force | bool) | ternary(['-f'], []))
+        + ['-o', 'ashift=' ~ (zfs_pool.ashift | string)]
+        + ['-O', 'compression=' ~ zfs_pool.compression]
+        + ['-O', 'atime=' ~ ((zfs_pool.atime | bool) | ternary('on', 'off'))]
+        + ['-O', 'mountpoint=' ~ zfs_pool.mountpoint]
+        + [zfs_pool.name]
+        + zfs_pool_vdev_arguments
+      }}
+  when: zfs_pool_check.rc != 0
+  changed_when: true
+
+- name: Check if declared datasets already exist
+  ansible.builtin.command:
+    argv:
+      - zfs
+      - list
+      - -H
+      - -o
+      - name
+      - "{{ item }}"
+  loop: "{{ zfs_datasets }}"
+  register: zfs_dataset_checks
+  changed_when: false
+  failed_when: false
+
+- name: Create declared datasets
+  ansible.builtin.command:
+    argv:
+      - zfs
+      - create
+      - -p
+      - "{{ item.item }}"
+  loop: "{{ zfs_dataset_checks.results }}"
+  when: item.rc != 0
+  changed_when: true
+  loop_control:
+    label: "{{ item.item }}"

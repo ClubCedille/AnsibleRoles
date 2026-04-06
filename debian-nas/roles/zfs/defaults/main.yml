@@ -4,3 +4,18 @@ zfs_packages:
   - zfs-dkms
   - zfsutils-linux
 zfs_kernel_headers_package: linux-headers-amd64
+
+# Pool management is opt-in to avoid accidental data destruction.
+zfs_manage_pool: false
+zfs_pool:
+  name: tank
+  mode: stripe
+  disks: []
+  force: false
+  ashift: 12
+  compression: lz4
+  atime: false
+  mountpoint: "/{{ zfs_pool.name }}"
+
+# Optional list of datasets to create once the pool exists.
+zfs_datasets: []
