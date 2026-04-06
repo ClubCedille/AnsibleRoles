@@ -1,0 +1,15 @@
+galaxy_info:
+  author: "Louis Raymond <lraymond@lanets.ca>"
+  description: Publish Cisco bootstrap artifacts (device map and Day-0 profiles) over HTTP
+  company: "Cedille"
+  license: "GPL-3.0-or-later"
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Debian
+    - name: EL
+  galaxy_tags:
+    - cisco
+    - pnp
+    - bootstrap
+    - http
+dependencies: []

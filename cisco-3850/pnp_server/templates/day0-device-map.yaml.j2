@@ -1,0 +1,17 @@
+# Managed by Ansible role pnp_server
+devices:
+{% for device in _pnp_server_day0_devices_effective %}
+  - profile: "{{ device.profile }}"
+{% if device.serial is defined and device.serial | string | trim | length > 0 %}
+    serial: "{{ device.serial | string | trim }}"
+{% endif %}
+{% if device.mac is defined and device.mac | string | trim | length > 0 %}
+    mac: "{{ device.mac | string | lower | trim }}"
+{% endif %}
+{% if device.hostname is defined and device.hostname | string | trim | length > 0 %}
+    hostname: "{{ device.hostname | string | trim }}"
+{% endif %}
+{% if device.site is defined and device.site | string | trim | length > 0 %}
+    site: "{{ device.site | string | trim }}"
+{% endif %}
+{% endfor %}

@@ -1,0 +1,32 @@
+!
+! Managed by Ansible role pnp_server
+!
+hostname {{ item.hostname }}
+no ip domain-lookup
+{% if pnp_server_day0_site_domain_name | length > 0 %}
+ip domain-name {{ pnp_server_day0_site_domain_name }}
+{% endif %}
+{% for dns_server in pnp_server_day0_site_name_servers %}
+ip name-server {{ dns_server }}
+{% endfor %}
+{% for ntp_server in pnp_server_day0_site_ntp_servers %}
+ntp server {{ ntp_server }}
+{% endfor %}
+!
+username admin privilege 15 secret {{ item.admin_password }}
+ip ssh version 2
+line vty 0 15
+ login local
+ transport input ssh
+ exec-timeout 30 0
+!
+service password-encryption
+{% if item.mgmt_default_gateway is defined and item.mgmt_default_gateway | string | trim | length > 0 %}
+ip default-gateway {{ item.mgmt_default_gateway }}
+{% endif %}
+{% if item.description is defined and item.description | string | trim | length > 0 %}
+banner login ^
+{{ item.description }}
+^
+{% endif %}
+end
