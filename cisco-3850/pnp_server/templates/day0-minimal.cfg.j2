@@ -13,7 +13,7 @@ ip name-server {{ dns_server }}
 ntp server {{ ntp_server }}
 {% endfor %}
 !
-username admin privilege 15 secret {{ item.admin_password }}
+username admin privilege 15 secret 0 {{ item.admin_password }}
 ip ssh version 2
 line vty 0 15
  login local
