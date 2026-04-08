@@ -15,11 +15,13 @@ pnp_server_day0_site_domain_name: ""
 pnp_server_day0_site_name_servers: []
 pnp_server_day0_site_ntp_servers: []
 
+pnp_server_day0_mgmt_svi_vlan_id: 100
+
 # Each entry should define:
 # - name
 # - hostname
 # - admin_password
-# Optional fields: description, mgmt_default_gateway
+# Optional fields: description, mgmt_default_gateway, mgmt_svi_ip_address, mgmt_svi_ip_mask
 # When non-empty, this list takes precedence over host vars.
 pnp_server_day0_profiles: []
 
