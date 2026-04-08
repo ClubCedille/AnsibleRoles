@@ -1,0 +1,77 @@
+---
+
+- name: Install nginx
+  ansible.builtin.package:
+    name: nginx
+    state: present
+  when: pnp_server_install_nginx | bool
+
+- name: Ensure HTTP docroot exists
+  ansible.builtin.file:
+    path: "{{ pnp_server_docroot }}"
+    state: directory
+    mode: "0755"
+    owner: www-data
+    group: www-data
+
+- name: Ensure profile directory in docroot exists
+  ansible.builtin.file:
+    path: "{{ pnp_server_docroot }}/profiles"
+    state: directory
+    mode: "0755"
+    owner: www-data
+    group: www-data
+
+- name: Check device map source exists
+  ansible.builtin.stat:
+    path: "{{ pnp_server_device_map_path }}"
+  register: pnp_server_device_map_stat
+
+- name: Fail when device map source is missing
+  ansible.builtin.assert:
+    that:
+      - pnp_server_device_map_stat.stat.exists
+    fail_msg: "device map not found at {{ pnp_server_device_map_path }}."
+
+- name: Publish device map to docroot
+  ansible.builtin.copy:
+    src: "{{ pnp_server_device_map_path }}"
+    dest: "{{ pnp_server_docroot }}/device-map.yaml"
+    remote_src: true
+    mode: "0644"
+    owner: www-data
+    group: www-data
+
+- name: Publish Day-0 profiles to docroot
+  ansible.builtin.copy:
+    src: "{{ pnp_server_profiles_src_dir }}/"
+    dest: "{{ pnp_server_docroot }}/profiles/"
+    remote_src: true
+    mode: "0640"
+    owner: www-data
+    group: www-data
+
+- name: Render bootstrap manifest
+  ansible.builtin.template:
+    src: bootstrap-manifest.json.j2
+    dest: "{{ pnp_server_docroot }}/bootstrap-manifest.json"
+    mode: "0644"
+    owner: www-data
+    group: www-data
+
+- name: Configure nginx virtual host
+  ansible.builtin.template:
+    src: nginx-cisco-pnp.conf.j2
+    dest: /etc/nginx/conf.d/cisco-pnp.conf
+    mode: "0644"
+    owner: root
+    group: root
+  notify: Restart nginx
+  when: pnp_server_install_nginx | bool
+
+- name: Ensure nginx service is enabled and running
+  ansible.builtin.service:
+    name: "{{ pnp_server_nginx_service_name }}"
+    enabled: true
+    state: started
+  when: pnp_server_install_nginx | bool

@@ -1,0 +1,92 @@
+---
+
+- name: Validate day0 profiles type
+  ansible.builtin.assert:
+    that:
+      - _pnp_server_day0_profiles_effective is sequence
+    fail_msg: day0 profiles must be a list.
+
+- name: Validate day0 devices type
+  ansible.builtin.assert:
+    that:
+      - _pnp_server_day0_devices_effective is sequence
+    fail_msg: day0 devices must be a list.
+
+- name: Validate each Day-0 profile
+  ansible.builtin.assert:
+    that:
+      - item.name is defined
+      - item.name | string | trim | length > 0
+      - item.hostname is defined
+      - item.hostname | string | trim | length > 0
+      - item.admin_password is defined
+      - item.admin_password | string | length > 0
+    fail_msg: "Each pnp_server_day0_profiles item must define name, hostname and admin_password."
+  loop: "{{ _pnp_server_day0_profiles_effective }}"
+  loop_control:
+    label: "{{ item.name | default('missing-name') }}"
+
+- name: Validate each Day-0 device entry
+  ansible.builtin.assert:
+    that:
+      - item.profile is defined
+      - item.profile | string | trim | length > 0
+      - (not (pnp_server_day0_require_identifier | bool)) or ((item.serial is defined and item.serial | string | trim | length > 0) or (item.mac is defined and item.mac | string | trim | length > 0))
+    fail_msg: "Each pnp_server_day0_devices item must define profile and, when pnp_server_day0_require_identifier is true, either serial or mac."
+  loop: "{{ _pnp_server_day0_devices_effective }}"
+  loop_control:
+    label: "{{ item.profile | default('missing-profile') }}"
+
+- name: Collect profile names
+  ansible.builtin.set_fact:
+    _pnp_server_day0_profile_names: "{{ _pnp_server_day0_profiles_effective | map(attribute='name') | list }}"
+
+- name: Validate each Day-0 device references an existing profile
+  ansible.builtin.assert:
+    that:
+      - item.profile in _pnp_server_day0_profile_names
+    fail_msg: "Unknown profile '{{ item.profile }}' in pnp_server_day0_devices."
+  loop: "{{ _pnp_server_day0_devices_effective }}"
+  loop_control:
+    label: "{{ item.profile | default('missing-profile') }}"
+
+- name: Collect serial numbers for uniqueness check
+  ansible.builtin.set_fact:
+    _pnp_server_day0_serials: >-
+      {{
+        _pnp_server_day0_devices_effective
+        | selectattr('serial', 'defined')
+        | map(attribute='serial')
+        | map('string')
+        | map('trim')
+        | reject('equalto', '')
+        | list
+      }}
+
+- name: Validate serial uniqueness
+  ansible.builtin.assert:
+    that:
+      - _pnp_server_day0_serials | length == (_pnp_server_day0_serials | unique | length)
+    fail_msg: Duplicate serial detected in pnp_server_day0_devices.
+  when: pnp_server_day0_validate_unique_serial | bool
+
+- name: Collect MAC addresses for uniqueness check
+  ansible.builtin.set_fact:
+    _pnp_server_day0_macs: >-
+      {{
+        _pnp_server_day0_devices_effective
+        | selectattr('mac', 'defined')
+        | map(attribute='mac')
+        | map('string')
+        | map('lower')
+        | map('trim')
+        | reject('equalto', '')
+        | list
+      }}
+
+- name: Validate MAC uniqueness
+  ansible.builtin.assert:
+    that:
+      - _pnp_server_day0_macs | length == (_pnp_server_day0_macs | unique | length)
+    fail_msg: Duplicate MAC detected in pnp_server_day0_devices.
+  when: pnp_server_day0_validate_unique_mac | bool

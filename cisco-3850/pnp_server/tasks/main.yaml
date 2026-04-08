@@ -1,0 +1,13 @@
+---
+
+- name: Build Day-0 data sets
+  ansible.builtin.include_tasks: build_day0.yaml
+
+- name: Validate Day-0 data
+  ansible.builtin.include_tasks: validate_day0.yaml
+
+- name: Render Day-0 artifacts
+  ansible.builtin.include_tasks: generate_day0.yaml
+
+- name: Deploy PnP server and publish Day-0 artifacts
+  ansible.builtin.include_tasks: deployment.yaml

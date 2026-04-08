@@ -1,0 +1,104 @@
+---
+
+- name: Setup the motd banner
+  cisco.ios.ios_banner:
+    banner: motd
+    text: |
+      CET APPAREIL EST LA PROPRIETE DE CEDILLE ET DU LAN ETS.
+      SI VOUS VOYEZ CE MESSAGE - VEUILLEZ NOTER QUE CETTE SWITCH EST UN EQUIPEMENT DE PRODUCTION.
+      SVP NE PAS REDEMARRER OU FAIRE DES TRUCS STUPIDES SANS AVERTIR QUELQU'UN AVANT.
+      ---
+      THIS DEVICE IS THE PROPERTY OF CEDILLE AND LAN ETS.
+      IF YOU SEE THIS - PLEASE BE AWARE THAT THIS IS A PRODUCTION SWITCH.
+      PLEASE DO NOT REBOOT OR DO STUPID STUFF WITHOUT WARNING SOMEONE FIRST.
+
+        /$$$$$$                  /$$ /$$ /$$ /$$
+      /$$__  $$                | $$|__/| $$| $$
+      | $$  \__/  /$$$$$$   /$$$$$$$ /$$| $$| $$  /$$$$$$
+      | $$       /$$__  $$ /$$__  $$| $$| $$| $$ /$$__  $$
+      | $$      | $$$$$$$$| $$  | $$| $$| $$| $$| $$$$$$$$
+      | $$    $$| $$_____/| $$  | $$| $$| $$| $$| $$_____/
+      |  $$$$$$/|  $$$$$$$|  $$$$$$$| $$| $$| $$|  $$$$$$$
+      \______/  \_______/ \_______/|__/|__/|__/ \_______/
+      /$$                                 /$$$$$$$$ /$$$$$$$$ /$$$$$$
+      | $$                                | $$_____/|__  $$__//$$__  $$
+      | $$        /$$$$$$  /$$$$$$$       | $$         | $$  | $$  \__/
+      | $$       |____  $$| $$__  $$      | $$$$$      | $$  |  $$$$$$
+      | $$        /$$$$$$$| $$  \ $$      | $$__/      | $$   \____  $$
+      | $$       /$$__  $$| $$  | $$      | $$         | $$   /$$  \ $$
+      | $$$$$$$$|  $$$$$$$| $$  | $$      | $$$$$$$$   | $$  |  $$$$$$/
+      |________/ \_______/|__/  |__/      |________/   |__/   \______/
+
+      {{ hostname }} - {{ description }}
+    state: present
+
+- name: Setup the login banner
+  cisco.ios.ios_banner:
+    banner: login
+    text: |
+      Accès réservé aux personnes autorisées seulement.
+      ---
+      Access is restricted to authorized personnel only.
+    state: present
+
+- name: Setup the hostname
+  cisco.ios.ios_hostname:
+    config:
+      hostname: "{{ hostname }}"
+    state: replaced
+
+- name: Configure domain lookup behavior
+  cisco.ios.ios_config:
+    lines:
+      - "{{ 'ip domain-lookup' if ip_domain_lookup else 'no ip domain-lookup' }}"
+
+- name: Configure domain name
+  cisco.ios.ios_config:
+    lines:
+      - "ip domain-name {{ ip_domain_name }}"
+  when:
+    - ip_domain_name is defined
+    - ip_domain_name | length > 0
+
+- name: Configure DNS name servers
+  cisco.ios.ios_config:
+    lines:
+      - "ip name-server {{ item }}"
+  loop: "{{ ip_name_servers }}"
+  when:
+    - ip_name_servers is defined
+    - ip_name_servers | length > 0
+
+- name: Configure clock timezone
+  cisco.ios.ios_config:
+    lines:
+      - "clock timezone {{ clock.timezone.name }} {{ clock.timezone.hours }} {{ clock.timezone.minutes }}"
+  when: clock.timezone.enabled | bool
+
+- name: Configure NTP peers
+  cisco.ios.ios_config:
+    lines:
+      - "ntp peer {{ item }}"
+  loop: "{{ ntp_peers }}"
+  when:
+    - ntp_peers is defined
+    - ntp_peers | length > 0
+
+- name: Setup the snmp community string
+  cisco.ios.ios_snmp_server:
+    config:
+      communities:
+        - name: "{{ snmp_community }}"
+          ro: true
+          acl_v4: "{{ snmp_acl_v4 | default(omit) }}"
+    state: merged
+  when:
+    - snmp_community is defined
+    - snmp_community | length > 0
+
+- name: Disable unsecure services
+  cisco.ios.ios_config:
+    lines:
+      - "{{ 'no ip http server' if disable_ip_http_server else 'ip http server' }}"
+      - "{{ 'no ip http secure-server' if disable_ip_http_secure_server else 'ip http secure-server' }}"
+      - "{{ 'no ip cef optimize neighbor resolution' if disable_ip_cef_optimize_neighbor_resolution else 'ip cef optimize neighbor resolution' }}"

@@ -1,0 +1,15 @@
+---
+
+- name: Build and publish Cisco Day-0 bootstrap artifacts
+  hosts: bootstrap_server
+  gather_facts: true
+  become: true
+
+  vars:
+    bootstrap_state_dir: /var/lib/cisco-pnp
+
+  roles:
+    - role: pnp_server
+      vars:
+        pnp_server_device_map_path: "{{ bootstrap_state_dir }}/device-map.yaml"
+        pnp_server_profiles_src_dir: "{{ bootstrap_state_dir }}/profiles"

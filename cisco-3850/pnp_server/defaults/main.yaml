@@ -1,0 +1,37 @@
+---
+
+pnp_server_docroot: /var/www/cisco-pnp
+pnp_server_device_map_path: /var/lib/cisco-pnp/device-map.yaml
+pnp_server_profiles_src_dir: /var/lib/cisco-pnp/profiles
+
+pnp_server_day0_profiles_source_group: cisco_bootstrapped
+pnp_server_day0_devices_source_group: cisco_bootstrapped
+
+pnp_server_day0_require_identifier: true
+pnp_server_day0_validate_unique_serial: true
+pnp_server_day0_validate_unique_mac: true
+
+pnp_server_day0_site_domain_name: ""
+pnp_server_day0_site_name_servers: []
+pnp_server_day0_site_ntp_servers: []
+
+# Each entry should define:
+# - name
+# - hostname
+# - admin_password
+# Optional fields: description, mgmt_default_gateway
+# When non-empty, this list takes precedence over host vars.
+pnp_server_day0_profiles: []
+
+# Each entry should define:
+# - profile (string)
+# - and at least one identifier: serial or mac
+# Optional fields: hostname, site
+# When non-empty, this list takes precedence over host vars.
+pnp_server_day0_devices: []
+
+pnp_server_listen_address: "0.0.0.0"
+pnp_server_listen_port: 8080
+
+pnp_server_install_nginx: true
+pnp_server_nginx_service_name: nginx

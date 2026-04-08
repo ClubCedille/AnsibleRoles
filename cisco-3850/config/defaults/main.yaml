@@ -1,0 +1,91 @@
+---
+
+ansible_connection: ansible.netcommon.network_cli
+ansible_network_os: cisco.ios.ios
+ansible_user: admin
+ansible_password: "{{ admin_password }}"
+ansible_become: true
+ansible_become_method: enable
+
+users: []
+# Example:
+# users:
+#   - name: user1
+#     password: password1
+#     privilege: 15
+users_purged: false # Useful to clean up users that are not needed anymore
+
+hostname: "{{ inventory_hostname }}"
+description: "Generic Cisco 3850"
+
+admin_password: ""
+
+snmp_community: ""
+snmp_acl_v4: null
+
+ip_domain_lookup: false
+ip_domain_name: ""
+ip_name_servers: []
+
+clock:
+  timezone:
+    enabled: false
+    name: "EST"
+    hours: -4
+    minutes: 0
+
+ntp_peers: []
+
+disable_ip_http_server: true
+disable_ip_http_secure_server: true
+disable_ip_cef_optimize_neighbor_resolution: true
+
+mgmt_acl:
+  enabled: true
+  id: "1"
+  replace: true
+  aces: []
+# Example:
+# mgmt_acl:
+#   enabled: true
+#   id: "1"
+#   replace: true
+#   aces:
+#   - sequence: 10
+#     grant: permit
+#     source:
+#       address: 10.0.0.0
+#       wildcard_bits: 0.255.255.255
+#   - sequence: 20
+#     grant: permit
+#     source:
+#       address: 172.16.0.0
+#       wildcard_bits: 0.15.255.255
+
+console_enabled: true
+console_logging_synchronous: true
+console_login_local: true
+
+vty:
+  enabled: true
+  line_range: "0 15"
+  remove_default_access_class: "sl_def_acl"
+  access_class_in: "1"
+  exec_timeout:
+    minutes: 60
+    seconds: 0
+  logging_synchronous: true
+  login_local: true
+  transport_input:
+    - ssh
+
+login_policy:
+  enabled: true
+  block_for: 300
+  attempts: 10
+  within: 120
+  delay: 2
+  on_failure_log: true
+  on_success_log: true
+
+service_password_encryption: true

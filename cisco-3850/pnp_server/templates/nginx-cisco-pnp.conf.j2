@@ -1,0 +1,15 @@
+server {
+    listen {{ pnp_server_listen_address }}:{{ pnp_server_listen_port }};
+    server_name _;
+
+    access_log /var/log/nginx/cisco-pnp-access.log;
+    error_log /var/log/nginx/cisco-pnp-error.log;
+
+    root {{ pnp_server_docroot }};
+    index index.html;
+
+    location / {
+        autoindex on;
+        try_files $uri $uri/ =404;
+    }
+}

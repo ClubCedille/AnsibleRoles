@@ -31,7 +31,7 @@
   },
   // Distinction between YAML and Ansible files to properly work with Ansible extensions
   "files.associations": {
-    "*.j2": "ansible",
+    "*.j2": "ansible-jinja",
     "*.yaml": "ansible",
     "*.yml": "yaml"
   },
@@ -39,5 +39,7 @@
   "editor.rulers": [
     160
   ],
-  "python-envs.defaultEnvManager": "ms-python.python:system"
+  "python-envs.defaultEnvManager": "ms-python.python:system",
+  "ansible.validation.enabled": true,
+  "ansible.validation.lint.enabled": true
 }
