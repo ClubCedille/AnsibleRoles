@@ -1,0 +1,15 @@
+namespace: "cedille"
+name: "cisco-3850"
+description: "Collection de rôles Ansible pour gérer les switches Cisco 3850"
+version: "1.0.1"
+readme: "./docs/README.md"
+authors:
+  - "Louis Raymond <lraymond@lanets.ca>"
+dependencies: {}
+license:
+  - "GPL-3.0-or-later"
+tags:
+  - "Cisco"
+  - "switching"
+  - "network"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"
