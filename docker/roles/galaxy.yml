@@ -1,0 +1,16 @@
+namespace: "cedille"
+name: "docker"
+description: "Collection de rôles Ansible pour gérer Docker"
+version: "1.0.0"
+readme: "./docs/README.md"
+authors:
+  - "Matei Martin <mmartin@lanets.ca>"
+  - "Louis Raymond <lraymond@lanets.ca>"
+dependencies: {}
+license:
+  - "GPL-3.0-or-later"
+tags:
+  - "docker"
+  - "container"
+  - "infra"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"
