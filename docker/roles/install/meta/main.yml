@@ -1,0 +1,18 @@
+---
+galaxy_info:
+  author: "Matei"
+  description: >
+    Rôle Ansible pour installer et configurer Docker sur des hôtes cibles. Ce rôle gère l'installation de Docker Engine, la configuration du dépôt officiel de Docker, et assure que le service Docker est démarré et activé au démarrage.
+  company: "Lan ETS"
+  license: "MIT"
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+  galaxy_tags:
+    - docker
+
+dependencies: []

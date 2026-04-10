@@ -10,7 +10,7 @@ SHELL := /bin/bash
 
 ANSIBLE ?= ansible-playbook
 COLLECTION ?=
-PLAYBOOK ?=
+PLAYBOOK ?= 
 INVENTORY ?=
 ROLES_PATH ?=
 ROOT := $(CURDIR)

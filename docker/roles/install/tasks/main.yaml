@@ -1,0 +1,117 @@
+---
+- name: Update apt cache
+  ansible.builtin.apt:
+    update_cache: true
+    cache_valid_time: 3600
+  become: true
+
+- name: Perform a full system upgrade
+  ansible.builtin.apt:
+    upgrade: full
+    autoremove: true
+    autoclean: true
+  become: true
+  register: apt_upgrade
+
+- name: Install prerequisite packages
+  ansible.builtin.apt:
+    name:
+      - ca-certificates
+      - curl
+      - gnupg
+      - lsb-release
+      - apt-transport-https
+      - software-properties-common
+      - python3-pip
+    state: present
+  become: true
+
+- name: Remove legacy / conflicting Docker packages (if any)
+  ansible.builtin.apt:
+    name:
+      - docker
+      - docker.io
+      - docker-engine
+      - containerd
+      - runc
+    state: absent
+    purge: true
+  become: true
+
+- name: Check if a reboot is required after upgrade
+  ansible.builtin.stat:
+    path: /var/run/reboot-required
+  register: reboot_required_file
+
+- name: Reboot the host if the kernel was updated
+  ansible.builtin.reboot:
+    msg: "Reboot triggered by Ansible after kernel upgrade"
+    connect_timeout: 5
+    reboot_timeout: 300
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: uptime
+  become: true
+  when: reboot_required_file.stat.exists
+
+- name: Create /etc/apt/keyrings directory
+  ansible.builtin.file:
+    path: /etc/apt/keyrings
+    state: directory
+    mode: "0755"
+  become: true
+
+- name: Download Docker's official GPG key (armored)
+  ansible.builtin.get_url:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    dest: /etc/apt/keyrings/docker.asc
+    mode: "0644"
+    force: false
+  become: true
+
+- name: Add Docker apt repository
+  ansible.builtin.apt_repository:
+    repo: >-
+      deb [arch=amd64 signed-by=/etc/apt/keyrings/docker.asc]
+      https://download.docker.com/linux/ubuntu
+      {{ ansible_distribution_release }} stable
+    state: present
+    filename: docker
+    update_cache: true
+  become: true
+
+- name: Install Docker CE and related packages
+  ansible.builtin.apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+    state: present
+    update_cache: true
+  become: true
+
+- name: Enable and start Docker service
+  ansible.builtin.systemd:
+    name: docker
+    enabled: true
+    state: started
+    daemon_reload: true
+  become: true
+
+- name: Enable and start containerd service
+  ansible.builtin.systemd:
+    name: containerd
+    enabled: true
+    state: started
+  become: true
+
+- name: Add specified user(s) to the docker group
+  ansible.builtin.user:
+    name: "{{ item }}"
+    groups: docker
+    append: true
+  loop: "{{ docker_users | default([ansible_user]) }}"
+  become: true
+  when: docker_users is defined or ansible_user is defined
