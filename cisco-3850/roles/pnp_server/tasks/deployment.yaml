@@ -51,18 +51,6 @@
     - pnp_server_http.install_nginx | bool
     - pnp_server_tls.enabled | bool
 
-- name: Ensure backend base directories exist
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: directory
-    mode: "0750"
-  loop:
-    - "{{ pnp_server_backend.base_dir }}"
-    - "{{ pnp_server_backend.bundle_dir }}"
-    - "{{ pnp_server_backend.log_dir }}"
-    - "{{ pnp_server_backend.git.checkout_dir | dirname }}"
-  when: pnp_server_backend.enabled | bool
-
 - name: Ensure backend service group exists
   ansible.builtin.group:
     name: "{{ pnp_server_backend.group }}"
@@ -77,6 +65,20 @@
     shell: /usr/sbin/nologin
     home: "{{ pnp_server_backend.base_dir }}"
     create_home: false
+  when: pnp_server_backend.enabled | bool
+
+- name: Ensure backend base directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ pnp_server_backend.user }}"
+    group: "{{ pnp_server_backend.group }}"
+    mode: "0750"
+  loop:
+    - "{{ pnp_server_backend.base_dir }}"
+    - "{{ pnp_server_backend.bundle_dir }}"
+    - "{{ pnp_server_backend.log_dir }}"
+    - "{{ pnp_server_backend.git.checkout_dir | dirname }}"
   when: pnp_server_backend.enabled | bool
 
 - name: Validate backend git settings
@@ -116,6 +118,8 @@
     src: "{{ pnp_server_backend.git.checkout_dir }}/pnp/"
     dest: "{{ pnp_server_backend.bundle_dir }}/"
     remote_src: true
+    owner: "{{ pnp_server_backend.user }}"
+    group: "{{ pnp_server_backend.group }}"
     mode: preserve
   when: pnp_server_backend.enabled | bool
 
@@ -143,6 +147,19 @@
     name: "{{ pnp_server_backend.pip_packages }}"
     virtualenv: "{{ pnp_server_backend.venv_dir }}"
     state: present
+  when: pnp_server_backend.enabled | bool
+
+- name: Ensure backend runtime tree ownership
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ pnp_server_backend.user }}"
+    group: "{{ pnp_server_backend.group }}"
+    recurse: true
+  loop:
+    - "{{ pnp_server_backend.base_dir }}"
+    - "{{ pnp_server_backend.bundle_dir }}"
+    - "{{ pnp_server_backend.log_dir }}"
+    - "{{ pnp_server_backend.venv_dir }}"
   when: pnp_server_backend.enabled | bool
 
 - name: Ensure HTTP docroot exists
@@ -210,6 +227,8 @@
   ansible.builtin.template:
     src: open-pnp.toml.j2
     dest: "{{ pnp_server_backend.config_path }}"
+    owner: "{{ pnp_server_backend.user }}"
+    group: "{{ pnp_server_backend.group }}"
     mode: "0640"
   when: pnp_server_backend.enabled | bool
 
@@ -217,6 +236,8 @@
   ansible.builtin.template:
     src: images.toml.j2
     dest: "{{ pnp_server_backend.images_path }}"
+    owner: "{{ pnp_server_backend.user }}"
+    group: "{{ pnp_server_backend.group }}"
     mode: "0640"
   when: pnp_server_backend.enabled | bool
 
