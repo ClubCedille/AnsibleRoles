@@ -2,6 +2,8 @@
   "generated_by": "ansible-role-pnp_server",
   "device_map": "device-map.yaml",
   "profiles_path": "profiles/",
+  "config_url": "{{ pnp_server_config_url }}",
+  "image_url": "{{ pnp_server_image_url }}",
   "listen": {
     "address": "{{ pnp_server_listen_address }}",
     "port": {{ pnp_server_listen_port }}

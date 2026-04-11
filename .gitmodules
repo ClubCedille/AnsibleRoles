@@ -1,0 +1,3 @@
+[submodule "cisco-3850/roles/pnp_server/files/pnp-server"]
+	path = cisco-3850/roles/pnp_server/files/pnp-server
+	url = https://github.com/GreatSymphonia/pnp-server.git

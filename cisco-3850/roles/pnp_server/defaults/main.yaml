@@ -4,6 +4,10 @@ pnp_server_docroot: /var/www/cisco-pnp
 pnp_server_device_map_path: /var/lib/cisco-pnp/device-map.yaml
 pnp_server_profiles_src_dir: /var/lib/cisco-pnp/profiles
 
+pnp_server_public_host: "{{ ansible_default_ipv4.address }}"
+pnp_server_image_url: "http://{{ pnp_server_public_host }}:{{ pnp_server_listen_port }}/images"
+pnp_server_config_url: "http://{{ pnp_server_public_host }}:{{ pnp_server_listen_port }}/configs"
+
 pnp_server_day0_profiles_source_group: cisco_bootstrapped
 pnp_server_day0_devices_source_group: cisco_bootstrapped
 
@@ -35,5 +39,33 @@ pnp_server_day0_devices: []
 pnp_server_listen_address: "0.0.0.0"
 pnp_server_listen_port: 8080
 
+pnp_server_backend_enabled: false
+pnp_server_backend_bind_address: "127.0.0.1"
+pnp_server_backend_bind_port: 8090
+pnp_server_backend_base_dir: /var/lib/cisco-pnp
+pnp_server_backend_bundle_dir: "{{ pnp_server_backend_base_dir }}/pnp"
+pnp_server_backend_user: pnp
+pnp_server_backend_group: pnp
+pnp_server_backend_venv_dir: "{{ pnp_server_backend_base_dir }}/venv"
+pnp_server_backend_log_dir: "{{ pnp_server_backend_base_dir }}/log"
+pnp_server_backend_log_file: "{{ pnp_server_backend_log_dir }}/pnp_debug.log"
+pnp_server_backend_script_path: "{{ pnp_server_backend_bundle_dir }}/open-pnp.py"
+pnp_server_backend_config_path: "{{ pnp_server_backend_bundle_dir }}/open-pnp.toml"
+pnp_server_backend_images_path: "{{ pnp_server_backend_bundle_dir }}/images.toml"
+pnp_server_backend_service_name: pnp-server
+
+pnp_server_tls_enabled: false
+pnp_server_tls_selfsigned: false
+pnp_server_tls_days: 3650
+pnp_server_tls_cert: /etc/nginx/certs/cisco-pnp.crt
+pnp_server_tls_key: /etc/nginx/certs/cisco-pnp.key
+
 pnp_server_install_nginx: true
 pnp_server_nginx_service_name: nginx
+
+pnp_server_pip_packages:
+  - flask
+  - xmltodict
+  - requests
+  - ifaddr
+  - tomli

@@ -1,6 +1,6 @@
 galaxy_info:
   author: "Louis Raymond <lraymond@lanets.ca>"
-  description: Publish Cisco bootstrap artifacts (device map and Day-0 profiles) over HTTP
+  description: Publish Cisco Day-0 artifacts and optionally proxy a Flask-based Cisco PNP server
   company: "Cedille"
   license: "GPL-3.0-or-later"
   min_ansible_version: "2.11"
@@ -20,4 +20,6 @@ galaxy_info:
     - pnp
     - bootstrap
     - http
+    - nginx
+    - flask
 dependencies: []

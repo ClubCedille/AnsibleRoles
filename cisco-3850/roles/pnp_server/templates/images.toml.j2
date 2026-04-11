@@ -1,0 +1,9 @@
+# Managed by Ansible
+{% for image in pnp_server_images %}
+["{{ image.filename }}"]
+version = "{{ image.version }}"
+md5 = "{{ image.md5 }}"
+size = {{ image.size }}
+models = {{ image.models | to_json }}
+
+{% endfor %}
