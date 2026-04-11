@@ -15,6 +15,9 @@ ntp server {{ ntp_server }}
 !
 username admin privilege 15 secret 0 {{ item.admin_password }}
 ip ssh version 2
+ip ssh time-out 60
+ip ssh authentication-retries 3
+crypto key generate rsa modulus 2048
 line vty 0 15
  login local
  transport input ssh
