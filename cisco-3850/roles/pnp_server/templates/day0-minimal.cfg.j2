@@ -3,13 +3,13 @@
 !
 hostname {{ item.hostname }}
 no ip domain-lookup
-{% if pnp_server_day0_site_domain_name | length > 0 %}
-ip domain-name {{ pnp_server_day0_site_domain_name }}
+{% if pnp_server_day0.site.domain_name | length > 0 %}
+ip domain-name {{ pnp_server_day0.site.domain_name }}
 {% endif %}
-{% for dns_server in pnp_server_day0_site_name_servers %}
+{% for dns_server in pnp_server_day0.site.name_servers %}
 ip name-server {{ dns_server }}
 {% endfor %}
-{% for ntp_server in pnp_server_day0_site_ntp_servers %}
+{% for ntp_server in pnp_server_day0.site.ntp_servers %}
 ntp server {{ ntp_server }}
 {% endfor %}
 !
@@ -22,9 +22,9 @@ line vty 0 15
 !
 service password-encryption
 {% if item.mgmt_svi_ip_address is defined and item.mgmt_svi_ip_address | string | trim | length > 0 and item.mgmt_svi_ip_mask is defined and item.mgmt_svi_ip_mask | string | trim | length > 0 %}
-vlan {{ pnp_server_day0_mgmt_svi_vlan_id }}
+vlan {{ pnp_server_day0.mgmt_svi_vlan_id }}
 !
-interface Vlan{{ pnp_server_day0_mgmt_svi_vlan_id }}
+interface Vlan{{ pnp_server_day0.mgmt_svi_vlan_id }}
  ip address {{ item.mgmt_svi_ip_address }} {{ item.mgmt_svi_ip_mask }}
  no shutdown
 !

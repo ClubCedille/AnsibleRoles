@@ -1,23 +1,23 @@
 server {
-    listen {{ pnp_server_listen_address }}:{{ pnp_server_listen_port }}{% if pnp_server_tls_enabled %} ssl{% endif %};
+    listen {{ pnp_server_http.listen.address }}:{{ pnp_server_http.listen.port }}{% if pnp_server_tls.enabled %} ssl{% endif %};
     server_name _;
 
     access_log /var/log/nginx/cisco-pnp-access.log;
     error_log /var/log/nginx/cisco-pnp-error.log;
 
-{% if pnp_server_tls_enabled %}
-    ssl_certificate {{ pnp_server_tls_cert }};
-    ssl_certificate_key {{ pnp_server_tls_key }};
+{% if pnp_server_tls.enabled %}
+    ssl_certificate {{ pnp_server_tls.cert }};
+    ssl_certificate_key {{ pnp_server_tls.key }};
     ssl_protocols TLSv1.2 TLSv1.3;
     ssl_ciphers HIGH:!aNULL:!MD5;
 {% endif %}
 
-    root {{ pnp_server_docroot }};
+    root {{ pnp_server_http.docroot }};
     index index.html;
 
     location /pnp/ {
-{% if pnp_server_backend_enabled | bool %}
-        proxy_pass http://{{ pnp_server_backend_bind_address }}:{{ pnp_server_backend_bind_port }};
+{% if pnp_server_backend.enabled | bool %}
+    proxy_pass http://{{ pnp_server_backend.bind.address }}:{{ pnp_server_backend.bind.port }};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
@@ -28,8 +28,8 @@ server {
     }
 
     location /status {
-{% if pnp_server_backend_enabled | bool %}
-        proxy_pass http://{{ pnp_server_backend_bind_address }}:{{ pnp_server_backend_bind_port }};
+    {% if pnp_server_backend.enabled | bool %}
+        proxy_pass http://{{ pnp_server_backend.bind.address }}:{{ pnp_server_backend.bind.port }};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
 {% else %}
@@ -38,8 +38,8 @@ server {
     }
 
     location /buttons {
-{% if pnp_server_backend_enabled | bool %}
-        proxy_pass http://{{ pnp_server_backend_bind_address }}:{{ pnp_server_backend_bind_port }};
+    {% if pnp_server_backend.enabled | bool %}
+        proxy_pass http://{{ pnp_server_backend.bind.address }}:{{ pnp_server_backend.bind.port }};
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
 {% else %}
@@ -48,12 +48,12 @@ server {
     }
 
     location /configs/ {
-        alias {{ pnp_server_docroot }}/profiles/;
+        alias {{ pnp_server_http.docroot }}/profiles/;
         autoindex off;
     }
 
     location /images/ {
-        alias {{ pnp_server_docroot }}/images/;
+        alias {{ pnp_server_http.docroot }}/images/;
         autoindex off;
     }
 

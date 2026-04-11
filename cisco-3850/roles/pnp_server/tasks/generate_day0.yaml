@@ -2,20 +2,20 @@
 
 - name: Ensure Day-0 device-map directory exists
   ansible.builtin.file:
-    path: "{{ pnp_server_device_map_path | dirname }}"
+    path: "{{ pnp_server_http.device_map_path | dirname }}"
     state: directory
     mode: "0750"
 
 - name: Ensure Day-0 profile directory exists
   ansible.builtin.file:
-    path: "{{ pnp_server_profiles_src_dir }}"
+    path: "{{ pnp_server_http.profiles_src_dir }}"
     state: directory
     mode: "0750"
 
 - name: Render Day-0 profile files
   ansible.builtin.template:
     src: day0-minimal.cfg.j2
-    dest: "{{ pnp_server_profiles_src_dir }}/{{ item.name }}.cfg"
+    dest: "{{ pnp_server_http.profiles_src_dir }}/{{ item.name }}.cfg"
     mode: "0640"
   loop: "{{ _pnp_server_day0_profiles_effective }}"
   loop_control:
@@ -24,5 +24,5 @@
 - name: Render Day-0 device map
   ansible.builtin.template:
     src: day0-device-map.yaml.j2
-    dest: "{{ pnp_server_device_map_path }}"
+    dest: "{{ pnp_server_http.device_map_path }}"
     mode: "0640"
