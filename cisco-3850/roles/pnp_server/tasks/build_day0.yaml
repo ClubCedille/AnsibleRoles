@@ -36,13 +36,22 @@
       {%- set hv = hostvars[host_name] -%}
       {%- set serial = hv.serial | default('') | string | trim -%}
       {%- set mac = hv.mac | default('') | string | lower | trim -%}
+      {%- set explicit_mgmt_svi_ip = hv.mgmt_svi_ip_address | default('') | string | trim -%}
+      {%- set host_ansible_host = hv.ansible_host | default('') | string | trim -%}
+      {%- set ipv4_pattern = '^(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])(\\.(25[0-5]|2[0-4][0-9]|[01]?[0-9]?[0-9])){3}$' -%}
+      {%- set host_ansible_host_is_ipv4 = host_ansible_host is match(ipv4_pattern) -%}
       {%- if (not pnp_server_day0.require_identifier | bool) or serial | length > 0 or mac | length > 0 -%}
       {%- set _ = out.append({
         'profile': hv.profile | default(host_name) | string | trim,
         'serial': serial,
         'mac': mac,
         'hostname': hv.hostname | default(host_name) | string | trim,
-        'site': hv.site | default('') | string | trim
+        'site': hv.site | default('') | string | trim,
+        'admin_password': hv.admin_password | default('') | string,
+        'mgmt_default_gateway': hv.mgmt_default_gateway | default('') | string | trim,
+        'mgmt_svi_ip_address': explicit_mgmt_svi_ip if explicit_mgmt_svi_ip | length > 0 else (host_ansible_host if host_ansible_host_is_ipv4 else ''),
+        'mgmt_svi_ip_mask': hv.mgmt_svi_ip_mask | default('') | string | trim,
+        'description': hv.description | default('') | string | trim
       }) -%}
       {%- endif -%}
       {%- endfor -%}

@@ -14,4 +14,3 @@
         pnp_server_http:
           device_map_path: "{{ bootstrap_state_dir }}/device-map.yaml"
           profiles_src_dir: "{{ bootstrap_state_dir }}/profiles"
-          configs_src_dir: "{{ bootstrap_state_dir }}/configs"

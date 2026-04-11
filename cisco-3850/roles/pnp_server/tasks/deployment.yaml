@@ -148,14 +148,11 @@
   loop_control:
     label: "{{ item.name }}"
 
-- name: Build SERIAL.cfg files for open-pnp
-  ansible.builtin.copy:
-    src: "{{ _pnp_server_profile_cfg_map[item.profile] }}"
+- name: Render SERIAL.cfg files for open-pnp with device-specific parameters
+  ansible.builtin.template:
+    src: day0-minimal.cfg.j2
     dest: "{{ pnp_server_http.configs_src_dir }}/{{ item.serial | string | trim | upper }}.cfg"
-    remote_src: true
     mode: "0640"
-    owner: www-data
-    group: www-data
   loop: "{{ _pnp_server_day0_devices_effective }}"
   loop_control:
     label: "{{ item.serial | default('missing-serial') }}"

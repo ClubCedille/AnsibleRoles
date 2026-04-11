@@ -3,7 +3,7 @@
 pnp_server_http:
   device_map_path: /var/lib/cisco-pnp/device-map.yaml
   profiles_src_dir: /var/lib/cisco-pnp/profiles
-  configs_src_dir: /var/lib/cisco-pnp/configs
+  configs_src_dir: "{{ pnp_server_backend.bundle_dir }}/configs"
   public_host: "{{ ansible_default_ipv4.address }}"
   image_url: "http://{{ pnp_server_http.public_host }}:{{ pnp_server_backend.bind.port }}/images"
   config_url: "http://{{ pnp_server_http.public_host }}:{{ pnp_server_backend.bind.port }}/configs"
