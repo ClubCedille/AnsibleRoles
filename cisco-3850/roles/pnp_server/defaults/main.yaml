@@ -42,7 +42,7 @@ pnp_server_day0:
 pnp_server_backend:
   enabled: false
   bind:
-    address: "0.0.0.0"
+    address: "127.0.0.1"
     port: 9191
   base_dir: /var/lib/cisco-pnp
   bundle_dir: "{{ pnp_server_backend.base_dir }}/pnp"

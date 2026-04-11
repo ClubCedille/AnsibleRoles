@@ -236,7 +236,7 @@
     src: "{{ pnp_server_http.profiles_src_dir }}/"
     dest: "{{ pnp_server_http.docroot }}/profiles/"
     remote_src: true
-    mode: "0640"
+    mode: "0644"
     owner: www-data
     group: www-data
 
@@ -269,7 +269,7 @@
     src: "{{ pnp_server_http.configs_src_dir }}/"
     dest: "{{ pnp_server_http.docroot }}/configs/"
     remote_src: true
-    mode: "0640"
+    mode: "0644"
     owner: www-data
     group: www-data
 
