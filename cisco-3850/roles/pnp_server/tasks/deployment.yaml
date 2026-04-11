@@ -237,6 +237,7 @@
     dest: "{{ pnp_server_http.docroot }}/profiles/"
     remote_src: true
     mode: "0644"
+    directory_mode: "0755"
     owner: www-data
     group: www-data
 
@@ -270,6 +271,7 @@
     dest: "{{ pnp_server_http.docroot }}/configs/"
     remote_src: true
     mode: "0644"
+    directory_mode: "0755"
     owner: www-data
     group: www-data
 
