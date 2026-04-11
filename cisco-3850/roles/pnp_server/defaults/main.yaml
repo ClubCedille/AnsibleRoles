@@ -1,18 +1,12 @@
 ---
 
 pnp_server_http:
-  docroot: /var/www/cisco-pnp
   device_map_path: /var/lib/cisco-pnp/device-map.yaml
   profiles_src_dir: /var/lib/cisco-pnp/profiles
   configs_src_dir: /var/lib/cisco-pnp/configs
   public_host: "{{ ansible_default_ipv4.address }}"
-  image_url: "http://{{ pnp_server_http.public_host }}:{{ pnp_server_http.listen.port }}/images"
-  config_url: "http://{{ pnp_server_http.public_host }}:{{ pnp_server_http.listen.port }}/configs"
-  listen:
-    address: "0.0.0.0"
-    port: 8080
-  install_nginx: true
-  nginx_service_name: nginx
+  image_url: "http://{{ pnp_server_http.public_host }}:{{ pnp_server_backend.bind.port }}/images"
+  config_url: "http://{{ pnp_server_http.public_host }}:{{ pnp_server_backend.bind.port }}/configs"
 
 pnp_server_day0:
   profiles_source_group: cisco_bootstrapped
@@ -40,9 +34,9 @@ pnp_server_day0:
   devices: []
 
 pnp_server_backend:
-  enabled: false
+  enabled: true
   bind:
-    address: "127.0.0.1"
+    address: "0.0.0.0"
     port: 9191
   base_dir: /var/lib/cisco-pnp
   bundle_dir: "{{ pnp_server_backend.base_dir }}/pnp"
@@ -65,12 +59,5 @@ pnp_server_backend:
     - requests
     - ifaddr
     - tomli
-
-pnp_server_tls:
-  enabled: false
-  selfsigned: false
-  days: 3650
-  cert: /etc/nginx/certs/cisco-pnp.crt
-  key: /etc/nginx/certs/cisco-pnp.key
 
 pnp_server_images: []

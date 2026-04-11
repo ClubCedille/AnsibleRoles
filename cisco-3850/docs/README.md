@@ -4,7 +4,7 @@ Ce dossier contient le premier jet d'implémentation Day-0 pour des switches Cis
 
 ## Rôles
 
-- `pnp_server`: valide les données Day-0, rend les profils IOS (fichiers `.cfg`), génère le `device-map.yaml` et publie les artefacts sur HTTP via nginx.
+- `pnp_server`: valide les données Day-0, rend les profils IOS (fichiers `.cfg`), génère le `device-map.yaml` et expose directement le serveur open-pnp sur le port `9191`.
 - `config`: applique la configuration Day-1 complète depuis les host vars.
 
 ## Flux
@@ -56,6 +56,6 @@ Notes de compatibilité:
 
 ## Notes
 
-- L'identification visée est `serial` prioritaire, avec `mac` en secours.
 - Le profil Day-0 est volontairement minimal pour limiter le risque opérationnel.
 - Le durcissement complet reste géré par le rôle `config` en Day-1.
+- Le serveur open-pnp écoute directement sur `0.0.0.0:9191`.

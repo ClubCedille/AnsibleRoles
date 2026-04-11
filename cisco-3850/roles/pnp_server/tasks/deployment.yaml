@@ -1,56 +1,3 @@
----
-
-- name: Install nginx
-  ansible.builtin.package:
-    name: nginx
-    state: present
-  when: pnp_server_http.install_nginx | bool
-
-- name: Install openssl for TLS support
-  ansible.builtin.package:
-    name: openssl
-    state: present
-  when:
-    - pnp_server_http.install_nginx | bool
-    - pnp_server_tls.enabled | bool
-
-- name: Ensure TLS certificate directory exists
-  ansible.builtin.file:
-    path: "{{ pnp_server_tls.cert | dirname }}"
-    state: directory
-    mode: "0750"
-  when:
-    - pnp_server_http.install_nginx | bool
-    - pnp_server_tls.enabled | bool
-
-- name: Generate self-signed TLS certificate
-  ansible.builtin.command:
-    cmd: >-
-      openssl req -x509 -nodes -days {{ pnp_server_tls.days }}
-      -newkey rsa:2048
-      -keyout {{ pnp_server_tls.key }}
-      -out {{ pnp_server_tls.cert }}
-      -subj "/CN={{ pnp_server_http.public_host }}/O=Cedille/C=CA"
-  args:
-    creates: "{{ pnp_server_tls.cert }}"
-  when:
-    - pnp_server_http.install_nginx | bool
-    - pnp_server_tls.enabled | bool
-    - pnp_server_tls.selfsigned | bool
-
-- name: Set TLS certificate permissions
-  ansible.builtin.file:
-    path: "{{ item.path }}"
-    mode: "{{ item.mode }}"
-    owner: root
-    group: root
-  loop:
-    - { path: "{{ pnp_server_tls.cert }}", mode: "0644" }
-    - { path: "{{ pnp_server_tls.key }}", mode: "0600" }
-  when:
-    - pnp_server_http.install_nginx | bool
-    - pnp_server_tls.enabled | bool
-
 - name: Ensure backend service group exists
   ansible.builtin.group:
     name: "{{ pnp_server_backend.group }}"
@@ -173,43 +120,11 @@
     - "{{ pnp_server_backend.venv_dir }}"
   when: pnp_server_backend.enabled | bool
 
-- name: Ensure HTTP docroot exists
-  ansible.builtin.file:
-    path: "{{ pnp_server_http.docroot }}"
-    state: directory
-    mode: "0755"
-    owner: www-data
-    group: www-data
-
-- name: Ensure profile directory in docroot exists
-  ansible.builtin.file:
-    path: "{{ pnp_server_http.docroot }}/profiles"
-    state: directory
-    mode: "0755"
-    owner: www-data
-    group: www-data
-
-- name: Ensure config directory in docroot exists
-  ansible.builtin.file:
-    path: "{{ pnp_server_http.docroot }}/configs"
-    state: directory
-    mode: "0755"
-    owner: www-data
-    group: www-data
-
 - name: Ensure config staging directory exists
   ansible.builtin.file:
     path: "{{ pnp_server_http.configs_src_dir }}"
     state: directory
     mode: "0750"
-
-- name: Ensure image directory in docroot exists
-  ansible.builtin.file:
-    path: "{{ pnp_server_http.docroot }}/images"
-    state: directory
-    mode: "0755"
-    owner: www-data
-    group: www-data
 
 - name: Check device map source exists
   ansible.builtin.stat:
@@ -221,25 +136,6 @@
     that:
       - pnp_server_device_map_stat.stat.exists
     fail_msg: "device map not found at {{ pnp_server_http.device_map_path }}."
-
-- name: Publish device map to docroot
-  ansible.builtin.copy:
-    src: "{{ pnp_server_http.device_map_path }}"
-    dest: "{{ pnp_server_http.docroot }}/device-map.yaml"
-    remote_src: true
-    mode: "0644"
-    owner: www-data
-    group: www-data
-
-- name: Publish Day-0 profiles to docroot
-  ansible.builtin.copy:
-    src: "{{ pnp_server_http.profiles_src_dir }}/"
-    dest: "{{ pnp_server_http.docroot }}/profiles/"
-    remote_src: true
-    mode: "0644"
-    directory_mode: "0755"
-    owner: www-data
-    group: www-data
 
 - name: Build backend config source map
   ansible.builtin.set_fact:
@@ -264,24 +160,6 @@
   loop_control:
     label: "{{ item.serial | default('missing-serial') }}"
   when: item.serial is defined and item.serial | string | trim | length > 0
-
-- name: Publish SERIAL.cfg files to docroot
-  ansible.builtin.copy:
-    src: "{{ pnp_server_http.configs_src_dir }}/"
-    dest: "{{ pnp_server_http.docroot }}/configs/"
-    remote_src: true
-    mode: "0644"
-    directory_mode: "0755"
-    owner: www-data
-    group: www-data
-
-- name: Render bootstrap manifest
-  ansible.builtin.template:
-    src: bootstrap-manifest.json.j2
-    dest: "{{ pnp_server_http.docroot }}/bootstrap-manifest.json"
-    mode: "0644"
-    owner: www-data
-    group: www-data
 
 - name: Render backend configuration
   ansible.builtin.template:
@@ -320,20 +198,3 @@
     state: started
     daemon_reload: true
   when: pnp_server_backend.enabled | bool
-
-- name: Configure nginx virtual host
-  ansible.builtin.template:
-    src: nginx-cisco-pnp.conf.j2
-    dest: /etc/nginx/conf.d/cisco-pnp.conf
-    mode: "0644"
-    owner: root
-    group: root
-  notify: Restart nginx
-  when: pnp_server_http.install_nginx | bool
-
-- name: Ensure nginx service is enabled and running
-  ansible.builtin.service:
-    name: "{{ pnp_server_http.nginx_service_name }}"
-    enabled: true
-    state: started
-  when: pnp_server_http.install_nginx | bool
