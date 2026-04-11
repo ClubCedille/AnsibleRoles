@@ -7,7 +7,7 @@ vm_proxmox_api:
 
 vm_id:
 vm_name:
-vm_node:
+vm_proxmox_node:
 vm_cpu_type: "host"
 vm_cpu_cores: 2
 vm_memory_mb: 4096
@@ -30,6 +30,7 @@ vm_disk_image_path:
 vm_disk_storage: "local-lvm"
 vm_disk_format: "qcow2"
 vm_disk_device: "virtio0"
+vm_cloud_init_storage:
 
 vm_delete_if_exists: false
 vm_start_after_creation: true
