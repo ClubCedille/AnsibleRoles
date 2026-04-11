@@ -25,6 +25,8 @@ hostname: "sw-core-01"              # optionnel, défaut: nom d'hôte
 
 admin_password: "change-me"         # requis pour pnp_server (Day-0) et Day-1
 mgmt_default_gateway: "10.0.0.1"    # optionnel
+mgmt_svi_ip_address: "10.0.100.11"  # optionnel (défaut: ansible_host s'il est une IPv4 valide)
+mgmt_svi_ip_mask: "255.255.255.0"   # optionnel
 ```
 
 `admin_password` est requis pour la génération Day-0 gérée par `pnp_server` et pour Day-1.
@@ -37,6 +39,7 @@ pnp_server_day0_site_name_servers:
   - "10.0.0.53"
 pnp_server_day0_site_ntp_servers:
   - "10.0.0.123"
+pnp_server_day0_mgmt_svi_vlan_id: 100
 ```
 
 Variables de pilotage de groupe (optionnelles):

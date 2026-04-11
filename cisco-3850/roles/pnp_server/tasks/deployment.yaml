@@ -4,11 +4,134 @@
   ansible.builtin.package:
     name: nginx
     state: present
-  when: pnp_server_install_nginx | bool
+  when: pnp_server_http.install_nginx | bool
+
+- name: Install openssl for TLS support
+  ansible.builtin.package:
+    name: openssl
+    state: present
+  when:
+    - pnp_server_http.install_nginx | bool
+    - pnp_server_tls.enabled | bool
+
+- name: Ensure TLS certificate directory exists
+  ansible.builtin.file:
+    path: "{{ pnp_server_tls.cert | dirname }}"
+    state: directory
+    mode: "0750"
+  when:
+    - pnp_server_http.install_nginx | bool
+    - pnp_server_tls.enabled | bool
+
+- name: Generate self-signed TLS certificate
+  ansible.builtin.command:
+    cmd: >-
+      openssl req -x509 -nodes -days {{ pnp_server_tls.days }}
+      -newkey rsa:2048
+      -keyout {{ pnp_server_tls.key }}
+      -out {{ pnp_server_tls.cert }}
+      -subj "/CN={{ pnp_server_http.public_host }}/O=Cedille/C=CA"
+  args:
+    creates: "{{ pnp_server_tls.cert }}"
+  when:
+    - pnp_server_http.install_nginx | bool
+    - pnp_server_tls.enabled | bool
+    - pnp_server_tls.selfsigned | bool
+
+- name: Set TLS certificate permissions
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    mode: "{{ item.mode }}"
+    owner: root
+    group: root
+  loop:
+    - { path: "{{ pnp_server_tls.cert }}", mode: "0644" }
+    - { path: "{{ pnp_server_tls.key }}", mode: "0600" }
+  when:
+    - pnp_server_http.install_nginx | bool
+    - pnp_server_tls.enabled | bool
+
+- name: Ensure backend base directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0750"
+  loop:
+    - "{{ pnp_server_backend.base_dir }}"
+    - "{{ pnp_server_backend.bundle_dir }}"
+    - "{{ pnp_server_backend.log_dir }}"
+    - "{{ pnp_server_backend.git.checkout_dir | dirname }}"
+  when: pnp_server_backend.enabled | bool
+
+- name: Validate backend git settings
+  ansible.builtin.assert:
+    that:
+      - pnp_server_backend.git.repo | string | trim | length > 0
+      - pnp_server_backend.git.version | string | trim | length > 0
+    fail_msg: "pnp_server_backend.git.repo and pnp_server_backend.git.version must be defined."
+  when: pnp_server_backend.enabled | bool
+
+- name: Install backend runtime packages
+  ansible.builtin.package:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+      - openssl
+    state: present
+  when: pnp_server_backend.enabled | bool
+
+- name: Install git for backend source checkout
+  ansible.builtin.package:
+    name: git
+    state: present
+  when: pnp_server_backend.enabled | bool
+
+- name: Checkout backend source repository
+  ansible.builtin.git:
+    repo: "{{ pnp_server_backend.git.repo }}"
+    dest: "{{ pnp_server_backend.git.checkout_dir }}"
+    version: "{{ pnp_server_backend.git.version }}"
+    update: false
+  when: pnp_server_backend.enabled | bool
+
+- name: Copy backend source bundle from checkout
+  ansible.builtin.copy:
+    src: "{{ pnp_server_backend.git.checkout_dir }}/pnp/"
+    dest: "{{ pnp_server_backend.bundle_dir }}/"
+    remote_src: true
+    mode: preserve
+  when: pnp_server_backend.enabled | bool
+
+- name: Check backend script exists after source sync
+  ansible.builtin.stat:
+    path: "{{ pnp_server_backend.script_path }}"
+  register: pnp_server_backend_script_stat
+  when: pnp_server_backend.enabled | bool
+
+- name: Fail when backend script is missing after source sync
+  ansible.builtin.assert:
+    that:
+      - pnp_server_backend_script_stat.stat.exists
+    fail_msg: "backend script not found at {{ pnp_server_backend.script_path }} after source sync."
+  when: pnp_server_backend.enabled | bool
+
+- name: Create backend virtualenv
+  ansible.builtin.command:
+    cmd: python3 -m venv "{{ pnp_server_backend.venv_dir }}"
+    creates: "{{ pnp_server_backend.venv_dir }}/bin/activate"
+  when: pnp_server_backend.enabled | bool
+
+- name: Install backend Python dependencies
+  ansible.builtin.pip:
+    name: "{{ pnp_server_backend.pip_packages }}"
+    virtualenv: "{{ pnp_server_backend.venv_dir }}"
+    state: present
+  when: pnp_server_backend.enabled | bool
 
 - name: Ensure HTTP docroot exists
   ansible.builtin.file:
-    path: "{{ pnp_server_docroot }}"
+    path: "{{ pnp_server_http.docroot }}"
     state: directory
     mode: "0755"
     owner: www-data
@@ -16,7 +139,15 @@
 
 - name: Ensure profile directory in docroot exists
   ansible.builtin.file:
-    path: "{{ pnp_server_docroot }}/profiles"
+    path: "{{ pnp_server_http.docroot }}/profiles"
+    state: directory
+    mode: "0755"
+    owner: www-data
+    group: www-data
+
+- name: Ensure image directory in docroot exists
+  ansible.builtin.file:
+    path: "{{ pnp_server_http.docroot }}/images"
     state: directory
     mode: "0755"
     owner: www-data
@@ -24,19 +155,19 @@
 
 - name: Check device map source exists
   ansible.builtin.stat:
-    path: "{{ pnp_server_device_map_path }}"
+    path: "{{ pnp_server_http.device_map_path }}"
   register: pnp_server_device_map_stat
 
 - name: Fail when device map source is missing
   ansible.builtin.assert:
     that:
       - pnp_server_device_map_stat.stat.exists
-    fail_msg: "device map not found at {{ pnp_server_device_map_path }}."
+    fail_msg: "device map not found at {{ pnp_server_http.device_map_path }}."
 
 - name: Publish device map to docroot
   ansible.builtin.copy:
-    src: "{{ pnp_server_device_map_path }}"
-    dest: "{{ pnp_server_docroot }}/device-map.yaml"
+    src: "{{ pnp_server_http.device_map_path }}"
+    dest: "{{ pnp_server_http.docroot }}/device-map.yaml"
     remote_src: true
     mode: "0644"
     owner: www-data
@@ -44,8 +175,8 @@
 
 - name: Publish Day-0 profiles to docroot
   ansible.builtin.copy:
-    src: "{{ pnp_server_profiles_src_dir }}/"
-    dest: "{{ pnp_server_docroot }}/profiles/"
+    src: "{{ pnp_server_http.profiles_src_dir }}/"
+    dest: "{{ pnp_server_http.docroot }}/profiles/"
     remote_src: true
     mode: "0640"
     owner: www-data
@@ -54,10 +185,44 @@
 - name: Render bootstrap manifest
   ansible.builtin.template:
     src: bootstrap-manifest.json.j2
-    dest: "{{ pnp_server_docroot }}/bootstrap-manifest.json"
+    dest: "{{ pnp_server_http.docroot }}/bootstrap-manifest.json"
     mode: "0644"
     owner: www-data
     group: www-data
+
+- name: Render backend configuration
+  ansible.builtin.template:
+    src: open-pnp.toml.j2
+    dest: "{{ pnp_server_backend.config_path }}"
+    mode: "0640"
+  when: pnp_server_backend.enabled | bool
+
+- name: Render backend image catalog
+  ansible.builtin.template:
+    src: images.toml.j2
+    dest: "{{ pnp_server_backend.images_path }}"
+    mode: "0640"
+  when: pnp_server_backend.enabled | bool
+
+- name: Render backend systemd unit
+  ansible.builtin.template:
+    src: pnp-server.service.j2
+    dest: /etc/systemd/system/{{ pnp_server_backend.service_name }}.service
+    mode: "0644"
+    owner: root
+    group: root
+  notify:
+    - Reload systemd
+    - Restart pnp-server
+  when: pnp_server_backend.enabled | bool
+
+- name: Enable and start backend service
+  ansible.builtin.systemd:
+    name: "{{ pnp_server_backend.service_name }}"
+    enabled: true
+    state: started
+    daemon_reload: true
+  when: pnp_server_backend.enabled | bool
 
 - name: Configure nginx virtual host
   ansible.builtin.template:
@@ -67,11 +232,11 @@
     owner: root
     group: root
   notify: Restart nginx
-  when: pnp_server_install_nginx | bool
+  when: pnp_server_http.install_nginx | bool
 
 - name: Ensure nginx service is enabled and running
   ansible.builtin.service:
-    name: "{{ pnp_server_nginx_service_name }}"
+    name: "{{ pnp_server_http.nginx_service_name }}"
     enabled: true
     state: started
-  when: pnp_server_install_nginx | bool
+  when: pnp_server_http.install_nginx | bool

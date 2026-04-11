@@ -1,0 +1,18 @@
+[Unit]
+Description=Cisco PNP server
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User={{ pnp_server_backend.user }}
+Group={{ pnp_server_backend.group }}
+WorkingDirectory={{ pnp_server_backend.bundle_dir }}
+ExecStart={{ pnp_server_backend.venv_dir }}/bin/python {{ pnp_server_backend.script_path }} --bind_pnp_server {{ pnp_server_backend.bind.address }} --port {{ pnp_server_backend.bind.port }} --image_url {{ pnp_server_http.image_url }} --config_url {{ pnp_server_http.config_url }} --log_file {{ pnp_server_backend.log_file }} --image_data {{ pnp_server_backend.images_path }} --config_file {{ pnp_server_backend.config_path }}
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

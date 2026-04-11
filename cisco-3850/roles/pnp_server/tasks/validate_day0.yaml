@@ -31,7 +31,10 @@
     that:
       - item.profile is defined
       - item.profile | string | trim | length > 0
-      - (not (pnp_server_day0_require_identifier | bool)) or ((item.serial is defined and item.serial | string | trim | length > 0) or (item.mac is defined and item.mac | string | trim | length > 0))
+      - >-
+        (not (pnp_server_day0.require_identifier | bool))
+        or ((item.serial is defined and item.serial | string | trim | length > 0)
+        or (item.mac is defined and item.mac | string | trim | length > 0))
     fail_msg: "Each pnp_server_day0_devices item must define profile and, when pnp_server_day0_require_identifier is true, either serial or mac."
   loop: "{{ _pnp_server_day0_devices_effective }}"
   loop_control:
@@ -68,7 +71,7 @@
     that:
       - _pnp_server_day0_serials | length == (_pnp_server_day0_serials | unique | length)
     fail_msg: Duplicate serial detected in pnp_server_day0_devices.
-  when: pnp_server_day0_validate_unique_serial | bool
+  when: pnp_server_day0.validate_unique_serial | bool
 
 - name: Collect MAC addresses for uniqueness check
   ansible.builtin.set_fact:
@@ -89,4 +92,4 @@
     that:
       - _pnp_server_day0_macs | length == (_pnp_server_day0_macs | unique | length)
     fail_msg: Duplicate MAC detected in pnp_server_day0_devices.
-  when: pnp_server_day0_validate_unique_mac | bool
+  when: pnp_server_day0.validate_unique_mac | bool

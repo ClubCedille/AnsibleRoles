@@ -1,0 +1,8 @@
+# Managed by Ansible
+bind_pnp_server = "{{ pnp_server_backend.bind.address }}"
+port = {{ pnp_server_backend.bind.port }}
+log_file = "{{ pnp_server_backend.log_file }}"
+image_url = "{{ pnp_server_http.image_url }}"
+config_url = "{{ pnp_server_http.config_url }}"
+image_data = "{{ pnp_server_backend.images_path }}"
+config_file = "{{ pnp_server_backend.config_path }}"
