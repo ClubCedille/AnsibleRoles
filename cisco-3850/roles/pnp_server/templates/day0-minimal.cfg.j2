@@ -27,6 +27,11 @@ service password-encryption
 {% if item.mgmt_svi_ip_address is defined and item.mgmt_svi_ip_address | string | trim | length > 0 and item.mgmt_svi_ip_mask is defined and item.mgmt_svi_ip_mask | string | trim | length > 0 %}
 vlan {{ pnp_server_day0.mgmt_svi_vlan_id }}
 !
+interface GigabitEthernet1/0/48
+ switchport mode access
+ switchport access vlan {{ pnp_server_day0.mgmt_svi_vlan_id }}
+ no shutdown
+!
 interface Vlan{{ pnp_server_day0.mgmt_svi_vlan_id }}
  ip address {{ item.mgmt_svi_ip_address }} {{ item.mgmt_svi_ip_mask }}
  no shutdown
