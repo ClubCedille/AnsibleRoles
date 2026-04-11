@@ -89,6 +89,17 @@
     fail_msg: "pnp_server_backend.git.repo and pnp_server_backend.git.version must be defined."
   when: pnp_server_backend.enabled | bool
 
+- name: Validate backend devices provide serial numbers
+  ansible.builtin.assert:
+    that:
+      - item.serial is defined
+      - item.serial | string | trim | length > 0
+    fail_msg: "Each backend device entry must define serial for open-pnp SERIAL.cfg mapping."
+  loop: "{{ _pnp_server_day0_devices_effective }}"
+  loop_control:
+    label: "{{ item.profile | default('missing-profile') }}"
+  when: pnp_server_backend.enabled | bool
+
 - name: Install backend runtime packages
   ansible.builtin.package:
     name:
@@ -178,6 +189,20 @@
     owner: www-data
     group: www-data
 
+- name: Ensure config directory in docroot exists
+  ansible.builtin.file:
+    path: "{{ pnp_server_http.docroot }}/configs"
+    state: directory
+    mode: "0755"
+    owner: www-data
+    group: www-data
+
+- name: Ensure config staging directory exists
+  ansible.builtin.file:
+    path: "{{ pnp_server_http.configs_src_dir }}"
+    state: directory
+    mode: "0750"
+
 - name: Ensure image directory in docroot exists
   ansible.builtin.file:
     path: "{{ pnp_server_http.docroot }}/images"
@@ -210,6 +235,39 @@
   ansible.builtin.copy:
     src: "{{ pnp_server_http.profiles_src_dir }}/"
     dest: "{{ pnp_server_http.docroot }}/profiles/"
+    remote_src: true
+    mode: "0640"
+    owner: www-data
+    group: www-data
+
+- name: Build backend config source map
+  ansible.builtin.set_fact:
+    _pnp_server_profile_cfg_map: >-
+      {{
+        _pnp_server_profile_cfg_map | default({})
+        | combine({item.name: pnp_server_http.profiles_src_dir ~ '/' ~ item.name ~ '.cfg'})
+      }}
+  loop: "{{ _pnp_server_day0_profiles_effective }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Build SERIAL.cfg files for open-pnp
+  ansible.builtin.copy:
+    src: "{{ _pnp_server_profile_cfg_map[item.profile] }}"
+    dest: "{{ pnp_server_http.configs_src_dir }}/{{ item.serial | string | trim | upper }}.cfg"
+    remote_src: true
+    mode: "0640"
+    owner: www-data
+    group: www-data
+  loop: "{{ _pnp_server_day0_devices_effective }}"
+  loop_control:
+    label: "{{ item.serial | default('missing-serial') }}"
+  when: item.serial is defined and item.serial | string | trim | length > 0
+
+- name: Publish SERIAL.cfg files to docroot
+  ansible.builtin.copy:
+    src: "{{ pnp_server_http.configs_src_dir }}/"
+    dest: "{{ pnp_server_http.docroot }}/configs/"
     remote_src: true
     mode: "0640"
     owner: www-data
