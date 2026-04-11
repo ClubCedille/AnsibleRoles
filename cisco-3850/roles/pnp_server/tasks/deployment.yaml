@@ -63,6 +63,22 @@
     - "{{ pnp_server_backend.git.checkout_dir | dirname }}"
   when: pnp_server_backend.enabled | bool
 
+- name: Ensure backend service group exists
+  ansible.builtin.group:
+    name: "{{ pnp_server_backend.group }}"
+    system: true
+  when: pnp_server_backend.enabled | bool
+
+- name: Ensure backend service user exists
+  ansible.builtin.user:
+    name: "{{ pnp_server_backend.user }}"
+    group: "{{ pnp_server_backend.group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ pnp_server_backend.base_dir }}"
+    create_home: false
+  when: pnp_server_backend.enabled | bool
+
 - name: Validate backend git settings
   ansible.builtin.assert:
     that:
