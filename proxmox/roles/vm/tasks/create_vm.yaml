@@ -56,6 +56,7 @@
       ide0: "{{ vm_cloud_init_storage }}:cloudinit,format={{ vm_disk_format }}"
     ciuser: "{{ vm_user }}"
     cipassword: "{{ vm_password }}"
+    sshkeys: "{{ vm_sshkeys }}"
     searchdomains: "{{ vm_net.search_domain | default('localdomain') }}"
     nameservers: "{{ omit if vm_net.nameservers is not defined else vm_net.nameservers }}"
     ipconfig:
