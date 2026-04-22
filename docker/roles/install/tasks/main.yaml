@@ -109,9 +109,8 @@
 
 - name: Add specified user(s) to the docker group
   ansible.builtin.user:
-    name: "{{ item }}"
+    name: "{{ ansible_user }}"
     groups: docker
     append: true
-  loop: "{{ docker_users | default([ansible_user]) }}"
   become: true
   when: docker_users is defined or ansible_user is defined
