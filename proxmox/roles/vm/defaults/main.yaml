@@ -23,6 +23,7 @@ vm_net:
 
 vm_user: localadmin
 vm_password:
+vm_sshkeys:
 
 vm_onboot: true
 
