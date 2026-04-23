@@ -13,6 +13,8 @@ Il est à noter que les fichiers .yml et .yaml sont utilisés dans des cas spéc
 
 - [proxmox](proxmox/docs/README.md) : Collection de rôles Ansible pour gérer Proxmox.
 - [opnsense](opnsense/docs/README.md) : Collection générique pour gérer OPNsense.
+- [debian-common](debian-common/docs/README.md) : Collection de base pour les hôtes Debian standards.
+- [debian-nas](debian-nas/docs/README.md) : Collection dédiée aux hôtes Debian orientés NAS.
 
 ## Extensions suggérées
 

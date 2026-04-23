@@ -1,0 +1,7 @@
+---
+- name: Add Debian backports repository
+  ansible.builtin.apt_repository:
+    repo: "deb http://deb.debian.org/debian {{ base_system_backports_suite }} main"
+    filename: debian-backports
+    state: present
+    update_cache: true

@@ -1,0 +1,17 @@
+namespace: "cedille"
+name: "debian_common"
+description: "Collection de rôles Ansible pour les hôtes Debian standards"
+version: "1.0.1"
+readme: "./docs/README.md"
+authors:
+  - "Louis Raymond <lraymond@lanets.ca>"
+dependencies:
+  community.general: ">=3.0.0"
+license:
+  - "GPL-3.0-or-later"
+tags:
+  - "debian"
+  - "base"
+  - "network"
+  - "ssh"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"

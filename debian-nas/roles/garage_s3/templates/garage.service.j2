@@ -1,0 +1,16 @@
+[Unit]
+Description=Garage S3 object storage
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=garage
+Group=garage
+Environment=GARAGE_CONFIG_FILE={{ garage.paths.config }}
+ExecStart={{ garage.paths.install }} server
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

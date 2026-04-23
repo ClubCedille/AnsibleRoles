@@ -1,0 +1,18 @@
+namespace: "cedille"
+name: "debian_nas"
+description: "Collection de rôles Ansible pour les hôtes Debian orientés NAS"
+version: "1.0.1"
+readme: "./docs/README.md"
+authors:
+  - "Louis Raymond <lraymond@lanets.ca>"
+dependencies:
+  cedille.debian_common: ">=1.0.1"
+license:
+  - "GPL-3.0-or-later"
+tags:
+  - "debian"
+  - "nas"
+  - "zfs"
+  - "storage"
+  - "cockpit"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"

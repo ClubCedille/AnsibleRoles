@@ -1,0 +1,8 @@
+base_system_packages:
+  - micro
+  - git
+  - make
+  - moreutils
+
+base_system_backports_enabled: false
+base_system_backports_suite: "{{ ansible_distribution_release }}-backports"

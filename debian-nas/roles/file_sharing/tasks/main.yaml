@@ -1,0 +1,14 @@
+---
+- name: Install Samba support
+  ansible.builtin.include_tasks:
+    file: samba.yaml
+    apply:
+      become: true
+  when: file_sharing_enable_samba | bool
+
+- name: Install NFS support
+  ansible.builtin.include_tasks:
+    file: nfs.yaml
+    apply:
+      become: true
+  when: file_sharing_enable_nfs | bool

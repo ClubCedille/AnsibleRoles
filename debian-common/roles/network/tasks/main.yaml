@@ -1,0 +1,6 @@
+---
+- name: Configure static networking
+  ansible.builtin.include_tasks:
+    file: nmcli.yaml
+    apply:
+      become: true

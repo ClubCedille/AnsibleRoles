@@ -1,0 +1,46 @@
+---
+garage:
+  version: "1.0.0"
+  binary_url: ""
+  paths:
+    install: /usr/local/bin/garage
+    config: /etc/garage.toml
+    data_dir: /var/lib/garage/data
+    metadata_dir: /var/lib/garage/meta
+    metadata_snapshots_dir: /var/lib/garage/snapshots
+  storage:
+    metadata_fsync: true
+    data_fsync: false
+    disable_scrub: false
+    use_local_tz: false
+    metadata_auto_snapshot_interval: "6h"
+    db_engine: lmdb
+    lmdb_map_size: 1T
+    compression_level: 1
+  cluster:
+    node_name: garage-node
+    replication_factor: 1
+  perf:
+    block_size: 1M
+    block_ram_buffer_max: 256MiB
+    block_max_concurrent_reads: 16
+    block_max_concurrent_writes_per_request: 10
+  rpc:
+    bind: "[::]:3901"
+    public_addr: "127.0.0.1:3901"
+    secret: ""
+  api:
+    s3:
+      bind: "[::]:3900"
+      region: garage
+      root_domain: .s3.garage.etsmtl.club
+    web:
+      bind: "[::]:3902"
+      root_domain: .web.garage.etsmtl.club
+      index: index.html
+    k2v:
+      bind: "[::]:3904"
+    admin:
+      bind: "[::]:3903"
+      admin_token: ""
+      metrics_token: ""

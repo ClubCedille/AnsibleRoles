@@ -1,0 +1,14 @@
+---
+- name: Configure static NetworkManager connection
+  community.general.nmcli:
+    conn_name: "{{ network_connection_name }}"
+    ifname: "{{ network_interface_name }}"
+    type: ethernet
+    method4: manual
+    ip4: "{{ network_ip_address }}/{{ network_prefix }}"
+    gw4: "{{ network_gateway }}"
+    dns4: "{{ network_dns_servers }}"
+    dns4_search: "{{ network_dns_search }}"
+    autoconnect: "{{ network_autoconnect }}"
+    state: present
+  notify: restart NetworkManager

@@ -1,0 +1,11 @@
+---
+- name: Install Cockpit and selected plugins
+  ansible.builtin.apt:
+    name: "{{ cockpit_packages + cockpit_plugins }}"
+    state: present
+
+- name: Enable and start Cockpit socket
+  ansible.builtin.service:
+    name: cockpit.socket
+    enabled: true
+    state: started
