@@ -1,0 +1,61 @@
+---
+netservices_dns:
+  enabled: true
+  supported_distribution: Ubuntu
+  supported_distribution_version: "24.04"
+
+  install:
+    update_cache: true
+    package_state: present
+    packages:
+      - bind9
+      - bind9-utils
+      - dnsutils
+
+  service:
+    name: bind9
+    state: started
+    enabled: true
+
+  paths:
+    options_config: /etc/bind/named.conf.options
+    local_config: /etc/bind/named.conf.local
+
+  options:
+    directory: /var/cache/bind
+    recursion: true
+    allow_query:
+      - 127.0.0.1
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+    allow_recursion:
+      - 127.0.0.1
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+    forwarders: []
+    dnssec_validation: auto
+    listen_on_v4:
+      - any
+    listen_on_v6:
+      - any
+    extra_statements: []
+
+  local:
+    acl_definitions: []
+    zones: []
+
+  ha:
+    enabled: true
+    this_server_role: master
+    master_ip: 10.0.0.10
+    slave_ip: 10.0.0.11
+    transfer_acl:
+      - 10.0.0.11
+    notify:
+      - 10.0.0.11
+    zones:
+      - name: lab.internal
+        master_file: /etc/bind/zones/db.lab.internal
+        slave_file: /var/cache/bind/db.lab.internal

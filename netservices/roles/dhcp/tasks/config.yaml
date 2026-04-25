@@ -1,0 +1,34 @@
+---
+- name: Write Kea DHCPv4 configuration
+  ansible.builtin.copy:
+    dest: "{{ netservices_dhcp.paths.dhcp4_config }}"
+    content: "{{ netservices_dhcp.kea_dhcp4_config | to_nice_json }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart kea-dhcp4-server
+  become: true
+
+- name: Write Kea control-agent configuration
+  ansible.builtin.copy:
+    dest: "{{ netservices_dhcp.paths.ctrl_agent_config }}"
+    content: "{{ netservices_dhcp.kea_ctrl_agent_config | to_nice_json }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart kea-ctrl-agent
+  become: true
+
+- name: Ensure Kea DHCPv4 service state
+  ansible.builtin.service:
+    name: "{{ netservices_dhcp.service.dhcp4_name }}"
+    state: "{{ netservices_dhcp.service.state }}"
+    enabled: "{{ netservices_dhcp.service.enabled }}"
+  become: true
+
+- name: Ensure Kea control-agent service state
+  ansible.builtin.service:
+    name: "{{ netservices_dhcp.service.ctrl_agent_name }}"
+    state: "{{ netservices_dhcp.service.state }}"
+    enabled: "{{ netservices_dhcp.service.enabled }}"
+  become: true

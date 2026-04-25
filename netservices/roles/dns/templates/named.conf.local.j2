@@ -1,0 +1,80 @@
+{% for acl in netservices_dns.local.acl_definitions %}
+acl "{{ acl.name }}" {
+{% for entry in acl.entries %}
+  {{ entry }};
+{% endfor %}
+};
+
+{% endfor %}
+{% for zone in netservices_dns.local.zones %}
+zone "{{ zone.name }}" {
+  type {{ zone.type }};
+{% if zone.file is defined %}
+  file "{{ zone.file }}";
+{% endif %}
+{% if zone.masters is defined and zone.masters | length > 0 %}
+  masters {
+{% for item in zone.masters %}
+    {{ item }};
+{% endfor %}
+  };
+{% endif %}
+{% if zone.forwarders is defined and zone.forwarders | length > 0 %}
+  forwarders {
+{% for item in zone.forwarders %}
+    {{ item }};
+{% endfor %}
+  };
+{% endif %}
+{% if zone.allow_update is defined and zone.allow_update | length > 0 %}
+  allow-update {
+{% for item in zone.allow_update %}
+    {{ item }};
+{% endfor %}
+  };
+{% endif %}
+{% if zone.allow_transfer is defined and zone.allow_transfer | length > 0 %}
+  allow-transfer {
+{% for item in zone.allow_transfer %}
+    {{ item }};
+{% endfor %}
+  };
+{% endif %}
+{% if zone.also_notify is defined and zone.also_notify | length > 0 %}
+  also-notify {
+{% for item in zone.also_notify %}
+    {{ item }};
+{% endfor %}
+  };
+{% endif %}
+};
+
+{% endfor %}
+
+{% if netservices_dns.ha.enabled | bool %}
+{% for zone in netservices_dns.ha.zones %}
+zone "{{ zone.name }}" {
+{% if netservices_dns.ha.this_server_role == 'master' %}
+  type master;
+  file "{{ zone.master_file }}";
+  allow-transfer {
+{% for item in netservices_dns.ha.transfer_acl %}
+    {{ item }};
+{% endfor %}
+  };
+  also-notify {
+{% for item in netservices_dns.ha.notify %}
+    {{ item }};
+{% endfor %}
+  };
+{% else %}
+  type slave;
+  file "{{ zone.slave_file }}";
+  masters {
+    {{ netservices_dns.ha.master_ip }};
+  };
+{% endif %}
+};
+
+{% endfor %}
+{% endif %}

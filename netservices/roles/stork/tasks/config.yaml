@@ -1,0 +1,54 @@
+---
+- name: Ensure Stork configuration directory exists
+  ansible.builtin.file:
+    path: "{{ netservices_stork.paths.config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Write Stork server environment file
+  ansible.builtin.copy:
+    dest: "{{ netservices_stork.paths.server_env }}"
+    owner: root
+    group: root
+    mode: "0640"
+    content: |
+      STORK_SERVER_HTTP_HOST={{ netservices_stork.server.http_host }}
+      STORK_SERVER_HTTP_PORT={{ netservices_stork.server.http_port }}
+      STORK_DATABASE_TYPE={{ netservices_stork.server.database.type }}
+      STORK_DATABASE_HOST={{ netservices_stork.server.database.host }}
+      STORK_DATABASE_PORT={{ netservices_stork.server.database.port }}
+      STORK_DATABASE_NAME={{ netservices_stork.server.database.name }}
+      STORK_DATABASE_USER={{ netservices_stork.server.database.user }}
+      STORK_DATABASE_PASSWORD={{ netservices_stork.server.database.password }}
+  notify: Restart stork-server
+  become: true
+
+- name: Write Stork agent environment file
+  ansible.builtin.copy:
+    dest: "{{ netservices_stork.paths.agent_env }}"
+    owner: root
+    group: root
+    mode: "0640"
+    content: |
+      STORK_AGENT_SERVER_URL={{ netservices_stork.agent.server_url }}
+      STORK_AGENT_TOKEN={{ netservices_stork.agent.token }}
+      STORK_AGENT_MONITORED_SERVICES={{ netservices_stork.agent.monitored_services | join(',') }}
+  notify: Restart stork-agent
+  become: true
+
+- name: Ensure Stork server service state
+  ansible.builtin.service:
+    name: "{{ netservices_stork.service.server_name }}"
+    state: "{{ netservices_stork.service.state }}"
+    enabled: "{{ netservices_stork.service.enabled }}"
+  become: true
+
+- name: Ensure Stork agent service state
+  ansible.builtin.service:
+    name: "{{ netservices_stork.service.agent_name }}"
+    state: "{{ netservices_stork.service.state }}"
+    enabled: "{{ netservices_stork.service.enabled }}"
+  become: true

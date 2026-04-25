@@ -1,0 +1,10 @@
+---
+- name: Install Stork
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: netservices_stork.enabled | bool
+
+- name: Configure Stork
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: netservices_stork.enabled | bool

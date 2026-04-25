@@ -1,0 +1,32 @@
+---
+- name: Write BIND9 options configuration
+  ansible.builtin.template:
+    dest: "{{ netservices_dns.paths.options_config }}"
+    src: named.conf.options.j2
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart bind9
+  become: true
+
+- name: Write BIND9 local configuration
+  ansible.builtin.template:
+    dest: "{{ netservices_dns.paths.local_config }}"
+    src: named.conf.local.j2
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart bind9
+  become: true
+
+- name: Validate BIND9 configuration
+  ansible.builtin.command: named-checkconf
+  changed_when: false
+  become: true
+
+- name: Ensure BIND9 service state
+  ansible.builtin.service:
+    name: "{{ netservices_dns.service.name }}"
+    state: "{{ netservices_dns.service.state }}"
+    enabled: "{{ netservices_dns.service.enabled }}"
+  become: true

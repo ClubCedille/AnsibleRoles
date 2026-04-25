@@ -1,0 +1,10 @@
+---
+- name: Install Kea DHCP server
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: netservices_dhcp.enabled | bool
+
+- name: Configure Kea DHCP server
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: netservices_dhcp.enabled | bool

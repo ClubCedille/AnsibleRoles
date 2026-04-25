@@ -1,0 +1,6 @@
+---
+- name: Restart bind9
+  ansible.builtin.service:
+    name: "{{ netservices_dns.service.name }}"
+    state: restarted
+  become: true

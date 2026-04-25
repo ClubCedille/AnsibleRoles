@@ -1,0 +1,12 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: netservices_stork.install.update_cache | bool
+  become: true
+
+- name: Install Stork packages
+  ansible.builtin.apt:
+    name: "{{ netservices_stork.install.packages }}"
+    state: "{{ netservices_stork.install.package_state }}"
+  become: true

@@ -1,0 +1,92 @@
+---
+netservices_dhcp:
+  enabled: true
+  supported_distribution: Ubuntu
+  supported_distribution_version: "24.04"
+
+  install:
+    update_cache: true
+    package_state: present
+    packages:
+      - kea-dhcp4-server
+      - kea-ctrl-agent
+      - kea-hooks
+
+  service:
+    dhcp4_name: kea-dhcp4-server
+    ctrl_agent_name: kea-ctrl-agent
+    state: started
+    enabled: true
+
+  paths:
+    dhcp4_config: /etc/kea/kea-dhcp4.conf
+    ctrl_agent_config: /etc/kea/kea-ctrl-agent.conf
+    dhcp4_control_socket: /run/kea/kea4-ctrl-socket
+
+  ha:
+    enabled: true
+    mode: hot-standby
+    this_server_name: "{{ inventory_hostname }}"
+    heartbeat_delay: 10000
+    max_response_delay: 60000
+    max_ack_delay: 5000
+    max_unacked_clients: 10
+    sync_page_limit: 10000
+    primary:
+      name: dhcp-primary
+      url: http://10.0.0.10:8000/
+    secondary:
+      name: dhcp-secondary
+      url: http://10.0.0.11:8000/
+
+  kea_dhcp4_config:
+    Dhcp4:
+      interfaces-config:
+        interfaces:
+          - "*"
+      control-socket:
+        socket-type: unix
+        socket-name: "{{ netservices_dhcp.paths.dhcp4_control_socket }}"
+      lease-database:
+        type: memfile
+        persist: true
+        name: /var/lib/kea/kea-leases4.csv
+      valid-lifetime: 4000
+      renew-timer: 1000
+      rebind-timer: 2000
+      subnet4: []
+      option-data: []
+      hooks-libraries:
+        - library: /usr/lib/x86_64-linux-gnu/kea/hooks/libdhcp_ha.so
+          parameters:
+            high-availability:
+              this-server-name: "{{ netservices_dhcp.ha.this_server_name }}"
+              mode: "{{ netservices_dhcp.ha.mode }}"
+              heartbeat-delay: 10000
+              max-response-delay: 60000
+              max-ack-delay: 5000
+              max-unacked-clients: 10
+              sync-page-limit: 10000
+              peers:
+                - name: "{{ netservices_dhcp.ha.primary.name }}"
+                  url: "{{ netservices_dhcp.ha.primary.url }}"
+                  role: primary
+                  auto-failover: true
+                - name: "{{ netservices_dhcp.ha.secondary.name }}"
+                  url: "{{ netservices_dhcp.ha.secondary.url }}"
+                  role: secondary
+                  auto-failover: true
+      loggers:
+        - name: kea-dhcp4
+          output-options:
+            - output: stdout
+          severity: INFO
+
+  kea_ctrl_agent_config:
+    Control-agent:
+      http-host: 0.0.0.0
+      http-port: 8000
+      control-sockets:
+        dhcp4:
+          socket-type: unix
+          socket-name: "{{ netservices_dhcp.paths.dhcp4_control_socket }}"
