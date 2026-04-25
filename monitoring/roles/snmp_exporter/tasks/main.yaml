@@ -1,0 +1,11 @@
+---
+
+- name: Install SNMP Exporter
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: snmp_exporter_enabled | bool
+
+- name: Configure SNMP Exporter
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: snmp_exporter_enabled | bool

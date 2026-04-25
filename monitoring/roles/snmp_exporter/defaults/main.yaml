@@ -1,0 +1,32 @@
+---
+
+snmp_exporter_enabled: true
+snmp_exporter_supported_distribution: Ubuntu
+snmp_exporter_supported_distribution_version: "24.04"
+
+snmp_exporter_install:
+  update_cache: true
+  package_state: present
+  packages:
+    - prometheus-snmp-exporter
+
+snmp_exporter_service:
+  name: prometheus-snmp-exporter
+  state: started
+  enabled: true
+
+snmp_exporter_paths:
+  config: /etc/prometheus/snmp.yml
+  config_template: snmp.yml.j2
+
+snmp_exporter_modules:
+  if_mib:
+    walk:
+      - 1.3.6.1.2.1.2
+      - 1.3.6.1.2.1.31
+    version: 2
+    auth: public_v2
+snmp_exporter_auths:
+  public_v2:
+    community: public
+    version: 2

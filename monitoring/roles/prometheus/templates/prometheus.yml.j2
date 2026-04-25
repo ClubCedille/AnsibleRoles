@@ -1,0 +1,40 @@
+global:
+  scrape_interval: {{ prometheus_server.scrape_interval }}
+  evaluation_interval: {{ prometheus_server.evaluation_interval }}
+{% if prometheus_server.external_labels | length > 0 %}
+  external_labels:
+{% for key, value in prometheus_server.external_labels.items() %}
+    {{ key }}: {{ value }}
+{% endfor %}
+{% endif %}
+
+{% if prometheus_rule_files | length > 0 %}
+rule_files:
+{% for rule_file in prometheus_rule_files %}
+  - {{ rule_file }}
+{% endfor %}
+{% endif %}
+
+{% if prometheus_alerting.alertmanagers | length > 0 %}
+alerting:
+  alertmanagers:
+{% for alertmanager in prometheus_alerting.alertmanagers %}
+    - static_configs:
+        - targets:
+{% for target in alertmanager.targets %}
+            - {{ target }}
+{% endfor %}
+{% endfor %}
+{% endif %}
+
+scrape_configs:
+{% for scrape_job in prometheus_scrape_configs %}
+  - job_name: {{ scrape_job.job_name }}
+    scrape_interval: {{ scrape_job.scrape_interval | default(prometheus_server.scrape_interval) }}
+    metrics_path: {{ scrape_job.metrics_path | default('/metrics') }}
+    static_configs:
+      - targets:
+{% for target in scrape_job.targets %}
+          - {{ target }}
+{% endfor %}
+{% endfor %}

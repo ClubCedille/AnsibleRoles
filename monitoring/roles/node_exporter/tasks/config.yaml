@@ -1,0 +1,8 @@
+---
+
+- name: Ensure Node Exporter service state
+  ansible.builtin.service:
+    name: "{{ node_exporter_service.name }}"
+    state: "{{ node_exporter_service.state }}"
+    enabled: "{{ node_exporter_service.enabled }}"
+  become: true

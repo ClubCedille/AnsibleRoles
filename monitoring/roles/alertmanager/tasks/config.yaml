@@ -1,0 +1,18 @@
+---
+
+- name: Write Alertmanager configuration
+  ansible.builtin.template:
+    src: "{{ alertmanager_paths.config_template }}"
+    dest: "{{ alertmanager_paths.config }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Alertmanager
+  become: true
+
+- name: Ensure Alertmanager service state
+  ansible.builtin.service:
+    name: "{{ alertmanager_service.name }}"
+    state: "{{ alertmanager_service.state }}"
+    enabled: "{{ alertmanager_service.enabled }}"
+  become: true

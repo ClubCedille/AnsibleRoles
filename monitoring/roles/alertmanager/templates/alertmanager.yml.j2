@@ -1,0 +1,18 @@
+global: {}
+
+route:
+  receiver: {{ alertmanager_route.receiver }}
+  group_wait: {{ alertmanager_route.group_wait }}
+  group_interval: {{ alertmanager_route.group_interval }}
+  repeat_interval: {{ alertmanager_route.repeat_interval }}
+
+receivers:
+{% for receiver in alertmanager_receivers %}
+  - name: {{ receiver.name }}
+{% if receiver.webhook_configs is defined and receiver.webhook_configs | length > 0 %}
+    webhook_configs:
+{% for webhook in receiver.webhook_configs %}
+      - url: {{ webhook.url }}
+{% endfor %}
+{% endif %}
+{% endfor %}

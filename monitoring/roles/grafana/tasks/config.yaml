@@ -1,0 +1,28 @@
+---
+
+- name: Write Grafana datasources provisioning
+  ansible.builtin.template:
+    src: datasources.yml.j2
+    dest: "{{ grafana_paths.datasources_dir }}/{{ grafana_paths.datasources_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Grafana
+  become: true
+
+- name: Write Grafana dashboards provisioning
+  ansible.builtin.template:
+    src: dashboards.yml.j2
+    dest: "{{ grafana_paths.dashboards_dir }}/{{ grafana_paths.dashboards_provider_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Grafana
+  become: true
+
+- name: Ensure Grafana service state
+  ansible.builtin.service:
+    name: "{{ grafana_service.name }}"
+    state: "{{ grafana_service.state }}"
+    enabled: "{{ grafana_service.enabled }}"
+  become: true

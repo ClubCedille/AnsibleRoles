@@ -1,0 +1,11 @@
+modules:
+{% for module_name, module in blackbox_exporter_modules.items() %}
+  {{ module_name }}:
+    prober: {{ module.prober }}
+    timeout: {{ module.timeout }}
+{% if module.http is defined %}
+    http:
+      method: {{ module.http.method }}
+      preferred_ip_protocol: {{ module.http.preferred_ip_protocol }}
+{% endif %}
+{% endfor %}

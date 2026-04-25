@@ -1,0 +1,51 @@
+---
+
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: loki_install.update_cache | bool
+  become: true
+
+- name: Install Loki packages
+  ansible.builtin.apt:
+    name: "{{ loki_install.packages }}"
+    state: "{{ loki_install.package_state }}"
+  when: loki_install.packages | length > 0
+  become: true
+
+- name: Create Loki group
+  ansible.builtin.group:
+    name: "{{ loki_service.group }}"
+    system: true
+  become: true
+
+- name: Create Loki user
+  ansible.builtin.user:
+    name: "{{ loki_service.user }}"
+    group: "{{ loki_service.group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+- name: Create Loki directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ loki_service.user }}"
+    group: "{{ loki_service.group }}"
+    mode: "0755"
+  loop:
+    - "{{ loki_paths.data_dir }}"
+    - "{{ loki_paths.runtime_dir }}"
+    - "{{ loki_storage.filesystem.chunks_directory }}"
+    - "{{ loki_storage.filesystem.rules_directory }}"
+  become: true
+
+- name: Download Loki binary
+  ansible.builtin.get_url:
+    url: "{{ loki_install.binary_url }}"
+    dest: "{{ loki_paths.binary }}"
+    mode: "0755"
+  when: loki_install.binary_url | length > 0
+  become: true

@@ -1,0 +1,23 @@
+---
+
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: prometheus_install.update_cache | bool
+  become: true
+
+- name: Install Prometheus package
+  ansible.builtin.apt:
+    name: "{{ prometheus_install.packages }}"
+    state: "{{ prometheus_install.package_state }}"
+  when: prometheus_install.packages | length > 0
+  become: true
+
+- name: Create Prometheus rules directory
+  ansible.builtin.file:
+    path: "{{ prometheus_paths.rules_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true

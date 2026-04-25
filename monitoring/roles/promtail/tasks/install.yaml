@@ -1,0 +1,48 @@
+---
+
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: promtail_install.update_cache | bool
+  become: true
+
+- name: Install Promtail packages
+  ansible.builtin.apt:
+    name: "{{ promtail_install.packages }}"
+    state: "{{ promtail_install.package_state }}"
+  when: promtail_install.packages | length > 0
+  become: true
+
+- name: Create Promtail group
+  ansible.builtin.group:
+    name: "{{ promtail_service.group }}"
+    system: true
+  become: true
+
+- name: Create Promtail user
+  ansible.builtin.user:
+    name: "{{ promtail_service.user }}"
+    group: "{{ promtail_service.group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+- name: Create Promtail directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ promtail_service.user }}"
+    group: "{{ promtail_service.group }}"
+    mode: "0755"
+  loop:
+    - "{{ promtail_paths.positions_dir }}"
+  become: true
+
+- name: Download Promtail binary
+  ansible.builtin.get_url:
+    url: "{{ promtail_install.binary_url }}"
+    dest: "{{ promtail_paths.binary }}"
+    mode: "0755"
+  when: promtail_install.binary_url | length > 0
+  become: true

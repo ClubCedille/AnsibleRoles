@@ -1,0 +1,27 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+
+positions:
+  filename: {{ promtail_paths.positions_file }}
+
+clients:
+{% for client in promtail_clients %}
+  - url: {{ client.url }}
+{% endfor %}
+
+scrape_configs:
+{% for scrape in promtail_scrape_configs %}
+  - job_name: {{ scrape.job_name }}
+    static_configs:
+{% for static_config in scrape.static_configs %}
+      - targets:
+{% for target in static_config.targets %}
+          - {{ target }}
+{% endfor %}
+        labels:
+{% for key, value in static_config.labels.items() %}
+          {{ key }}: {{ value }}
+{% endfor %}
+{% endfor %}
+{% endfor %}

@@ -1,0 +1,11 @@
+---
+
+- name: Install Node Exporter
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: node_exporter_enabled | bool
+
+- name: Configure Node Exporter
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: node_exporter_enabled | bool

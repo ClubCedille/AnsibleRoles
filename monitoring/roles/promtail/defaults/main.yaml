@@ -1,0 +1,32 @@
+---
+
+promtail_enabled: true
+promtail_supported_distribution: Ubuntu
+promtail_supported_distribution_version: "24.04"
+
+promtail_install:
+  update_cache: true
+  package_state: present
+  packages: []
+  binary_url: ""
+  binary_checksum: ""
+
+promtail_service:
+  name: promtail
+  state: started
+  enabled: true
+  user: promtail
+  group: promtail
+
+promtail_paths:
+  binary: /usr/local/bin/promtail
+  config: /etc/promtail/promtail.yml
+  config_template: promtail.yml.j2
+  service_unit: /etc/systemd/system/promtail.service
+  positions_file: /var/lib/promtail/positions.yaml
+  positions_dir: /var/lib/promtail
+
+promtail_clients:
+  - url: http://127.0.0.1:3100/loki/api/v1/push
+
+promtail_scrape_configs: []

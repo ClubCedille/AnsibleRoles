@@ -1,0 +1,7 @@
+---
+
+- name: Restart SNMP Exporter
+  ansible.builtin.service:
+    name: "{{ snmp_exporter_service.name }}"
+    state: restarted
+  become: true

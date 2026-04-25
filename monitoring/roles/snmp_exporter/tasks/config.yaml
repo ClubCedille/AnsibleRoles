@@ -1,0 +1,18 @@
+---
+
+- name: Write SNMP Exporter configuration
+  ansible.builtin.template:
+    src: "{{ snmp_exporter_paths.config_template }}"
+    dest: "{{ snmp_exporter_paths.config }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart SNMP Exporter
+  become: true
+
+- name: Ensure SNMP Exporter service state
+  ansible.builtin.service:
+    name: "{{ snmp_exporter_service.name }}"
+    state: "{{ snmp_exporter_service.state }}"
+    enabled: "{{ snmp_exporter_service.enabled }}"
+  become: true

@@ -1,0 +1,11 @@
+---
+
+- name: Install Grafana
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: grafana_enabled | bool
+
+- name: Configure Grafana
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: grafana_enabled | bool

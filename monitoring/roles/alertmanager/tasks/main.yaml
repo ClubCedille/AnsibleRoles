@@ -1,0 +1,11 @@
+---
+
+- name: Install Alertmanager
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: alertmanager_enabled | bool
+
+- name: Configure Alertmanager
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: alertmanager_enabled | bool

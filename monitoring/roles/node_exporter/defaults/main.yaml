@@ -1,0 +1,18 @@
+---
+
+node_exporter_enabled: true
+node_exporter_supported_distribution: Ubuntu
+node_exporter_supported_distribution_version: "24.04"
+
+node_exporter_install:
+  update_cache: true
+  package_state: present
+  packages:
+    - prometheus-node-exporter
+
+node_exporter_service:
+  name: prometheus-node-exporter
+  state: started
+  enabled: true
+
+node_exporter_collectors: []

@@ -1,0 +1,14 @@
+---
+
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: node_exporter_install.update_cache | bool
+  become: true
+
+- name: Install Node Exporter package
+  ansible.builtin.apt:
+    name: "{{ node_exporter_install.packages }}"
+    state: "{{ node_exporter_install.package_state }}"
+  when: node_exporter_install.packages | length > 0
+  become: true

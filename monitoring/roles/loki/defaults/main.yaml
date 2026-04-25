@@ -1,0 +1,40 @@
+---
+
+loki_enabled: true
+loki_supported_distribution: Ubuntu
+loki_supported_distribution_version: "24.04"
+
+loki_install:
+  update_cache: true
+  package_state: present
+  packages: []
+  binary_url: ""
+  binary_checksum: ""
+
+loki_service:
+  name: loki
+  state: started
+  enabled: true
+  user: loki
+  group: loki
+
+loki_paths:
+  binary: /usr/local/bin/loki
+  config: /etc/loki/loki.yml
+  config_template: loki.yml.j2
+  service_unit: /etc/systemd/system/loki.service
+  data_dir: /var/lib/loki
+  runtime_dir: /run/loki
+
+loki_server:
+  http_listen_port: 3100
+  retention_period: 168h
+  bind_address: 0.0.0.0
+
+loki_storage:
+  path_prefix: /var/lib/loki
+  filesystem:
+    chunks_directory: /var/lib/loki/chunks
+    rules_directory: /var/lib/loki/rules
+  schema_config:
+    index_prefix: index_

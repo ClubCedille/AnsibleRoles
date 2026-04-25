@@ -1,0 +1,23 @@
+---
+
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: snmp_exporter_install.update_cache | bool
+  become: true
+
+- name: Install SNMP Exporter package
+  ansible.builtin.apt:
+    name: "{{ snmp_exporter_install.packages }}"
+    state: "{{ snmp_exporter_install.package_state }}"
+  when: snmp_exporter_install.packages | length > 0
+  become: true
+
+- name: Ensure Prometheus config directory exists
+  ansible.builtin.file:
+    path: /etc/prometheus
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true

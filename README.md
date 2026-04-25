@@ -15,6 +15,7 @@ Il est à noter que les fichiers .yml et .yaml sont utilisés dans des cas spéc
 - [proxmox](proxmox/docs/README.md) : Collection de rôles Ansible pour gérer Proxmox.
 - [opnsense](opnsense/docs/README.md) : Collection générique pour gérer OPNsense.
 - [netservices](netservices/docs/README.md) : Collection de rôles réseau pour Kea DHCP, BIND9 et Stork.
+- [monitoring](monitoring/docs/README.md) : Collection de rôles pour Prometheus, Grafana, Loki et les exporters.
 
 ## Extensions suggérées
 

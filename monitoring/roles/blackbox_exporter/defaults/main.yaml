@@ -1,0 +1,31 @@
+---
+
+blackbox_exporter_enabled: true
+blackbox_exporter_supported_distribution: Ubuntu
+blackbox_exporter_supported_distribution_version: "24.04"
+
+blackbox_exporter_install:
+  update_cache: true
+  package_state: present
+  packages:
+    - prometheus-blackbox-exporter
+
+blackbox_exporter_service:
+  name: prometheus-blackbox-exporter
+  state: started
+  enabled: true
+
+blackbox_exporter_paths:
+  config: /etc/prometheus/blackbox.yml
+  config_template: blackbox.yml.j2
+
+blackbox_exporter_modules:
+  http_2xx:
+    prober: http
+    timeout: 5s
+    http:
+      method: GET
+      preferred_ip_protocol: ip4
+  icmp:
+    prober: icmp
+    timeout: 5s

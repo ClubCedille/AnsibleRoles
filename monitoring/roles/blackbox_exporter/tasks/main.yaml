@@ -1,0 +1,11 @@
+---
+
+- name: Install Blackbox Exporter
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: blackbox_exporter_enabled | bool
+
+- name: Configure Blackbox Exporter
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: blackbox_exporter_enabled | bool

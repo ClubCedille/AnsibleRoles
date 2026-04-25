@@ -1,0 +1,32 @@
+---
+
+prometheus_enabled: true
+prometheus_supported_distribution: Ubuntu
+prometheus_supported_distribution_version: "24.04"
+
+prometheus_install:
+  update_cache: true
+  package_state: present
+  packages:
+    - prometheus
+
+prometheus_service:
+  name: prometheus
+  state: started
+  enabled: true
+
+prometheus_paths:
+  config: /etc/prometheus/prometheus.yml
+  rules_dir: /etc/prometheus/rules
+  config_template: prometheus.yml.j2
+
+prometheus_server:
+  scrape_interval: 60s
+  evaluation_interval: 60s
+  retention_time: 15d
+  external_labels: {}
+
+prometheus_rule_files: []
+prometheus_scrape_configs: []
+prometheus_alerting:
+  alertmanagers: []

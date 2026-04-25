@@ -1,0 +1,27 @@
+---
+
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: grafana_install.update_cache | bool
+  become: true
+
+- name: Install Grafana package
+  ansible.builtin.apt:
+    name: "{{ grafana_install.packages }}"
+    state: "{{ grafana_install.package_state }}"
+  when: grafana_install.packages | length > 0
+  become: true
+
+- name: Create Grafana provisioning directories
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - "{{ grafana_paths.provisioning_dir }}"
+    - "{{ grafana_paths.datasources_dir }}"
+    - "{{ grafana_paths.dashboards_dir }}"
+  become: true

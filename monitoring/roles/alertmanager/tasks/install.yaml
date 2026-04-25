@@ -1,0 +1,23 @@
+---
+
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: alertmanager_install.update_cache | bool
+  become: true
+
+- name: Install Alertmanager package
+  ansible.builtin.apt:
+    name: "{{ alertmanager_install.packages }}"
+    state: "{{ alertmanager_install.package_state }}"
+  when: alertmanager_install.packages | length > 0
+  become: true
+
+- name: Ensure Alertmanager config directory exists
+  ansible.builtin.file:
+    path: /etc/alertmanager
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true

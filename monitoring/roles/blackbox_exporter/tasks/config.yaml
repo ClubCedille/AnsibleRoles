@@ -1,0 +1,18 @@
+---
+
+- name: Write Blackbox Exporter configuration
+  ansible.builtin.template:
+    src: "{{ blackbox_exporter_paths.config_template }}"
+    dest: "{{ blackbox_exporter_paths.config }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Blackbox Exporter
+  become: true
+
+- name: Ensure Blackbox Exporter service state
+  ansible.builtin.service:
+    name: "{{ blackbox_exporter_service.name }}"
+    state: "{{ blackbox_exporter_service.state }}"
+    enabled: "{{ blackbox_exporter_service.enabled }}"
+  become: true
