@@ -1,0 +1,12 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: netservices_dns.install.update_cache | bool
+  become: true
+
+- name: Install BIND9 packages
+  ansible.builtin.apt:
+    name: "{{ netservices_dns.install.packages }}"
+    state: "{{ netservices_dns.install.package_state }}"
+  become: true

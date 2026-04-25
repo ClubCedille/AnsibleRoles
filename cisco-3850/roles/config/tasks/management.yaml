@@ -1,5 +1,4 @@
 ---
-
 - name: Setup the motd banner
   cisco.ios.ios_banner:
     banner: motd
@@ -13,7 +12,7 @@
       PLEASE DO NOT REBOOT OR DO STUPID STUFF WITHOUT WARNING SOMEONE FIRST.
 
         /$$$$$$                  /$$ /$$ /$$ /$$
-      /$$__  $$                | $$|__/| $$| $$
+      /$$__  $$                 | $$|__/| $$| $$
       | $$  \__/  /$$$$$$   /$$$$$$$ /$$| $$| $$  /$$$$$$
       | $$       /$$__  $$ /$$__  $$| $$| $$| $$ /$$__  $$
       | $$      | $$$$$$$$| $$  | $$| $$| $$| $$| $$$$$$$$

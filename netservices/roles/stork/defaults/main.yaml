@@ -1,0 +1,41 @@
+---
+netservices_stork:
+  enabled: true
+  supported_distribution: Ubuntu
+  supported_distribution_version: "24.04"
+
+  install:
+    update_cache: true
+    package_state: present
+    packages:
+      - stork-server
+      - stork-agent
+
+  service:
+    server_name: stork-server
+    agent_name: stork-agent
+    state: started
+    enabled: true
+
+  paths:
+    config_dir: /etc/stork
+    server_env: /etc/stork/server.env
+    agent_env: /etc/stork/agent.env
+
+  server:
+    http_host: 0.0.0.0
+    http_port: 8080
+    database:
+      type: postgresql
+      host: 127.0.0.1
+      port: 5432
+      name: stork
+      user: stork
+      password: ""
+
+  agent:
+    server_url: http://127.0.0.1:8080
+    token: ""
+    monitored_services:
+      - kea-dhcp4-server
+      - bind9

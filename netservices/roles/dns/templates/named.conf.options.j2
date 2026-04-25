@@ -1,0 +1,43 @@
+options {
+  directory "{{ netservices_dns.options.directory }}";
+
+  recursion {{ 'yes' if netservices_dns.options.recursion else 'no' }};
+
+  allow-query {
+{% for item in netservices_dns.options.allow_query %}
+    {{ item }};
+{% endfor %}
+  };
+
+  allow-recursion {
+{% for item in netservices_dns.options.allow_recursion %}
+    {{ item }};
+{% endfor %}
+  };
+
+{% if netservices_dns.options.forwarders | length > 0 %}
+  forwarders {
+{% for item in netservices_dns.options.forwarders %}
+    {{ item }};
+{% endfor %}
+  };
+{% endif %}
+
+  dnssec-validation {{ netservices_dns.options.dnssec_validation }};
+
+  listen-on {
+{% for item in netservices_dns.options.listen_on_v4 %}
+    {{ item }};
+{% endfor %}
+  };
+
+  listen-on-v6 {
+{% for item in netservices_dns.options.listen_on_v6 %}
+    {{ item }};
+{% endfor %}
+  };
+
+{% for statement in netservices_dns.options.extra_statements %}
+  {{ statement }};
+{% endfor %}
+};

@@ -1,0 +1,12 @@
+---
+- name: Restart stork-server
+  ansible.builtin.service:
+    name: "{{ netservices_stork.service.server_name }}"
+    state: restarted
+  become: true
+
+- name: Restart stork-agent
+  ansible.builtin.service:
+    name: "{{ netservices_stork.service.agent_name }}"
+    state: restarted
+  become: true
