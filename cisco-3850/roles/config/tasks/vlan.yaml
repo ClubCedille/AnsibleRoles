@@ -5,8 +5,8 @@
     - name: Creating VLAN
       cisco.ios.ios_vlans:
         config:
-          - name: vlan_{{ vlans[0] }}
-            vlan_id: "{{ vlans[0] }}"
+          - name: vlan_{{ mgmt_vlan }}
+            vlan_id: "{{ mgmt_vlan }}"
             state: active
             shutdown: disabled
     - name: Using DHCP for address assignment
@@ -14,4 +14,4 @@
         lines:
           - ip address dhcp
         parents:
-          - interface Vlan{{ vlans[0] }}
+          - interface Vlan{{ mgmt_vlan }}
