@@ -11,13 +11,13 @@
       - interface Port-channel1
 
 - name: Access Interfaces
-  cisco.ios.ios.l2_interfaces:
+  cisco.ios.l2_interfaces:
     config:
       - name: GigabitEthernet0/"{{ item }}"
         mode: access
         access:
-          vlan: "{{ vlans[0] }}"
-  cisco.ios.ios.ios_config:
+          vlan: "{{ vlans[1] }}"
+  cisco.ios.ios_config:
     lines:
       - switchport port-security maximum 2
       - switchport port-security violation restrict
@@ -30,14 +30,14 @@
   loop: "{{ range(1, 48) }}"
 
 - name: Uplink Interfaces (4x1GB)
-  cisco.ios.ios.l2_interfaces:
+  cisco.ios.ios_l2_interfaces:
     config:
       - name: GigabitEthernet1/"{{ item }}"
         mode: trunk
         trunk:
           encapsulation: dot1q
           allowed_vlans: "{{ vlans }}"
-  cisco.ios.ios.ios_config:
+  cisco.ios.ios_config:
     lines:
       - channel-group 1 mode active
     parents:
@@ -46,7 +46,7 @@
   when: uplink_config == '4x1'
 
 - name: Uplink Interfaces (1x10GB)
-  cisco.ios.ios.l2_interfaces:
+  cisco.ios.ios_l2_interfaces:
     config:
       - name: TenGigabitEthernet1/1
         mode: trunk
@@ -56,14 +56,14 @@
   when: uplink_config == '1x10'
 
 - name: Uplink Interfaces (2x10GB)
-  cisco.ios.ios.l2_interfaces:
+  cisco.ios.ios_l2_interfaces:
     config:
       - name: TenGigabitEthernet1/"{{ item }}"
         mode: trunk
         trunk:
           encapsulation: dot1q
           allowed_vlans: "{{ vlans }}"
-  cisco.ios.ios.ios_config:
+  cisco.ios.ios_config:
     lines:
       - channel-group 1 mode active
     parents:
