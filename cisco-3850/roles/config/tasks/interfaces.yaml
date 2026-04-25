@@ -1,0 +1,72 @@
+---
+
+- name: Portchannel to distribution
+  cisco.ios.ios_config:
+    lines:
+      - description PORTCHANNEL TO D1
+      - switchport trunk encapsulation dot1q
+      - switchport trunk allowed vlan {{ vlans | join(',') }}
+      - switchport mode trunk
+    parents:
+      - interface Port-channel1
+
+- name: Access Interfaces
+  cisco.ios.ios.l2_interfaces:
+    config:
+      - name: GigabitEthernet0/"{{ item }}"
+        mode: access
+        access:
+          vlan: "{{ vlans[0] }}"
+  cisco.ios.ios.ios_config:
+    lines:
+      - switchport port-security maximum 2
+      - switchport port-security violation restrict
+      - switchport port-security aging time 5
+      - switchport port-security aging type inactivity
+      - switchport port-security
+      - spanning-tree portfast
+    parents:
+      - GigabitEthernet0/"{{ item }}"
+  loop: "{{ range(1, 48) }}"
+
+- name: Uplink Interfaces (4x1GB)
+  cisco.ios.ios.l2_interfaces:
+    config:
+      - name: GigabitEthernet1/"{{ item }}"
+        mode: trunk
+        trunk:
+          encapsulation: dot1q
+          allowed_vlans: "{{ vlans }}"
+  cisco.ios.ios.ios_config:
+    lines:
+      - channel-group 1 mode active
+    parents:
+      - GigabitEthernet1/"{{ item }}"
+  loop: "{{ range(1, 4) }}"
+  when: uplink_config == '4x1'
+
+- name: Uplink Interfaces (1x10GB)
+  cisco.ios.ios.l2_interfaces:
+    config:
+      - name: GigabitEthernet1/1
+        mode: trunk
+        trunk:
+          encapsulation: dot1q
+          allowed_vlans: "{{ vlans }}"
+  when: uplink_config == '1x10'
+
+- name: Uplink Interfaces (2x10GB)
+  cisco.ios.ios.l2_interfaces:
+    config:
+      - name: TenGigabitEthernet1/"{{ item }}"
+        mode: trunk
+        trunk:
+          encapsulation: dot1q
+          allowed_vlans: "{{ vlans }}"
+  cisco.ios.ios.ios_config:
+    lines:
+      - channel-group 1 mode active
+    parents:
+      - TenGigabitEthernet1/"{{ item }}"
+  loop: "{{ range(1, 2) }}"
+  when: uplink_config == '2x10'

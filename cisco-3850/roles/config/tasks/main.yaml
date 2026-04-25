@@ -7,3 +7,11 @@
 - name: Allow for SSH access
   ansible.builtin.include_tasks:
     file: remote_management.yaml
+
+- name: VLAN config
+  ansible.builtin.include_tasks:
+    file: vlan.yaml
+
+- name: Interfaces config
+  ansible.builtin.include_tasks:
+    file: interfaces.yaml
