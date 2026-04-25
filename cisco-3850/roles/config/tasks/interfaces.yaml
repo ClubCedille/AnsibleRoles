@@ -48,7 +48,7 @@
 - name: Uplink Interfaces (1x10GB)
   cisco.ios.ios.l2_interfaces:
     config:
-      - name: GigabitEthernet1/1
+      - name: TenGigabitEthernet1/1
         mode: trunk
         trunk:
           encapsulation: dot1q
