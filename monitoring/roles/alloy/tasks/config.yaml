@@ -7,19 +7,6 @@
     group: root
     mode: "0644"
   notify:
-    - Reload systemd
-    - Restart Alloy
-  become: true
-
-- name: Write Alloy systemd unit
-  ansible.builtin.template:
-    src: alloy.service.j2
-    dest: "{{ alloy_paths.service_unit }}"
-    owner: root
-    group: root
-    mode: "0644"
-  notify:
-    - Reload systemd
     - Restart Alloy
   become: true
 

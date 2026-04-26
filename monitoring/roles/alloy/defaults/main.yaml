@@ -6,24 +6,27 @@ alloy_supported_distribution_version: "24.04"
 alloy_install:
   update_cache: true
   package_state: present
-  packages: []
-  binary_url: ""
-  binary_checksum: ""
+  packages:
+    - alloy
+  prereq_packages:
+    - gpg
+  repository:
+    enabled: true
+    key_url: https://apt.grafana.com/gpg-full.key
+    key_path: /etc/apt/keyrings/grafana.asc
+    source: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+    filename: grafana
 
 alloy_service:
   name: alloy
   state: started
   enabled: true
-  user: alloy
-  group: alloy
 
 alloy_paths:
-  binary: /usr/local/bin/alloy
   config: /etc/alloy/config.alloy
   config_template: config.alloy.j2
-  service_unit: /etc/systemd/system/alloy.service
-  storage_dir: /var/lib/alloy
   config_dir: /etc/alloy
+  apt_keyrings_dir: /etc/apt/keyrings
 
 alloy_server:
   http_listen_addr: 0.0.0.0

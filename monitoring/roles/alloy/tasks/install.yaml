@@ -5,51 +5,54 @@
   when: alloy_install.update_cache | bool
   become: true
 
-- name: Install Alloy packages
+- name: Install Alloy prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ alloy_install.prereq_packages }}"
+    state: present
+  when: alloy_install.prereq_packages | length > 0
+  become: true
+
+- name: Ensure APT keyrings directory exists
+  ansible.builtin.file:
+    path: "{{ alloy_paths.apt_keyrings_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: alloy_install.repository.enabled | bool
+  become: true
+
+- name: Download Grafana APT repository key
+  ansible.builtin.get_url:
+    url: "{{ alloy_install.repository.key_url }}"
+    dest: "{{ alloy_install.repository.key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: alloy_install.repository.enabled | bool
+  become: true
+
+- name: Configure Grafana APT repository
+  ansible.builtin.apt_repository:
+    repo: "{{ alloy_install.repository.source }}"
+    filename: "{{ alloy_install.repository.filename }}"
+    state: present
+    update_cache: "{{ alloy_install.update_cache | bool }}"
+  when: alloy_install.repository.enabled | bool
+  become: true
+
+- name: Install Alloy packages from repository
   ansible.builtin.apt:
     name: "{{ alloy_install.packages }}"
     state: "{{ alloy_install.package_state }}"
   when: alloy_install.packages | length > 0
   become: true
 
-- name: Create Alloy group
-  ansible.builtin.group:
-    name: "{{ alloy_service.group }}"
-    system: true
-  become: true
-
-- name: Create Alloy user
-  ansible.builtin.user:
-    name: "{{ alloy_service.user }}"
-    group: "{{ alloy_service.group }}"
-    system: true
-    shell: /usr/sbin/nologin
-    create_home: false
-  become: true
-
-- name: Create Alloy directories
+- name: Ensure Alloy config directory exists
   ansible.builtin.file:
-    path: "{{ item.path }}"
+    path: "{{ alloy_paths.config_dir }}"
     state: directory
-    owner: "{{ item.owner }}"
-    group: "{{ item.group }}"
-    mode: "{{ item.mode }}"
-  loop:
-    - path: "{{ alloy_paths.config_dir }}"
-      owner: root
-      group: root
-      mode: "0755"
-    - path: "{{ alloy_paths.storage_dir }}"
-      owner: "{{ alloy_service.user }}"
-      group: "{{ alloy_service.group }}"
-      mode: "0755"
-  become: true
-
-- name: Download Alloy binary
-  ansible.builtin.get_url:
-    url: "{{ alloy_install.binary_url }}"
-    dest: "{{ alloy_paths.binary }}"
+    owner: root
+    group: root
     mode: "0755"
-    checksum: "{{ alloy_install.binary_checksum if alloy_install.binary_checksum | length > 0 else omit }}"
-  when: alloy_install.binary_url | length > 0
   become: true
