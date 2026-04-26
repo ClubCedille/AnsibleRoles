@@ -102,3 +102,8 @@
       - "{{ 'no ip http server' if disable_ip_http_server else 'ip http server' }}"
       - "{{ 'no ip http secure-server' if disable_ip_http_secure_server else 'ip http secure-server' }}"
       - "{{ 'no ip cef optimize neighbor resolution' if disable_ip_cef_optimize_neighbor_resolution else 'ip cef optimize neighbor resolution' }}"
+
+- name: Setup jumbo frames
+  cisco.ios.ios_config:
+    lines:
+      - "system mtu {{ mtu }}"

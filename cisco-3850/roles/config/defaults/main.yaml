@@ -79,6 +79,8 @@ vty:
   transport_input:
     - ssh
 
+mtu: 9000
+
 login_policy:
   enabled: true
   block_for: 300
