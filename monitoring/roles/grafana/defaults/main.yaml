@@ -1,5 +1,4 @@
 ---
-
 grafana_enabled: true
 grafana_supported_distribution: Ubuntu
 grafana_supported_distribution_version: "24.04"
@@ -7,8 +6,18 @@ grafana_supported_distribution_version: "24.04"
 grafana_install:
   update_cache: true
   package_state: present
-  packages:
-    - grafana
+  package: grafana
+  prereq_packages:
+    - apt-transport-https
+    - wget
+    - gnupg
+  repository:
+    enabled: true
+    key_url: https://apt.grafana.com/gpg-full.key
+    key_path: /etc/apt/keyrings/grafana.asc
+    keyring_dir: /etc/apt/keyrings
+    filename: grafana
+    source: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
 
 grafana_service:
   name: grafana-server

@@ -1,51 +1,75 @@
 ---
-
 - name: Refresh apt cache
   ansible.builtin.apt:
     update_cache: true
   when: loki_install.update_cache | bool
   become: true
 
-- name: Install Loki packages
+- name: Install Loki prerequisite packages
   ansible.builtin.apt:
-    name: "{{ loki_install.packages }}"
-    state: "{{ loki_install.package_state }}"
-  when: loki_install.packages | length > 0
+    name: "{{ loki_install.prereq_packages }}"
+    state: present
+  when: loki_install.prereq_packages | length > 0
   become: true
 
-- name: Create Loki group
-  ansible.builtin.group:
-    name: "{{ loki_service.group }}"
-    system: true
-  become: true
-
-- name: Create Loki user
-  ansible.builtin.user:
-    name: "{{ loki_service.user }}"
-    group: "{{ loki_service.group }}"
-    system: true
-    shell: /usr/sbin/nologin
-    create_home: false
-  become: true
-
-- name: Create Loki directories
+- name: Ensure APT keyrings directory exists
   ansible.builtin.file:
-    path: "{{ item }}"
+    path: "{{ loki_install.repository.keyring_dir }}"
     state: directory
-    owner: "{{ loki_service.user }}"
-    group: "{{ loki_service.group }}"
+    owner: root
+    group: root
     mode: "0755"
-  loop:
-    - "{{ loki_paths.data_dir }}"
-    - "{{ loki_paths.runtime_dir }}"
-    - "{{ loki_storage.filesystem.chunks_directory }}"
-    - "{{ loki_storage.filesystem.rules_directory }}"
+  when: loki_install.repository.enabled | bool
   become: true
 
-- name: Download Loki binary
+- name: Download Grafana APT repository key
   ansible.builtin.get_url:
-    url: "{{ loki_install.binary_url }}"
-    dest: "{{ loki_paths.binary }}"
-    mode: "0755"
-  when: loki_install.binary_url | length > 0
+    url: "{{ loki_install.repository.key_url }}"
+    dest: "{{ loki_install.repository.key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: loki_install.repository.enabled | bool
+  become: true
+
+- name: Configure Grafana APT repository
+  ansible.builtin.apt_repository:
+    repo: "{{ loki_install.repository.source }}"
+    filename: "{{ loki_install.repository.filename }}"
+    state: present
+    update_cache: "{{ loki_install.update_cache | bool }}"
+  when: loki_install.repository.enabled | bool
+  become: true
+
+- name: Install Loki package
+  ansible.builtin.apt:
+    name: "{{ loki_install.package }}"
+    state: "{{ loki_install.package_state }}"
+  when: loki_install.package | length > 0
+  become: true
+
+- name: Ensure Loki directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ loki_paths.config_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ loki_paths.data_dir }}"
+      owner: loki
+      group: loki
+      mode: "0755"
+    - path: "{{ loki_storage.filesystem.chunks_directory }}"
+      owner: loki
+      group: loki
+      mode: "0755"
+    - path: "{{ loki_storage.filesystem.rules_directory }}"
+      owner: loki
+      group: loki
+      mode: "0755"
   become: true

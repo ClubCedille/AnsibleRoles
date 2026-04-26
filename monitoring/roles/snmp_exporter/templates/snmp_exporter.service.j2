@@ -1,0 +1,15 @@
+[Unit]
+Description=Prometheus SNMP Exporter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ snmp_exporter_service.user }}
+Group={{ snmp_exporter_service.group }}
+ExecStart={{ snmp_exporter_paths.binary_dir }}/snmp_exporter \
+  --config.file={{ snmp_exporter_paths.config }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

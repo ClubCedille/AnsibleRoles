@@ -1,16 +1,51 @@
 ---
-
 - name: Refresh apt cache
   ansible.builtin.apt:
     update_cache: true
   when: grafana_install.update_cache | bool
   become: true
 
+- name: Install Grafana prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ grafana_install.prereq_packages }}"
+    state: present
+  when: grafana_install.prereq_packages | length > 0
+  become: true
+
+- name: Ensure APT keyrings directory exists
+  ansible.builtin.file:
+    path: "{{ grafana_install.repository.keyring_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: grafana_install.repository.enabled | bool
+  become: true
+
+- name: Download Grafana APT repository key
+  ansible.builtin.get_url:
+    url: "{{ grafana_install.repository.key_url }}"
+    dest: "{{ grafana_install.repository.key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: grafana_install.repository.enabled | bool
+  become: true
+
+- name: Configure Grafana APT repository
+  ansible.builtin.apt_repository:
+    repo: "{{ grafana_install.repository.source }}"
+    filename: "{{ grafana_install.repository.filename }}"
+    state: present
+    update_cache: "{{ grafana_install.update_cache | bool }}"
+  when: grafana_install.repository.enabled | bool
+  become: true
+
 - name: Install Grafana package
   ansible.builtin.apt:
-    name: "{{ grafana_install.packages }}"
+    name: "{{ grafana_install.package }}"
     state: "{{ grafana_install.package_state }}"
-  when: grafana_install.packages | length > 0
+  when: grafana_install.package | length > 0
   become: true
 
 - name: Create Grafana provisioning directories

@@ -1,4 +1,15 @@
 ---
+- name: Write Node Exporter systemd unit
+  ansible.builtin.template:
+    src: node_exporter.service.j2
+    dest: "{{ node_exporter_paths.service_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Node Exporter
+  become: true
 
 - name: Ensure Node Exporter service state
   ansible.builtin.service:

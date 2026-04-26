@@ -1,23 +1,39 @@
 ---
-
 alertmanager_enabled: true
 alertmanager_supported_distribution: Ubuntu
 alertmanager_supported_distribution_version: "24.04"
 
 alertmanager_install:
   update_cache: true
-  package_state: present
-  packages:
-    - prometheus-alertmanager
+  prereq_packages:
+    - tar
+  version: "0.32.0"
+  archive_url: >-
+    {{ 'https://github.com/prometheus/alertmanager/releases/download/v'
+    ~ alertmanager_install.version
+    ~ '/alertmanager-'
+    ~ alertmanager_install.version
+    ~ '.linux-amd64.tar.gz' }}
+  archive_checksum: "be72f50f6124ec53d944c0f100f8ec8108d969bade02fcc9f06a3068ff6c726f"
+  archive_name: "alertmanager-{{ alertmanager_install.version }}.linux-amd64.tar.gz"
+  extracted_dir: "alertmanager-{{ alertmanager_install.version }}.linux-amd64"
 
 alertmanager_service:
-  name: prometheus-alertmanager
+  name: alertmanager
   state: started
   enabled: true
+  user: alertmanager
+  group: alertmanager
 
 alertmanager_paths:
+  install_dir: /opt/alertmanager
+  archive_download_dir: /tmp
+  binary_dir: /usr/local/bin
+  config_dir: /etc/alertmanager
   config: /etc/alertmanager/alertmanager.yml
+  data_dir: /var/lib/alertmanager
   config_template: alertmanager.yml.j2
+  service_unit: /etc/systemd/system/alertmanager.service
 
 alertmanager_route:
   receiver: default

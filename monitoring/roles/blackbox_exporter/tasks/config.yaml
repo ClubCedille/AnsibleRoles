@@ -1,13 +1,26 @@
 ---
-
 - name: Write Blackbox Exporter configuration
   ansible.builtin.template:
     src: "{{ blackbox_exporter_paths.config_template }}"
     dest: "{{ blackbox_exporter_paths.config }}"
+    owner: "{{ blackbox_exporter_service.user }}"
+    group: "{{ blackbox_exporter_service.group }}"
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Blackbox Exporter
+  become: true
+
+- name: Write Blackbox Exporter systemd unit
+  ansible.builtin.template:
+    src: blackbox_exporter.service.j2
+    dest: "{{ blackbox_exporter_paths.service_unit }}"
     owner: root
     group: root
     mode: "0644"
-  notify: Restart Blackbox Exporter
+  notify:
+    - Reload systemd
+    - Restart Blackbox Exporter
   become: true
 
 - name: Ensure Blackbox Exporter service state

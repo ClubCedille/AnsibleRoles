@@ -1,5 +1,4 @@
 ---
-
 - name: Write Loki configuration
   ansible.builtin.template:
     src: "{{ loki_paths.config_template }}"
@@ -8,19 +7,6 @@
     group: root
     mode: "0644"
   notify:
-    - Reload systemd
-    - Restart Loki
-  become: true
-
-- name: Write Loki systemd unit
-  ansible.builtin.template:
-    src: loki.service.j2
-    dest: "{{ loki_paths.service_unit }}"
-    owner: root
-    group: root
-    mode: "0644"
-  notify:
-    - Reload systemd
     - Restart Loki
   become: true
 

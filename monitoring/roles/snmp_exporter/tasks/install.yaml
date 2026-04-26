@@ -1,22 +1,84 @@
 ---
-
 - name: Refresh apt cache
   ansible.builtin.apt:
     update_cache: true
   when: snmp_exporter_install.update_cache | bool
   become: true
 
-- name: Install SNMP Exporter package
+- name: Install SNMP Exporter prerequisite packages
   ansible.builtin.apt:
-    name: "{{ snmp_exporter_install.packages }}"
-    state: "{{ snmp_exporter_install.package_state }}"
-  when: snmp_exporter_install.packages | length > 0
+    name: "{{ snmp_exporter_install.prereq_packages }}"
+    state: present
+  when: snmp_exporter_install.prereq_packages | length > 0
   become: true
 
-- name: Ensure Prometheus config directory exists
+- name: Create SNMP Exporter group
+  ansible.builtin.group:
+    name: "{{ snmp_exporter_service.group }}"
+    system: true
+  become: true
+
+- name: Create SNMP Exporter user
+  ansible.builtin.user:
+    name: "{{ snmp_exporter_service.user }}"
+    group: "{{ snmp_exporter_service.group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+- name: Create SNMP Exporter directories
   ansible.builtin.file:
-    path: /etc/prometheus
+    path: "{{ item.path }}"
     state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ snmp_exporter_paths.install_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ snmp_exporter_paths.binary_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ snmp_exporter_paths.config_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ snmp_exporter_paths.archive_download_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+  become: true
+
+- name: Download SNMP Exporter archive
+  ansible.builtin.get_url:
+    url: "{{ snmp_exporter_install.archive_url }}"
+    dest: "{{ snmp_exporter_paths.archive_download_dir }}/{{ snmp_exporter_install.archive_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+    checksum: "{{ 'sha256:' ~ snmp_exporter_install.archive_checksum if snmp_exporter_install.archive_checksum | length > 0 else omit }}"
+  become: true
+
+- name: Extract SNMP Exporter archive
+  ansible.builtin.unarchive:
+    src: "{{ snmp_exporter_paths.archive_download_dir }}/{{ snmp_exporter_install.archive_name }}"
+    dest: "{{ snmp_exporter_paths.install_dir }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+    creates: "{{ snmp_exporter_paths.install_dir }}/{{ snmp_exporter_install.extracted_dir }}"
+  become: true
+
+- name: Install SNMP Exporter binary
+  ansible.builtin.copy:
+    src: "{{ snmp_exporter_paths.install_dir }}/{{ snmp_exporter_install.extracted_dir }}/snmp_exporter"
+    dest: "{{ snmp_exporter_paths.binary_dir }}/snmp_exporter"
+    remote_src: true
     owner: root
     group: root
     mode: "0755"

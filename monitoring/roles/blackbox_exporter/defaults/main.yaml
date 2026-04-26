@@ -1,23 +1,38 @@
 ---
-
 blackbox_exporter_enabled: true
 blackbox_exporter_supported_distribution: Ubuntu
 blackbox_exporter_supported_distribution_version: "24.04"
 
 blackbox_exporter_install:
   update_cache: true
-  package_state: present
-  packages:
-    - prometheus-blackbox-exporter
+  prereq_packages:
+    - tar
+  version: "0.28.0"
+  archive_url: >-
+    {{ 'https://github.com/prometheus/blackbox_exporter/releases/download/v'
+    ~ blackbox_exporter_install.version
+    ~ '/blackbox_exporter-'
+    ~ blackbox_exporter_install.version
+    ~ '.linux-amd64.tar.gz' }}
+  archive_checksum: "caf5d242fb1cf6d5cb678f3f799f22703d4fafea26b03dcbbd7e1f1825e06329"
+  archive_name: "blackbox_exporter-{{ blackbox_exporter_install.version }}.linux-amd64.tar.gz"
+  extracted_dir: "blackbox_exporter-{{ blackbox_exporter_install.version }}.linux-amd64"
 
 blackbox_exporter_service:
-  name: prometheus-blackbox-exporter
+  name: blackbox_exporter
   state: started
   enabled: true
+  user: blackbox_exporter
+  group: blackbox_exporter
 
 blackbox_exporter_paths:
-  config: /etc/prometheus/blackbox.yml
+  install_dir: /opt/blackbox_exporter
+  archive_download_dir: /tmp
+  binary_dir: /usr/local/bin
+  config_dir: /etc/blackbox_exporter
+  config: /etc/blackbox_exporter/blackbox.yml
   config_template: blackbox.yml.j2
+  service_unit: /etc/systemd/system/blackbox_exporter.service
 
 blackbox_exporter_modules:
   http_2xx:
