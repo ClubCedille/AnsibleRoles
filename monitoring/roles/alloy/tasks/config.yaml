@@ -1,0 +1,31 @@
+---
+- name: Write Alloy configuration
+  ansible.builtin.template:
+    src: "{{ alloy_paths.config_template }}"
+    dest: "{{ alloy_paths.config }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Alloy
+  become: true
+
+- name: Write Alloy systemd unit
+  ansible.builtin.template:
+    src: alloy.service.j2
+    dest: "{{ alloy_paths.service_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Alloy
+  become: true
+
+- name: Ensure Alloy service state
+  ansible.builtin.service:
+    name: "{{ alloy_service.name }}"
+    state: "{{ alloy_service.state }}"
+    enabled: "{{ alloy_service.enabled }}"
+  become: true

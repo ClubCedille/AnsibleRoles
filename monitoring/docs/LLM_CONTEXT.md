@@ -25,7 +25,7 @@ Primary targets:
 - `prometheus`
 - `grafana`
 - `loki`
-- `promtail`
+- `alloy`
 - `node_exporter`
 - `blackbox_exporter`
 - `snmp_exporter`
@@ -38,7 +38,7 @@ Primary targets:
 - Each role should keep the same shape: `install.yaml`, `config.yaml`, `handlers/main.yaml`, `meta/main.yml`.
 - Prometheus is the aggregation point for metrics.
 - Grafana is the visualization layer.
-- Loki/Promtail are preferred for logs over Elasticsearch/Kibana in this first iteration.
+- Loki/Alloy are preferred for logs over Elasticsearch/Kibana in this first iteration.
 - SNMP Exporter and Blackbox Exporter are the most relevant add-ons for this infrastructure.
 - Alertmanager should be included early so Prometheus alerts have a destination.
 
@@ -46,7 +46,7 @@ Primary targets:
 
 - Prometheus scrapes Kea, BIND9, Stork, Node Exporter, SNMP Exporter and Blackbox Exporter.
 - Grafana reads from Prometheus and Loki.
-- Promtail forwards logs to Loki.
+- Alloy forwards logs to Loki.
 - Node Exporter runs on Linux hosts.
 - SNMP Exporter targets switches and network devices.
 - Blackbox Exporter probes network reachability and service availability.
@@ -58,7 +58,7 @@ Use a role-specific prefix, for example:
 - `monitoring_prometheus`
 - `monitoring_grafana`
 - `monitoring_loki`
-- `monitoring_promtail`
+- `monitoring_alloy`
 - `monitoring_node_exporter`
 - `monitoring_blackbox_exporter`
 - `monitoring_snmp_exporter`

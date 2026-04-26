@@ -1,12 +1,11 @@
 ---
-
 - name: Reload systemd
   ansible.builtin.systemd:
     daemon_reload: true
   become: true
 
-- name: Restart Promtail
+- name: Restart Alloy
   ansible.builtin.service:
-    name: "{{ promtail_service.name }}"
+    name: "{{ alloy_service.name }}"
     state: restarted
   become: true

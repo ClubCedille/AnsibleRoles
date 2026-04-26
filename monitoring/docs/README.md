@@ -9,7 +9,7 @@ La collection `cedille.monitoring` regroupe les rôles nécessaires pour constru
 - `prometheus` : agrégation des métriques des switches, de Kea DHCP, de BIND9 et des exporters.
 - `grafana` : observabilité et dashboards à partir des sources de données récupérées.
 - `loki` : centralisation des logs dans une pile plus légère qu'Elastic.
-- `promtail` : collecte et envoi des logs vers Loki.
+- `alloy` : collecte et envoi des logs vers Loki.
 - `node_exporter` : métriques système des hôtes Linux.
 - `blackbox_exporter` : checks réseau, HTTP et ICMP.
 - `snmp_exporter` : métriques SNMP des switches et équipements réseau.
@@ -26,7 +26,7 @@ Les rôles sont pensés pour être consommés depuis un autre repository de dép
     - cedille.monitoring.prometheus
     - cedille.monitoring.grafana
     - cedille.monitoring.loki
-    - cedille.monitoring.promtail
+    - cedille.monitoring.alloy
 ```
 
 ## Convention

@@ -1,0 +1,41 @@
+---
+alloy_enabled: true
+alloy_supported_distribution: Ubuntu
+alloy_supported_distribution_version: "24.04"
+
+alloy_install:
+  update_cache: true
+  package_state: present
+  packages: []
+  binary_url: ""
+  binary_checksum: ""
+
+alloy_service:
+  name: alloy
+  state: started
+  enabled: true
+  user: alloy
+  group: alloy
+
+alloy_paths:
+  binary: /usr/local/bin/alloy
+  config: /etc/alloy/config.alloy
+  config_template: config.alloy.j2
+  service_unit: /etc/systemd/system/alloy.service
+  storage_dir: /var/lib/alloy
+  config_dir: /etc/alloy
+
+alloy_server:
+  http_listen_addr: 0.0.0.0
+  http_listen_port: 12345
+
+alloy_loki_endpoints:
+  - name: loki
+    url: http://127.0.0.1:3100/loki/api/v1/push
+
+alloy_file_sources:
+  - name: system_logs
+    paths:
+      - /var/log/*.log
+    labels:
+      job: system
