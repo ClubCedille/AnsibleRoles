@@ -5,7 +5,7 @@
     lines:
       - description PORTCHANNEL TO D1
       - switchport trunk encapsulation dot1q
-      - switchport trunk allowed vlan {{ mgmt_vlan }}, {{ client_vlan }}, {{ admin_wifi_vlan }}
+      - switchport trunk allowed vlan {{ mgmt_vlan }},{{ access_vlans | join(',') }},{{ extra_vlans | join(',') }}
       - switchport mode trunk
     parents:
       - interface Port-channel1
@@ -16,13 +16,13 @@
     - name: Setting up VLAN
       cisco.ios.ios_l2_interfaces:
         config:
-          - name: GigabitEthernet0/{{ item }}
+          - name: GigabitEthernet1/0/{{ item }}
             spanning_tree:
               portfast:
                 disabled: false
             mode: access
             access:
-              vlan: "{{ client_vlan }}"
+              vlan: "{{ access_vlans }}"
     - name: Setting up port security
       cisco.ios.ios_config:
         lines:
@@ -32,7 +32,7 @@
           - switchport port-security aging type inactivity
           - switchport port-security
         parents:
-          - interface GigabitEthernet0/{{ item }}
+          - interface GigabitEthernet1/0/{{ item }}
 
 - name: Uplink Interfaces (4x1GB)
   loop: "{{ range(1, 5) | list }}"
@@ -41,33 +41,27 @@
     - name: Setting up VLAN
       cisco.ios.ios_l2_interfaces:
         config:
-          - name: GigabitEthernet1/{{ item }}
+          - name: GigabitEthernet1/1/{{ item }}
             mode: trunk
             trunk:
               encapsulation: dot1q
-              allowed_vlans:
-                - "{{ mgmt_vlan }}"
-                - "{{ client_vlan }}"
-                - "{{ admin_wifi_vlan }}"
+              allowed_vlans: "{{ mgmt_vlan | list + access_vlans + extra_vlans }}"
     - name: Setting up channel-group
       cisco.ios.ios_config:
         lines:
           - channel-group 1 mode active
         parents:
-          - interface GigabitEthernet1/{{ item }}
+          - interface GigabitEthernet1/1/{{ item }}
 
 - name: Uplink Interfaces (1x10GB)
   when: uplink_config == '1x10'
   cisco.ios.ios_l2_interfaces:
     config:
-      - name: TenGigabitEthernet1/1
+      - name: TenGigabitEthernet1/1/1
         mode: trunk
         trunk:
           encapsulation: dot1q
-          allowed_vlans:
-            - "{{ mgmt_vlan }}"
-            - "{{ client_vlan }}"
-            - "{{ admin_wifi_vlan }}"
+          allowed_vlans: "{{ mgmt_vlan | list + access_vlans + extra_vlans }}"
 
 - name: Uplink Interfaces (2x10GB)
   loop: "{{ range(1, 3) | list }}"
@@ -76,17 +70,14 @@
     - name: Setting up VLAN
       cisco.ios.ios_l2_interfaces:
         config:
-          - name: TenGigabitEthernet1/{{ item }}
+          - name: TenGigabitEthernet1/1/{{ item }}
             mode: trunk
             trunk:
               encapsulation: dot1q
-              allowed_vlans:
-                - "{{ mgmt_vlan }}"
-                - "{{ client_vlan }}"
-                - "{{ admin_wifi_vlan }}"
+              allowed_vlans: "{{ mgmt_vlan | list + access_vlans + extra_vlans }}"
     - name: Setting up channel-group
       cisco.ios.ios_config:
         lines:
           - channel-group 1 mode active
         parents:
-          - interface TenGigabitEthernet1/{{ item }}
+          - interface TenGigabitEthernet1/1/{{ item }}

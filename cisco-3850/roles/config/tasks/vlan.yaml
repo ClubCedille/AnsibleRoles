@@ -15,3 +15,21 @@
           - ip address dhcp
         parents:
           - interface Vlan{{ mgmt_vlan }}
+
+- name: Configure access VLAN
+  loop: "{{ access_vlans }}"
+  cisco.ios.ios_vlans:
+    config:
+      - name: vlan_{{ item }}
+        vlan_id: "{{ item }}"
+        state: active
+        shutdown: disabled
+
+- name: Configure extra VLAN
+  loop: "{{ extra_vlans }}"
+  cisco.ios.ios_vlans:
+    config:
+      - name: vlan_{{ item }}
+        vlan_id: "{{ item }}"
+        state: active
+        shutdown: disabled
