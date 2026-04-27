@@ -89,3 +89,16 @@ login_policy:
   on_success_log: true
 
 service_password_encryption: true
+
+# VLAN ID must be in string
+mgmt_vlan: "10"
+access_vlans:
+  - "90"
+extra_vlans:
+  - "101"
+
+# Configuration for the uplink
+# 4x1 for four 1 GB/s Ethernet
+# 1x10 for one 10 GB/s Fiber
+# 2x10 for two 10 GB/s Fiber
+uplink_config: 2x10
