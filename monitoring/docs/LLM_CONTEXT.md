@@ -31,6 +31,10 @@ Primary targets:
 - `snmp_exporter`
 - `alertmanager`
 
+Removed from scope:
+
+- `promtail` (replaced by `alloy`)
+
 ## Architectural intent
 
 - The collection is consumed from another repository.
@@ -41,6 +45,9 @@ Primary targets:
 - Loki/Alloy are preferred for logs over Elasticsearch/Kibana in this first iteration.
 - SNMP Exporter and Blackbox Exporter are the most relevant add-ons for this infrastructure.
 - Alertmanager should be included early so Prometheus alerts have a destination.
+- Install strategy is split in two families:
+  - Grafana stack packages from `https://apt.grafana.com`: `grafana`, `loki`, `alloy`
+  - Prometheus ecosystem pinned tarballs: `prometheus`, `alertmanager`, `node_exporter`, `blackbox_exporter`, `snmp_exporter`
 
 ## Suggested integration points
 
@@ -53,16 +60,16 @@ Primary targets:
 
 ## Suggested variable pattern
 
-Use a role-specific prefix, for example:
+Use the real role-specific prefixes used in `defaults/main.yaml`:
 
-- `monitoring_prometheus`
-- `monitoring_grafana`
-- `monitoring_loki`
-- `monitoring_alloy`
-- `monitoring_node_exporter`
-- `monitoring_blackbox_exporter`
-- `monitoring_snmp_exporter`
-- `monitoring_alertmanager`
+- `prometheus_*`
+- `grafana_*`
+- `loki_*`
+- `alloy_*`
+- `node_exporter_*`
+- `blackbox_exporter_*`
+- `snmp_exporter_*`
+- `alertmanager_*`
 
 Keep variables grouped by sections such as:
 
@@ -77,6 +84,40 @@ Keep variables grouped by sections such as:
 - `alerts`
 - `probes`
 - `retention`
+
+Common high-level keys by role are:
+
+- `<role>_enabled`
+- `<role>_supported_distribution`
+- `<role>_supported_distribution_version`
+- `<role>_install`
+- `<role>_service`
+- `<role>_paths`
+
+Additional commonly used keys:
+
+- Prometheus: `prometheus_server`, `prometheus_rule_files`, `prometheus_scrape_configs`, `prometheus_alerting`
+- Grafana: `grafana_server`, `grafana_datasources`, `grafana_dashboards`
+- Loki: `loki_server`, `loki_storage`
+- Alloy: `alloy_server`, `alloy_loki_endpoints`, `alloy_file_sources`
+- Blackbox Exporter: `blackbox_exporter_modules`
+- SNMP Exporter: `snmp_exporter_modules`, `snmp_exporter_auths`
+- Alertmanager: `alertmanager_route`, `alertmanager_receivers`
+
+## Version and packaging references
+
+Pinned versions currently defined in defaults:
+
+- `prometheus`: `3.5.2` (tarball + checksum)
+- `alertmanager`: `0.32.0` (tarball + checksum)
+- `node_exporter`: `1.11.1` (tarball + checksum)
+- `blackbox_exporter`: `0.28.0` (tarball + checksum)
+- `snmp_exporter`: `0.30.1` (tarball + checksum)
+
+APT repository references:
+
+- `grafana`, `loki`, `alloy` use key `https://apt.grafana.com/gpg-full.key`
+- repository `deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main`
 
 ## Implementation note
 
