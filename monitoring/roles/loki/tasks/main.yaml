@@ -1,0 +1,11 @@
+---
+
+- name: Install Loki
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: loki_enabled | bool
+
+- name: Configure Loki
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: loki_enabled | bool

@@ -1,0 +1,85 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: blackbox_exporter_install.update_cache | bool
+  become: true
+
+- name: Install Blackbox Exporter prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ blackbox_exporter_install.prereq_packages }}"
+    state: present
+  when: blackbox_exporter_install.prereq_packages | length > 0
+  become: true
+
+- name: Create Blackbox Exporter group
+  ansible.builtin.group:
+    name: "{{ blackbox_exporter_service.group }}"
+    system: true
+  become: true
+
+- name: Create Blackbox Exporter user
+  ansible.builtin.user:
+    name: "{{ blackbox_exporter_service.user }}"
+    group: "{{ blackbox_exporter_service.group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+- name: Create Blackbox Exporter directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ blackbox_exporter_paths.install_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ blackbox_exporter_paths.binary_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ blackbox_exporter_paths.config_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ blackbox_exporter_paths.archive_download_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+  become: true
+
+- name: Download Blackbox Exporter archive
+  ansible.builtin.get_url:
+    url: "{{ blackbox_exporter_install.archive_url }}"
+    dest: "{{ blackbox_exporter_paths.archive_download_dir }}/{{ blackbox_exporter_install.archive_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+    checksum: "{{ 'sha256:' ~ blackbox_exporter_install.archive_checksum if blackbox_exporter_install.archive_checksum | length > 0 else omit }}"
+  become: true
+
+- name: Extract Blackbox Exporter archive
+  ansible.builtin.unarchive:
+    src: "{{ blackbox_exporter_paths.archive_download_dir }}/{{ blackbox_exporter_install.archive_name }}"
+    dest: "{{ blackbox_exporter_paths.install_dir }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+    creates: "{{ blackbox_exporter_paths.install_dir }}/{{ blackbox_exporter_install.extracted_dir }}"
+  become: true
+
+- name: Install Blackbox Exporter binary
+  ansible.builtin.copy:
+    src: "{{ blackbox_exporter_paths.install_dir }}/{{ blackbox_exporter_install.extracted_dir }}/blackbox_exporter"
+    dest: "{{ blackbox_exporter_paths.binary_dir }}/blackbox_exporter"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  become: true

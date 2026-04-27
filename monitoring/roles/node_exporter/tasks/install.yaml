@@ -1,0 +1,85 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: node_exporter_install.update_cache | bool
+  become: true
+
+- name: Install Node Exporter prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ node_exporter_install.prereq_packages }}"
+    state: present
+  when: node_exporter_install.prereq_packages | length > 0
+  become: true
+
+- name: Create Node Exporter group
+  ansible.builtin.group:
+    name: "{{ node_exporter_service.group }}"
+    system: true
+  become: true
+
+- name: Create Node Exporter user
+  ansible.builtin.user:
+    name: "{{ node_exporter_service.user }}"
+    group: "{{ node_exporter_service.group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+- name: Create Node Exporter directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ node_exporter_paths.install_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ node_exporter_paths.binary_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ node_exporter_paths.archive_download_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ node_exporter_paths.textfile_collector_dir }}"
+      owner: "{{ node_exporter_service.user }}"
+      group: "{{ node_exporter_service.group }}"
+      mode: "0755"
+  become: true
+
+- name: Download Node Exporter archive
+  ansible.builtin.get_url:
+    url: "{{ node_exporter_install.archive_url }}"
+    dest: "{{ node_exporter_paths.archive_download_dir }}/{{ node_exporter_install.archive_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+    checksum: "{{ 'sha256:' ~ node_exporter_install.archive_checksum if node_exporter_install.archive_checksum | length > 0 else omit }}"
+  become: true
+
+- name: Extract Node Exporter archive
+  ansible.builtin.unarchive:
+    src: "{{ node_exporter_paths.archive_download_dir }}/{{ node_exporter_install.archive_name }}"
+    dest: "{{ node_exporter_paths.install_dir }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+    creates: "{{ node_exporter_paths.install_dir }}/{{ node_exporter_install.extracted_dir }}"
+  become: true
+
+- name: Install Node Exporter binary
+  ansible.builtin.copy:
+    src: "{{ node_exporter_paths.install_dir }}/{{ node_exporter_install.extracted_dir }}/node_exporter"
+    dest: "{{ node_exporter_paths.binary_dir }}/node_exporter"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  become: true

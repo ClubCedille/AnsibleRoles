@@ -1,0 +1,42 @@
+---
+prometheus_enabled: true
+prometheus_supported_distribution: Ubuntu
+prometheus_supported_distribution_version: "24.04"
+
+prometheus_install:
+  update_cache: true
+  prereq_packages:
+    - tar
+  version: "3.5.2"
+  archive_url: "https://github.com/prometheus/prometheus/releases/download/v3.5.2/prometheus-3.5.2.linux-amd64.tar.gz"
+  archive_checksum: "sha256:552c6d701e27d3c77983bb8a76e61953cb60021f6e10f17a929546a6dedc436a"
+  archive_name: "prometheus-3.5.2.linux-amd64.tar.gz"
+  extracted_dir: "prometheus-3.5.2.linux-amd64"
+
+prometheus_service:
+  name: prometheus
+  state: started
+  enabled: true
+  user: prometheus
+  group: prometheus
+
+prometheus_paths:
+  install_dir: /opt/prometheus
+  archive_download_dir: /tmp
+  binary_dir: /usr/local/bin
+  config: /etc/prometheus/prometheus.yml
+  rules_dir: /etc/prometheus/rules
+  data_dir: /var/lib/prometheus
+  config_template: prometheus.yml.j2
+  service_unit: /etc/systemd/system/prometheus.service
+
+prometheus_server:
+  scrape_interval: 60s
+  evaluation_interval: 60s
+  retention_time: 15d
+  external_labels: {}
+
+prometheus_rule_files: []
+prometheus_scrape_configs: []
+prometheus_alerting:
+  alertmanagers: []

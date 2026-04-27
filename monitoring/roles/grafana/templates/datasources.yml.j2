@@ -1,0 +1,11 @@
+apiVersion: 1
+
+datasources:
+{% for datasource in grafana_datasources %}
+  - name: {{ datasource.name }}
+    type: {{ datasource.type }}
+    access: {{ datasource.access }}
+    url: {{ datasource.url }}
+    isDefault: {{ 'true' if datasource.is_default else 'false' }}
+    editable: {{ 'true' if datasource.editable else 'false' }}
+{% endfor %}

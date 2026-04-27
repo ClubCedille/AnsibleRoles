@@ -1,0 +1,44 @@
+---
+alloy_enabled: true
+alloy_supported_distribution: Ubuntu
+alloy_supported_distribution_version: "24.04"
+
+alloy_install:
+  update_cache: true
+  package_state: present
+  packages:
+    - alloy
+  prereq_packages:
+    - gpg
+  repository:
+    enabled: true
+    key_url: https://apt.grafana.com/gpg-full.key
+    key_path: /etc/apt/keyrings/grafana.asc
+    source: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+    filename: grafana
+
+alloy_service:
+  name: alloy
+  state: started
+  enabled: true
+
+alloy_paths:
+  config: /etc/alloy/config.alloy
+  config_template: config.alloy.j2
+  config_dir: /etc/alloy
+  apt_keyrings_dir: /etc/apt/keyrings
+
+alloy_server:
+  http_listen_addr: 0.0.0.0
+  http_listen_port: 12345
+
+alloy_loki_endpoints:
+  - name: loki
+    url: http://127.0.0.1:3100/loki/api/v1/push
+
+alloy_file_sources:
+  - name: system_logs
+    paths:
+      - /var/log/*.log
+    labels:
+      job: system

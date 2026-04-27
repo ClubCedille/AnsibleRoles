@@ -1,0 +1,58 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: alloy_install.update_cache | bool
+  become: true
+
+- name: Install Alloy prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ alloy_install.prereq_packages }}"
+    state: present
+  when: alloy_install.prereq_packages | length > 0
+  become: true
+
+- name: Ensure APT keyrings directory exists
+  ansible.builtin.file:
+    path: "{{ alloy_paths.apt_keyrings_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  when: alloy_install.repository.enabled | bool
+  become: true
+
+- name: Download Grafana APT repository key
+  ansible.builtin.get_url:
+    url: "{{ alloy_install.repository.key_url }}"
+    dest: "{{ alloy_install.repository.key_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+  when: alloy_install.repository.enabled | bool
+  become: true
+
+- name: Configure Grafana APT repository
+  ansible.builtin.apt_repository:
+    repo: "{{ alloy_install.repository.source }}"
+    filename: "{{ alloy_install.repository.filename }}"
+    state: present
+    update_cache: "{{ alloy_install.update_cache | bool }}"
+  when: alloy_install.repository.enabled | bool
+  become: true
+
+- name: Install Alloy packages from repository
+  ansible.builtin.apt:
+    name: "{{ alloy_install.packages }}"
+    state: "{{ alloy_install.package_state }}"
+  when: alloy_install.packages | length > 0
+  become: true
+
+- name: Ensure Alloy config directory exists
+  ansible.builtin.file:
+    path: "{{ alloy_paths.config_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true

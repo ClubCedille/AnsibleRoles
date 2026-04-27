@@ -1,0 +1,18 @@
+---
+
+- name: Write Prometheus configuration
+  ansible.builtin.template:
+    src: "{{ prometheus_paths.config_template }}"
+    dest: "{{ prometheus_paths.config }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart Prometheus
+  become: true
+
+- name: Ensure Prometheus service state
+  ansible.builtin.service:
+    name: "{{ prometheus_service.name }}"
+    state: "{{ prometheus_service.state }}"
+    enabled: "{{ prometheus_service.enabled }}"
+  become: true

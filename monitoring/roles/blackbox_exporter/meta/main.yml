@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  author: ClubCedille
+  description: Install and configure Blackbox Exporter on Ubuntu 24.04
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+
+dependencies: []

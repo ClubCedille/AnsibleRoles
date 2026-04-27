@@ -1,0 +1,99 @@
+---
+- name: Refresh apt cache
+  ansible.builtin.apt:
+    update_cache: true
+  when: alertmanager_install.update_cache | bool
+  become: true
+
+- name: Install Alertmanager prerequisite packages
+  ansible.builtin.apt:
+    name: "{{ alertmanager_install.prereq_packages }}"
+    state: present
+  when: alertmanager_install.prereq_packages | length > 0
+  become: true
+
+- name: Create Alertmanager group
+  ansible.builtin.group:
+    name: "{{ alertmanager_service.group }}"
+    system: true
+  become: true
+
+- name: Create Alertmanager user
+  ansible.builtin.user:
+    name: "{{ alertmanager_service.user }}"
+    group: "{{ alertmanager_service.group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
+- name: Create Alertmanager directories
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: "{{ item.owner }}"
+    group: "{{ item.group }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ alertmanager_paths.install_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ alertmanager_paths.binary_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ alertmanager_paths.config_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+    - path: "{{ alertmanager_paths.data_dir }}"
+      owner: "{{ alertmanager_service.user }}"
+      group: "{{ alertmanager_service.group }}"
+      mode: "0755"
+    - path: "{{ alertmanager_paths.archive_download_dir }}"
+      owner: root
+      group: root
+      mode: "0755"
+  become: true
+
+- name: Download Alertmanager archive
+  ansible.builtin.get_url:
+    url: "{{ alertmanager_install.archive_url }}"
+    dest: "{{ alertmanager_paths.archive_download_dir }}/{{ alertmanager_install.archive_name }}"
+    owner: root
+    group: root
+    mode: "0644"
+    checksum: "{{ 'sha256:' ~ alertmanager_install.archive_checksum if alertmanager_install.archive_checksum | length > 0 else omit }}"
+  become: true
+
+- name: Extract Alertmanager archive
+  ansible.builtin.unarchive:
+    src: "{{ alertmanager_paths.archive_download_dir }}/{{ alertmanager_install.archive_name }}"
+    dest: "{{ alertmanager_paths.install_dir }}"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+    creates: "{{ alertmanager_paths.install_dir }}/{{ alertmanager_install.extracted_dir }}"
+  become: true
+
+- name: Install Alertmanager binary
+  ansible.builtin.copy:
+    src: "{{ alertmanager_paths.install_dir }}/{{ alertmanager_install.extracted_dir }}/alertmanager"
+    dest: "{{ alertmanager_paths.binary_dir }}/alertmanager"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+
+- name: Install amtool binary
+  ansible.builtin.copy:
+    src: "{{ alertmanager_paths.install_dir }}/{{ alertmanager_install.extracted_dir }}/amtool"
+    dest: "{{ alertmanager_paths.binary_dir }}/amtool"
+    remote_src: true
+    owner: root
+    group: root
+    mode: "0755"
+  become: true

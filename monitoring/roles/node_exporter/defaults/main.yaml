@@ -1,0 +1,36 @@
+---
+node_exporter_enabled: true
+node_exporter_supported_distribution: Ubuntu
+node_exporter_supported_distribution_version: "24.04"
+
+node_exporter_install:
+  update_cache: true
+  prereq_packages:
+    - tar
+  version: "1.11.1"
+  archive_url: >-
+    {{ 'https://github.com/prometheus/node_exporter/releases/download/v'
+    ~ node_exporter_install.version
+    ~ '/node_exporter-'
+    ~ node_exporter_install.version
+    ~ '.linux-amd64.tar.gz' }}
+  archive_checksum: "9f5ea48e5bc7b656f8a91a32e7d7deb89f70f73dabd0d974418aca15f37d6810"
+  archive_name: "node_exporter-{{ node_exporter_install.version }}.linux-amd64.tar.gz"
+  extracted_dir: "node_exporter-{{ node_exporter_install.version }}.linux-amd64"
+
+node_exporter_service:
+  name: node_exporter
+  state: started
+  enabled: true
+  user: node_exporter
+  group: node_exporter
+
+node_exporter_paths:
+  install_dir: /opt/node_exporter
+  archive_download_dir: /tmp
+  binary_dir: /usr/local/bin
+  textfile_collector_dir: /var/lib/node_exporter/textfile_collector
+  service_unit: /etc/systemd/system/node_exporter.service
+
+node_exporter_collectors: []
+node_exporter_extra_args: []

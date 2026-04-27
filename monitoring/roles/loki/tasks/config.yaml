@@ -1,0 +1,18 @@
+---
+- name: Write Loki configuration
+  ansible.builtin.template:
+    src: "{{ loki_paths.config_template }}"
+    dest: "{{ loki_paths.config }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart Loki
+  become: true
+
+- name: Ensure Loki service state
+  ansible.builtin.service:
+    name: "{{ loki_service.name }}"
+    state: "{{ loki_service.state }}"
+    enabled: "{{ loki_service.enabled }}"
+  become: true

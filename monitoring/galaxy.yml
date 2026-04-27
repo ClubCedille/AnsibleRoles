@@ -1,0 +1,16 @@
+namespace: "cedille"
+name: "monitoring"
+description: "Collection de rôles Ansible pour le monitoring et l'observabilité"
+version: "0.1.0"
+readme: "./docs/README.md"
+authors:
+  - "Louis Raymond <lraymond@lanets.ca>"
+dependencies: {}
+license:
+  - "GPL-3.0-or-later"
+tags:
+  - "monitoring"
+  - "observability"
+  - "metrics"
+  - "logs"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"

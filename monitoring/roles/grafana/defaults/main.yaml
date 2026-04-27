@@ -1,0 +1,52 @@
+---
+grafana_enabled: true
+grafana_supported_distribution: Ubuntu
+grafana_supported_distribution_version: "24.04"
+
+grafana_install:
+  update_cache: true
+  package_state: present
+  package: grafana
+  prereq_packages:
+    - apt-transport-https
+    - wget
+    - gnupg
+  repository:
+    enabled: true
+    key_url: https://apt.grafana.com/gpg-full.key
+    key_path: /etc/apt/keyrings/grafana.asc
+    keyring_dir: /etc/apt/keyrings
+    filename: grafana
+    source: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+
+grafana_service:
+  name: grafana-server
+  state: started
+  enabled: true
+
+grafana_paths:
+  provisioning_dir: /etc/grafana/provisioning
+  datasources_dir: /etc/grafana/provisioning/datasources
+  dashboards_dir: /etc/grafana/provisioning/dashboards
+  datasources_file: monitoring-datasources.yml
+  dashboards_provider_file: monitoring-dashboards.yml
+
+grafana_server:
+  http_port: 3000
+  root_url: http://127.0.0.1:3000
+
+grafana_datasources:
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    url: http://127.0.0.1:9090
+    is_default: true
+    editable: false
+  - name: Loki
+    type: loki
+    access: proxy
+    url: http://127.0.0.1:3100
+    is_default: false
+    editable: false
+
+grafana_dashboards: []

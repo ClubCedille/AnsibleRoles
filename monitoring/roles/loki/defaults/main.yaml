@@ -1,0 +1,45 @@
+---
+
+loki_enabled: true
+loki_supported_distribution: Ubuntu
+loki_supported_distribution_version: "24.04"
+
+loki_install:
+  update_cache: true
+  package_state: present
+  prereq_packages:
+    - apt-transport-https
+    - wget
+    - gpg
+  package: loki
+  repository:
+    enabled: true
+    key_url: https://apt.grafana.com/gpg-full.key
+    key_path: /etc/apt/keyrings/grafana.asc
+    keyring_dir: /etc/apt/keyrings
+    filename: grafana
+    source: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+
+loki_service:
+  name: loki
+  state: started
+  enabled: true
+
+loki_paths:
+  config: /etc/loki/loki.yml
+  config_template: loki.yml.j2
+  config_dir: /etc/loki
+  data_dir: /var/lib/loki
+
+loki_server:
+  http_listen_port: 3100
+  retention_period: 168h
+  bind_address: 0.0.0.0
+
+loki_storage:
+  path_prefix: /var/lib/loki
+  filesystem:
+    chunks_directory: /var/lib/loki/chunks
+    rules_directory: /var/lib/loki/rules
+  schema_config:
+    index_prefix: index_

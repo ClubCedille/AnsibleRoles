@@ -1,0 +1,17 @@
+auths:
+{% for auth_name, auth in snmp_exporter_auths.items() %}
+  {{ auth_name }}:
+    community: {{ auth.community }}
+    version: {{ auth.version }}
+{% endfor %}
+
+modules:
+{% for module_name, module in snmp_exporter_modules.items() %}
+  {{ module_name }}:
+    walk:
+{% for oid in module.walk %}
+      - {{ oid }}
+{% endfor %}
+    version: {{ module.version }}
+    auth: {{ module.auth }}
+{% endfor %}

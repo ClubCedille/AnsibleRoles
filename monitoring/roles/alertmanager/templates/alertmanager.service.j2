@@ -1,0 +1,16 @@
+[Unit]
+Description=Prometheus Alertmanager
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ alertmanager_service.user }}
+Group={{ alertmanager_service.group }}
+ExecStart={{ alertmanager_paths.binary_dir }}/alertmanager \
+  --config.file={{ alertmanager_paths.config }} \
+  --storage.path={{ alertmanager_paths.data_dir }}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

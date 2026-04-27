@@ -1,0 +1,39 @@
+logging {
+  level = "info"
+}
+
+livedebugging {
+  enabled = true
+}
+
+{% for endpoint in alloy_loki_endpoints %}
+loki.write "{{ endpoint.name }}" {
+  endpoint {
+    url = "{{ endpoint.url }}"
+  }
+}
+{% endfor %}
+
+{% for source in alloy_file_sources %}
+local.file_match "{{ source.name }}_targets" {
+  path_targets = [
+{% for path in source.paths %}
+    {
+      __path__ = "{{ path }}"
+{% for key, value in source.labels.items() %}
+      {{ key }} = "{{ value }}"
+{% endfor %}
+    },
+{% endfor %}
+  ]
+}
+
+loki.source.file "{{ source.name }}" {
+  targets    = local.file_match.{{ source.name }}_targets.targets
+  forward_to = [
+{% for endpoint in alloy_loki_endpoints %}
+    loki.write.{{ endpoint.name }}.receiver,
+{% endfor %}
+  ]
+}
+{% endfor %}
