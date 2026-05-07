@@ -1,0 +1,7 @@
+---
+# This file is part of the Ansible role 'launch_server' for Counter-Strike 2 (CS2) game server management.
+# It defines the tasks to launch the CS2 game server after it has been deployed on a server.
+- name: Lancer le serveur de jeu CS2
+  ansible.builtin.include_tasks:
+    file: launch_server.yaml
+  tags: start

@@ -1,0 +1,24 @@
+galaxy_info:
+  author: "Aimé"
+  description: >
+    Rôle Ansible pour fermer le serveur de jeu CS2 après son utilisation sur un serveur.
+  company: "Lan ETS"
+  license: "MIT"
+  min_ansible_version: "2.11"
+  platforms:
+  - name: Debian
+    versions:
+    - bullseye
+    - bookworm
+  - name: Ubuntu
+    versions:
+    - focal
+    - jammy
+    - noble
+  galaxy_tags:
+  - cs2
+  - gameserver
+  - steam
+  - stop
+
+dependencies: []

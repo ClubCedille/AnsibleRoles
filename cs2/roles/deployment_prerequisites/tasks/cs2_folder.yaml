@@ -1,0 +1,35 @@
+---
+
+- name: Vérifier la présence du binaire steamcmd
+  ansible.builtin.stat:
+    path: /usr/games/steamcmd
+  register: steamcmd_bin
+  become: true
+
+- name: Échouer si steamcmd n'est pas installé
+  ansible.builtin.fail:
+    msg: "steamcmd est introuvable à /usr/games/steamcmd. Vérifie la tâche d'installation."
+  when: not steamcmd_bin.stat.exists
+
+- name: Vérifier steamcmd (run minimal)
+  ansible.builtin.command: /usr/games/steamcmd +quit
+  environment:
+    HOME: /home/steam
+  become: true
+  become_user: steam
+  register: steamcmd_check
+  changed_when: false
+  failed_when: steamcmd_check.rc != 0
+  retries: 2
+  delay: 5
+  until: steamcmd_check.rc == 0
+
+- name: Créer dossier cs2_server
+  ansible.builtin.file:
+    path: /home/steam/cs2_server
+    state: directory
+    owner: steam
+    group: steam
+    mode: "0750"
+  become: true
+  become_user: steam

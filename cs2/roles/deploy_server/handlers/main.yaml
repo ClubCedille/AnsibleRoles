@@ -1,0 +1,12 @@
+---
+- name: apt update
+  ansible.builtin.apt:
+    update_cache: true
+  become: true
+
+- name: Reload systemd + start CS2
+  ansible.builtin.systemd:
+    name: cs2
+    daemon_reload: true
+    state: restarted
+  become: true

@@ -1,0 +1,71 @@
+---
+- name: Download Metamod
+  ansible.builtin.get_url:
+    url: "{{ cs2_metamod_url }}"
+    dest: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
+  become: true
+
+- name: Extract Metamod
+  ansible.builtin.unarchive:
+    src: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
+    dest: /home/steam/cs2_server/game/csgo/
+    remote_src: true
+  become: true
+
+- name: Remove Metamod archive
+  ansible.builtin.file:
+    path: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
+    state: absent
+  become: true
+
+- name: Download CSSSharp
+  ansible.builtin.get_url:
+    url: "{{ cs2_csssharp_url }}"
+    dest: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
+  become: true
+
+- name: Extract CSSSharp
+  ansible.builtin.unarchive:
+    src: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
+    dest: /home/steam/cs2_server/game/csgo/
+    remote_src: true
+  become: true
+
+- name: Remove CSSSharp archive
+  ansible.builtin.file:
+    path: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
+    state: absent
+  become: true
+
+- name: Download MatchZy
+  ansible.builtin.get_url:
+    url: "{{ cs2_matchzy_url }}"
+    dest: /home/steam/cs2_server/game/csgo/MatchZy.zip
+  become: true
+
+- name: Extract MatchZy
+  ansible.builtin.unarchive:
+    src: /home/steam/cs2_server/game/csgo/MatchZy.zip
+    dest: /home/steam/cs2_server/game/csgo/
+    remote_src: true
+  become: true
+
+- name: Remove MatchZy archive
+  ansible.builtin.file:
+    path: /home/steam/cs2_server/game/csgo/MatchZy.zip
+    state: absent
+  become: true
+
+- name: Backup gameinfo.gi file
+  ansible.builtin.copy:
+    src: /home/steam/cs2_server/game/csgo/gameinfo.gi
+    dest: /home/steam/cs2_server/game/csgo/gameinfo.gi.bak
+    remote_src: True
+  become: true
+
+- name: Update gameinfo.gi to add Metamod
+  ansible.builtin.lineinfile:
+    path: /home/steam/cs2_server/game/csgo/gameinfo.gi
+    insertafter: 'Game_LowViolence\s*csgo_lv\s*\/\/\s*Perfect\s*World\s*content\s*override'
+    line: '        Game csgo\\addons\\metamod'
+  become: true

@@ -1,0 +1,19 @@
+---
+# 1. ROOT : Mettre à jour le système + créer utilisateur steam
+- name: Mettre à jour le système et créer l'utilisateur steam
+  ansible.builtin.include_tasks:
+    file: update_system.yaml
+  tags: root
+
+# 2. ROOT : SteamCMD global
+- name: Installer SteamCMD
+  ansible.builtin.include_tasks:
+    file: steamcmd_install.yaml
+  tags: steam
+
+
+# 3. STEAM : Vérifier l'installation de steamcmd et créer le dossier qui va accueillir le serveur CS2
+- name: Vérifier l'installation de steamcmd et créer le dossier pour CS2
+  ansible.builtin.include_tasks:
+    file: cs2_folder.yaml
+  tags: steam

@@ -1,0 +1,11 @@
+ansible>=9.2.0
+ansible-core>=2.16.3
+cryptography>=3.4.8
+Jinja2>=3.0.3
+netaddr>=1.2.1
+packaging>=21.3
+pip>=24.0
+PyYAML>=5.4.1
+resolvelib>=1.0.1
+requests>=2.31.0
+proxmoxer>=2.0.1

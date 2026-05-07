@@ -129,12 +129,13 @@
   when: (vm_start_after_creation | default(false)) and not (vm_delete_if_exists | default(false))
   delegate_to: localhost
 
-- name: Wait for SSH to become available
-  ansible.builtin.wait_for:
-    host: "{{ vm_net.ip }}"
-    port: 22
-    delay: 10
-    timeout: 300
-    state: started
-  when: (vm_start_after_creation | default(false)) and not (vm_delete_if_exists | default(false))
-  delegate_to: localhost
+#TODO: Faire en sorte que ça fonctionne quand on crée une VM sur Proxmox
+# - name: Wait for SSH to become available
+#   ansible.builtin.wait_for:
+#     host: "{{ vm_net.ip }}"
+#     port: 22
+#     delay: 10
+#     timeout: 300
+#     state: started
+#   when: (vm_start_after_creation | default(false)) and not (vm_delete_if_exists | default(false))
+#   delegate_to: localhost

@@ -1,0 +1,12 @@
+---
+
+cs2_server_password: "changeme"
+cs2_rcon_password: "changeme"
+cs2_steam_token: "changeme"
+
+cs2_ip: "0.0.0.0"
+cs2_port: 27015
+cs2_tv_port: 27020
+cs2_maxplayers: 12
+cs2_hostname: "CS0X.lanets.ca"
+
