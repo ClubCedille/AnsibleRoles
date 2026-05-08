@@ -12,4 +12,4 @@ tags:
 - "cs2"
 - "gameserver"
 - "steam"
-repository: "https://gitea.infra.lanets.ca/Infrastructure/ansible-roles.git"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"
