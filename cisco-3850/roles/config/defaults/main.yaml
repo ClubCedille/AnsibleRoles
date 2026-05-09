@@ -90,10 +90,10 @@ login_policy:
 
 service_password_encryption: true
 
-# VLAN ID must be in string
-mgmt_vlan: "10"
-access_vlans:
-  - "90"
+# VLAN ID must be in int for management VLAN and access VLAN,
+# but can be in string for extra VLANs.
+mgmt_vlan: 10
+access_vlan: 90
 extra_vlans:
   - "101"
 
