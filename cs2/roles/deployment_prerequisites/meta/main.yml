@@ -1,0 +1,24 @@
+galaxy_info:
+  author: "Aimé"
+  description: >
+    Rôle Ansible pour faire les prérequis de déploiement d'un serveur de jeu Counter-Strike 2 (CS2) au Lan ETS
+  company: "Lan ETS"
+  license: "MIT"
+  min_ansible_version: "2.11"
+  platforms:
+  - name: Debian
+    versions:
+    - bullseye
+    - bookworm
+  - name: Ubuntu
+    versions:
+    - focal
+    - jammy
+    - noble
+  galaxy_tags:
+  - cs2
+  - steamcmd
+  - prerequisites
+  - system
+
+dependencies: []

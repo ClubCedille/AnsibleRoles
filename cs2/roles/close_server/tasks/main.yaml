@@ -1,0 +1,6 @@
+---
+# This file is part of the Ansible role 'close_server' for Counter-Strike 2 (CS2) game server management.
+- name: Stopper le serveur de jeu CS2
+  ansible.builtin.include_tasks:
+    file: stop_server.yaml
+  tags: stop

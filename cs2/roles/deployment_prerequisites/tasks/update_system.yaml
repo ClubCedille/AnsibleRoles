@@ -1,0 +1,17 @@
+---
+# Update system and create steam user
+- name: Update apt + upgrade
+  ansible.builtin.apt:
+    update_cache: true
+    upgrade: dist
+  become: true
+  become_method: sudo
+
+- name: Créer utilisateur steam
+  ansible.builtin.user:
+    name: steam
+    shell: /bin/bash
+    create_home: true
+    state: present
+  become: true
+  become_method: sudo

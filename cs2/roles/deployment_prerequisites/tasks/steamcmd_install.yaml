@@ -1,0 +1,82 @@
+---
+# Install SteamCMD and its dependencies
+- name: Add multiverse repository
+  ansible.builtin.apt_repository:
+    repo: "deb http://archive.ubuntu.com/ubuntu {{ ansible_facts['distribution_release'] }} multiverse"
+    state: present
+    filename: "multiverse"
+  become: true
+
+- name: Vérifier les architectures étrangères activées
+  ansible.builtin.command: dpkg --print-foreign-architectures
+  register: foreign_arch
+  changed_when: false
+  become: true
+
+- name: Ajouter l'architecture i386 si absente
+  ansible.builtin.command: dpkg --add-architecture i386
+  when: "'i386' not in foreign_arch.stdout_lines"
+  register: arch_i386_added
+  changed_when: arch_i386_added.rc == 0
+  notify: apt update
+  become: true
+
+- name: Forcer le handler si l'architecture vient d'être ajoutée
+  ansible.builtin.meta: flush_handlers
+  when: arch_i386_added is defined and arch_i386_added is changed
+
+- name: Accepter d'avance le contrat de licence de steamcmd
+  ansible.builtin.debconf:
+    name: steamcmd
+    question: "{{ item.question }}"
+    value: "{{ item.value }}"
+    vtype: "{{ item.vtype }}"
+  loop:
+    - { question: "steam/question", value: "I AGREE", vtype: "select" }
+    - { question: "steam/license", value: "", vtype: "note" }
+  become: true
+
+- name: Installer steamcmd avec ses dépendances
+  ansible.builtin.apt:
+    name:
+      - steamcmd
+      - lib32gcc-s1
+      - lib32stdc++6
+      - libtinfo6
+      - libicu-dev
+      - libsdl2-2.0-0
+      - unzip
+    state: present
+    update_cache: yes
+  environment:
+    DEBIAN_FRONTEND: noninteractive
+  become: true
+
+- name: Check if original and backup steamclient files exist
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  register: steam_files
+  loop:
+    - /home/steam/.steam/sdk64/steamclient.so
+    - /home/steam/.steam/sdk64/steamclient.so.bak
+  become: true
+
+- name: Rename steamclient.so to steamclient.so.bak
+  ansible.builtin.command:
+    cmd: mv /home/steam/.steam/sdk64/steamclient.so /home/steam/.steam/sdk64/steamclient.so.bak
+    removes: /home/steam/.steam/sdk64/steamclient.so
+    creates: /home/steam/.steam/sdk64/steamclient.so.bak
+  when:
+    - steam_files.results[0].stat.exists
+    - not steam_files.results[1].stat.exists
+  become: true
+
+- name: Replace steamclient.so with updated version from steamcmd
+  ansible.builtin.copy:
+    src: /home/steam/.steam/steam/steamcmd/linux64/steamclient.so
+    dest: /home/steam/.steam/sdk64/steamclient.so
+    remote_src: true
+    owner: steam
+    group: steam
+    mode: '0644'
+  become: true

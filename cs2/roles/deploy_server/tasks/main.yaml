@@ -1,0 +1,12 @@
+---
+# 1. STEAM : Installation de CS2 Server avec SteamCMD
+- name: Installer CS2 Server avec SteamCMD
+  ansible.builtin.include_tasks:
+    file: install_steam.yaml
+  tags: steam
+
+# 2. STEAM : Lancement d'un serveur CS2 minimal
+- name: Lancer les serveur de CS2 avec systemd
+  ansible.builtin.include_tasks:
+    file: launch_steam.yaml
+  tags: cs2

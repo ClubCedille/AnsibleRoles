@@ -1,0 +1,21 @@
+[Unit]
+  Description=Counter-Strike 2 Dedicated Server
+  After=network.target
+  Wants=network.target
+
+[Service]
+  Type=simple
+  User=steam
+  Group=steam
+  WorkingDirectory=/home/steam/cs2_server/game
+  Environment=SERVER_PASSWORD={{ cs2_server_password | quote }}
+  Environment=RCON_PASSWORD={{ cs2_rcon_password | quote }}
+  Environment=STEAM_TOKEN={{ cs2_steam_token | quote }}
+  ExecStart=/home/steam/cs2_server/game/cs2.sh -dedicated -ip {{ cs2_ip | default('0.0.0.0') }} -port {{ cs2_port }} -tv_port {{ cs2_tv_port }} -maxplayers {{ cs2_maxplayers | default(12) }} -usercon +game_mode 1 +game_type 0 +map de_dust2 +hostname {{ cs2_hostname }} +sv_password {{ cs2_server_password }} +rcon_password {{ cs2_rcon_password }} +sv_setsteamaccount {{ cs2_steam_token }}
+  ExecReload=/bin/kill -HUP $MAINPID
+  Restart=on-failure
+  RestartSec=5s
+  LimitNOFILE=65536
+
+[Install]
+  WantedBy=multi-user.target

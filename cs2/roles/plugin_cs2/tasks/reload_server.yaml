@@ -1,0 +1,11 @@
+---
+
+# Redémarrer le serveur CS2 pour appliquer les changements de plugins
+- name: Activer et démarrer CS2 daemon
+  ansible.builtin.systemd:
+    name: cs2
+    state: started
+    enabled: true
+    daemon_reload: true
+  become: true
+  tags: cs2
