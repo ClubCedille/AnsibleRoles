@@ -9,6 +9,7 @@
             vlan_id: "{{ mgmt_vlan }}"
             state: active
             shutdown: disabled
+
     - name: Using DHCP for address assignment
       cisco.ios.ios_config:
         lines:
@@ -17,11 +18,10 @@
           - interface Vlan{{ mgmt_vlan }}
 
 - name: Configure access VLAN
-  loop: "{{ access_vlans }}"
   cisco.ios.ios_vlans:
     config:
-      - name: vlan_{{ item }}
-        vlan_id: "{{ item }}"
+      - name: vlan_{{ access_vlan }}
+        vlan_id: "{{ access_vlan }}"
         state: active
         shutdown: disabled
 
