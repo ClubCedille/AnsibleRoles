@@ -52,6 +52,13 @@
     DEBIAN_FRONTEND: noninteractive
   become: true
 
+- name: Test steamcmd and update it
+  ansible.builtin.command: steamcmd +quit
+  register: steamcmd_test
+  failed_when: steamcmd_test.rc != 0 and "Steam Console Client" not in steamcmd_test.stdout
+  become: true
+
+
 - name: Check if original and backup steamclient files exist
   ansible.builtin.stat:
     path: "{{ item }}"
