@@ -46,6 +46,7 @@
       - libicu-dev
       - libsdl2-2.0-0
       - unzip
+      - acl
     state: present
     update_cache: yes
   environment:
