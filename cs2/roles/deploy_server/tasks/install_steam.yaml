@@ -60,6 +60,15 @@
     - not steam_files.results[1].stat.exists
   become: true
 
+- name: Ensure sdk64 directory exists
+  ansible.builtin.file:
+    path: /home/steam/.steam/sdk64
+    state: directory
+    owner: steam
+    group: steam
+    mode: '0755'
+  become: true
+
 - name: Replace steamclient.so with updated version from steamcmd
   ansible.builtin.copy:
     src: /home/steam/.steam/steam/steamcmd/linux64/steamclient.so
