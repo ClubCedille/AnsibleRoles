@@ -14,3 +14,4 @@
   ansible.builtin.command: "tailscale up --authkey={{ tailscale_auth_key }}"
   register: tailscale_output
   changed_when: "'Success' in tailscale_output.stdout or tailscale_output.rc == 0"
+  become: true
