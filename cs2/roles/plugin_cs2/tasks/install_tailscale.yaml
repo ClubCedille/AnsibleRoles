@@ -1,0 +1,10 @@
+---
+- name: Install tailscale 
+  ansible.builtin.command:
+    cmd: >
+      curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --auth-key="{{ tailscale_auth_key }}"
+
+- name: tailscale running
+  ansible.builtin.command:
+    cmd: tailscale up
+  become: true
