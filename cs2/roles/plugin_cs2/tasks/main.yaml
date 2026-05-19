@@ -13,7 +13,7 @@
   tags: plugins
 
 #Installer tailscale et le faire fonctionner 
-- name: Install tailscale
+- name: Tailscale installation
   ansible.builtin.include_tasks:
     file: install_tailscale.yaml
   tags: plugins

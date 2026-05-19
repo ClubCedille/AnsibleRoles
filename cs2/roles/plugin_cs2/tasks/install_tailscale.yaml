@@ -1,8 +1,16 @@
 ---
-- name: Install tailscale 
-  ansible.builtin.shell: |
-      curl -fsSL https://tailscale.com/install.sh | sh && sudo tailscale up --auth-key="{{ tailscale_auth_key }}"
-- name: tailscale running
-  ansible.builtin.command:
-    cmd: tailscale up
-  become: true
+- name: Download Tailscale installation script
+  ansible.builtin.get_url:
+    url: https://tailscale.com/install.sh
+    dest: /tmp/tailscale_install.sh
+    mode: '0755'
+
+- name: Execute Tailscale installation script
+  ansible.builtin.command: /tmp/tailscale_install.sh
+  args:
+    creates: /usr/bin/tailscale
+
+- name: Start and authenticate Tailscale
+  ansible.builtin.command: "tailscale up --authkey={{ tailscale_auth_key }}"
+  register: tailscale_output
+  changed_when: "'Success' in tailscale_output.stdout or tailscale_output.rc == 0"
