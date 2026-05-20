@@ -1,7 +1,7 @@
 namespace: "lanets"
 name: "cs2"
 description: "Collection de rôles Ansible pour gérer les serveurs CS2 au Lan ETS"
-version: "1.0.0"
+version: "1.0.1"
 readme: "./docs/README.md"
 authors:
 - "Aimé Melançon <amelancon@lanets.ca>"
@@ -12,4 +12,6 @@ tags:
 - "cs2"
 - "gameserver"
 - "steam"
+- "plugins"
+- "tailscale"
 repository: "https://github.com/ClubCedille/AnsibleRoles.git"

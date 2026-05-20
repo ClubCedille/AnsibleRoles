@@ -69,3 +69,13 @@
     insertafter: 'Game_LowViolence\s*csgo_lv\s*\/\/\s*Perfect\s*World\s*content\s*override'
     line: '        Game csgo\\addons\\metamod'
   become: true
+
+- name: Verify and correct about the sv_logecho
+  ansible.builtin.lineinfile:
+    path: /home/steam/cs2_server/game/csgo/cfg/server.cfg
+    line: "sv_logecho 1"
+    regexp: "^sv_logecho"
+    create: yes 
+    owner: steam 
+    group: steam
+    mode: '0644'

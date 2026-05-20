@@ -1,0 +1,24 @@
+galaxy_info:
+  author: "Aimé"
+  description: >
+    Installe et configure Tailscale sur un serveur pour permettre une connexion sécurisée à distance.
+  company: "Lan ETS"
+  license: "MIT"
+  min_ansible_version: "2.11"
+  platforms:
+  - name: Debian
+    versions:
+    - bullseye
+    - bookworm
+  - name: Ubuntu
+    versions:
+    - focal
+    - jammy
+    - noble
+  galaxy_tags:
+  - tailscale
+  - vpn
+  - network
+  - start
+
+dependencies: []

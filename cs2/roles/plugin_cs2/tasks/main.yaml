@@ -5,19 +5,11 @@
     file: stop_server.yaml
   tags: plugins
 
-
 #Installer les plugins nécessaires pour la gestion de serveur cs2
 - name: Installer les plugins pour CS2
   ansible.builtin.include_tasks:
     file: install_plugins.yaml
   tags: plugins
-
-#Installer tailscale et le faire fonctionner 
-- name: Tailscale installation
-  ansible.builtin.include_tasks:
-    file: install_tailscale.yaml
-  tags: plugins
-
 
 #Configurer les plugins pour CS2 et redémarrer le serveur
 - name: Configurer les plugins pour CS2
