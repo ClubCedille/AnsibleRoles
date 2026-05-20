@@ -70,12 +70,33 @@
     line: '        Game csgo\\addons\\metamod'
   become: true
 
+- name: Ensure cfg directory exists
+  ansible.builtin.file:
+    path: /home/steam/cs2_server/game/csgo/cfg
+    state: directory
+    owner: steam
+    group: steam
+    mode: '0755'
+  become: true
+
 - name: Verify and correct about the sv_logecho
   ansible.builtin.lineinfile:
     path: /home/steam/cs2_server/game/csgo/cfg/server.cfg
     line: "sv_logecho 1"
     regexp: "^sv_logecho"
-    create: yes 
-    owner: steam 
+    create: yes
+    owner: steam
     group: steam
     mode: '0644'
+  become: true
+
+- name: Verify and correct about the log on
+  ansible.builtin.lineinfile:
+    path: /home/steam/cs2_server/game/csgo/cfg/server.cfg
+    line: "log on"
+    regexp: "^log"
+    create: yes
+    owner: steam
+    group: steam
+    mode: '0644'
+  become: true
