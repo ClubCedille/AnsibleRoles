@@ -100,3 +100,68 @@
     group: steam
     mode: '0644'
   become: true
+
+
+# --- Robustifications supplémentaires ---
+- name: Ensure addons directory exists
+  ansible.builtin.file:
+    path: "{{ cs2_addons_dir | default('/home/steam/cs2_server/game/csgo/addons') }}"
+    state: directory
+    owner: steam
+    group: steam
+    mode: '0755'
+  become: true
+
+- name: Move extracted plugin folders into addons if they exist at top-level
+  ansible.builtin.shell: |
+    set -e
+    for p in "metamod" "sourcemod" "counterstrikesharp" "MatchZy"; do
+      if [ -d "{{ cs2_game_dir | default('/home/steam/cs2_server/game/csgo') }}/$p" ]; then
+        mv -f "{{ cs2_game_dir | default('/home/steam/cs2_server/game/csgo') }}/$p" "{{ cs2_addons_dir | default('/home/steam/cs2_server/game/csgo/addons') }}/" || true
+      fi
+    done
+  args:
+    executable: /bin/bash
+  become: true
+
+- name: Ensure ownership and perms for addons and cfg
+  ansible.builtin.command:
+    cmd: chown -R steam:steam "{{ cs2_addons_dir | default('/home/steam/cs2_server/game/csgo/addons') }}" && chmod -R u+rwX,go+rX "{{ cs2_addons_dir | default('/home/steam/cs2_server/game/csgo/addons') }}"
+  become: true
+
+- name: Ensure Metamod reference in gameinfo.gi
+  ansible.builtin.blockinfile:
+    path: "{{ cs2_game_dir | default('/home/steam/cs2_server/game/csgo') }}/gameinfo.gi"
+    block: |
+      	Game csgo\\addons\\metamod
+    marker: "# {mark} ANSIBLE METAMOD"
+    create: yes
+  become: true
+
+- name: Verify presence of critical plugin directories
+  ansible.builtin.stat:
+    path: "{{ item }}"
+  register: plugin_stats
+  loop:
+    - "{{ cs2_addons_dir | default('/home/steam/cs2_server/game/csgo/addons') }}/metamod"
+    - "{{ cs2_addons_dir | default('/home/steam/cs2_server/game/csgo/addons') }}/counterstrikesharp"
+    - "{{ cs2_addons_dir | default('/home/steam/cs2_server/game/csgo/addons') }}/MatchZy"
+  become: true
+
+- name: Fail if critical plugin missing
+  ansible.builtin.fail:
+    msg: "Plugin manquant: {{ item.item }} — vérifie les URLs et l'extraction."
+  when: not item.stat.exists
+  loop: "{{ plugin_stats.results }}"
+  become: true
+
+- name: Debug list of addons (présent sur la machine cible)
+  ansible.builtin.command:
+    cmd: ls -la "{{ cs2_addons_dir | default('/home/steam/cs2_server/game/csgo/addons') }}"
+  register: addons_list
+  changed_when: false
+  become: true
+
+- name: Afficher la liste des addons détectés
+  ansible.builtin.debug:
+    var: addons_list.stdout_lines

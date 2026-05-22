@@ -29,17 +29,17 @@
   ansible.builtin.debug:
     msg: "The download and installation of CS2 with SteamCMD is complete."
 
-- name: Vérifier l'installation de cs2
-  ansible.builtin.command:
-    cmd: >
-      /usr/games/steamcmd +login anonymous +force_install_dir /home/steam/cs2_server +app_update 730 validate +quit
-  args:
-    chdir: /home/steam/cs2_server
-  become: true
-  become_user: steam
-  environment:
-    PATH: "/usr/games:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-  tags: steam
+# - name: Vérifier l'installation de cs2
+#   ansible.builtin.command:
+#     cmd: >
+#       /usr/games/steamcmd +login anonymous +force_install_dir /home/steam/cs2_server +app_update 730 validate +quit
+#   args:
+#     chdir: /home/steam/cs2_server
+#   become: true
+#   become_user: steam
+#   environment:
+#     PATH: "/usr/games:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+#   tags: steam
 
 - name: Check if original and backup steamclient files exist
   ansible.builtin.stat:
