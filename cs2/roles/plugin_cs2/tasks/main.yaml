@@ -5,7 +5,6 @@
     file: stop_server.yaml
   tags: plugins
 
-
 #Installer les plugins nécessaires pour la gestion de serveur cs2
 - name: Installer les plugins pour CS2
   ansible.builtin.include_tasks:
