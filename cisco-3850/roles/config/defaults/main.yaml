@@ -92,10 +92,11 @@ service_password_encryption: true
 
 # VLAN ID must be in int for management VLAN and access VLAN,
 # but can be in string for extra VLANs.
-mgmt_vlan: 10
-access_vlan: 90
+mgmt_vlan: 320
+access_vlan: 310
 extra_vlans:
-  - "101"
+  - "330"
+  - "340"
 
 # Configuration for the uplink
 # 4x1 for four 1 GB/s Ethernet
