@@ -13,7 +13,7 @@
     remote_src: true
     mode: '0770'
   become: true
-  become_user: steam
+  
 
 - name: Remove Metamod archive
   ansible.builtin.file:
@@ -35,7 +35,7 @@
     remote_src: true
     mode: '0770'
   become: true
-  become_user: steam
+  
 
 - name: Remove CSSSharp archive
   ansible.builtin.file:
@@ -57,7 +57,7 @@
     remote_src: true
     mode: '0770'
   become: true
-  become_user: steam
+
 
 - name: Remove MatchZy archive
   ansible.builtin.file:
@@ -81,7 +81,6 @@
     line: '        Game csgo\\addons\\metamod'
     mode: '0770'
   become: true
-  become_user: steam
 
 - name: Ensure cfg directory exists
   ansible.builtin.file:
