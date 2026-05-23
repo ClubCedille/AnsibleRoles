@@ -1,10 +1,4 @@
----
-# URLs des plugins Metamod / CSSSharp / MatchZy
-# Remplis ces valeurs dans le playbook ou via inventory.
+
 cs2_metamod_url: ""
 cs2_csssharp_url: ""
 cs2_matchzy_url: ""
-
-# Chemins locaux attendus
-cs2_game_dir: "/home/steam/cs2_server/game/csgo"
-cs2_addons_dir: "{{ cs2_game_dir }}/addons"
