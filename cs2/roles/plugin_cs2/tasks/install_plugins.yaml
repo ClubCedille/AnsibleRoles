@@ -3,6 +3,7 @@
   ansible.builtin.get_url:
     url: "{{ cs2_metamod_url }}"
     dest: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
+    timeout: 300
   become: true
 
 - name: Extract Metamod
@@ -24,6 +25,7 @@
   ansible.builtin.get_url:
     url: "{{ cs2_csssharp_url }}"
     dest: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
+    timeout: 300
   become: true
 
 - name: Extract CSSSharp
@@ -45,6 +47,7 @@
   ansible.builtin.get_url:
     url: "{{ cs2_matchzy_url }}"
     dest: /home/steam/cs2_server/game/csgo/MatchZy.zip
+    timeout: 300
   become: true
 
 - name: Extract MatchZy
