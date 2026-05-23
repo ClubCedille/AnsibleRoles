@@ -1,4 +1,14 @@
 ---
+
+- name: Fix ownership of game directory before extracting
+  ansible.builtin.file:
+    path: "/home/steam/cs2_server/game/csgo"
+    owner: steam
+    group: steam
+    recurse: true
+  become: true          
+  become_user: root
+
 - name: Download Metamod
   ansible.builtin.get_url:
     url: "{{ cs2_metamod_url }}"
@@ -12,7 +22,10 @@
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
     mode: '0770'
+    extra_opts:
+      - "--no-same-owner"
   become: true
+  become_user: steam
   
 
 - name: Remove Metamod archive
@@ -34,7 +47,10 @@
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
     mode: '0770'
+    extra_opts:
+      - "--no-same-owner"
   become: true
+  become_user: steam
   
 
 - name: Remove CSSSharp archive
@@ -55,8 +71,11 @@
     src: /home/steam/cs2_server/game/csgo/MatchZy.zip
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
+    extra_opts:
+      - "--no-same-owner"
     mode: '0770'
   become: true
+  become_user: steam
 
 
 - name: Remove MatchZy archive
@@ -81,6 +100,7 @@
     line: '        Game csgo\\addons\\metamod'
     mode: '0770'
   become: true
+  become_user: steam
 
 - name: Ensure cfg directory exists
   ansible.builtin.file:
@@ -90,7 +110,8 @@
     group: steam
     mode: '0755'
   become: true
-
+  become_user: steam
+  
 - name: Verify and correct about the sv_logecho
   ansible.builtin.lineinfile:
     path: /home/steam/cs2_server/game/csgo/cfg/server.cfg
