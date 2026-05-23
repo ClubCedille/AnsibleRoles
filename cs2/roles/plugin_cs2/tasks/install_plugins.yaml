@@ -10,7 +10,9 @@
     src: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
+    mode: '0770'
   become: true
+  become_user: steam
 
 - name: Remove Metamod archive
   ansible.builtin.file:
@@ -29,7 +31,9 @@
     src: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
+    mode: '0770'
   become: true
+  become_user: steam
 
 - name: Remove CSSSharp archive
   ansible.builtin.file:
@@ -48,7 +52,9 @@
     src: /home/steam/cs2_server/game/csgo/MatchZy.zip
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
+    mode: '0770'
   become: true
+  become_user: steam
 
 - name: Remove MatchZy archive
   ansible.builtin.file:
@@ -61,14 +67,18 @@
     src: /home/steam/cs2_server/game/csgo/gameinfo.gi
     dest: /home/steam/cs2_server/game/csgo/gameinfo.gi.bak
     remote_src: True
+    mode: '0770'
   become: true
+  become_user: steam
 
 - name: Update gameinfo.gi to add Metamod
   ansible.builtin.lineinfile:
     path: /home/steam/cs2_server/game/csgo/gameinfo.gi
     insertafter: 'Game_LowViolence\s*csgo_lv\s*\/\/\s*Perfect\s*World\s*content\s*override'
     line: '        Game csgo\\addons\\metamod'
+    mode: '0770'
   become: true
+  become_user: steam
 
 - name: Ensure cfg directory exists
   ansible.builtin.file:
