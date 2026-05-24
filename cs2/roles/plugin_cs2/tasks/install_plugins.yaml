@@ -26,7 +26,6 @@
       - "--no-same-owner"
   become: true
   become_user: steam
-  
 
 - name: Remove Metamod archive
   ansible.builtin.file:
@@ -51,7 +50,6 @@
       - "--no-same-owner"
   become: true
   become_user: steam
-  
 
 - name: Remove CSSSharp archive
   ansible.builtin.file:
@@ -76,7 +74,6 @@
     mode: '0770'
   become: true
   become_user: steam
-
 
 - name: Remove MatchZy archive
   ansible.builtin.file:
@@ -111,7 +108,7 @@
     mode: '0755'
   become: true
   become_user: steam
-  
+
 - name: Verify and correct about the sv_logecho
   ansible.builtin.lineinfile:
     path: /home/steam/cs2_server/game/csgo/cfg/server.cfg
@@ -122,7 +119,8 @@
     group: steam
     mode: '0644'
   become: true
-
+  become_user: steam
+  
 - name: Verify and correct about the log on
   ansible.builtin.lineinfile:
     path: /home/steam/cs2_server/game/csgo/cfg/server.cfg
