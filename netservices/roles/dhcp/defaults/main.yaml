@@ -78,7 +78,7 @@ netservices_dhcp:
                   auto-failover: true
       loggers:
         - name: kea-dhcp4
-          output-options:
+          output_options:
             - output: stdout
           severity: INFO
 
