@@ -8,6 +8,12 @@
     parents:
       - interface Port-channel1
 
+- name: Suppport all SFP
+  cisco.ios.ios_config:
+    lines:
+      - no errdisable detect cause gbic-invalid
+      - service unsupported-transceiver
+
 - name: Access Interfaces
   block:
     - name: Setting up VLAN
