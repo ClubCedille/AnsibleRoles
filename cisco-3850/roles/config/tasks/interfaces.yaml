@@ -17,6 +17,12 @@
     parents:
       - interface Port-channel2
 
+- name: Enabling DHCP snooping
+  cisco.ios.ios_config:
+    lines:
+      - ip dhcp snooping
+      - ip dhcp snooping vlan {{ mgmt_vlan | string }},{{ access_vlan | string }},{{ extra_vlans | join(',') }}
+
 - name: Suppport all SFP
   cisco.ios.ios_config:
     lines:
@@ -61,11 +67,12 @@
                 - "{{ mgmt_vlan | string }}"
                 - "{{ access_vlan | string }}"
                 - "{{ extra_vlans }}"
-    - name: Setting up channel-group
+    - name: Setting up channel-group and DHCP snooping
       loop: "{{ range(1, 5) | list }}"
       cisco.ios.ios_config:
         lines:
           - channel-group 2 mode active
+          - ip dhcp snooping trust
         parents:
           - interface GigabitEthernet1/1/{{ item }}
 
@@ -80,11 +87,12 @@
             trunk:
               allowed_vlans: "{{ extra_vlans + [mgmt_vlan | string] + [access_vlan | string] }}"
 
-    - name: Setting up channel-group
+    - name: Setting up channel-group and DHCP snooping
       loop: "{{ range(3, 5) | list }}"
       cisco.ios.ios_config:
         lines:
           - channel-group 1 mode active
+          - ip dhcp snooping trust
         parents:
           - interface TenGigabitEthernet1/1/{{ item }}
 
