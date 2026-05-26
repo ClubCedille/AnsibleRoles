@@ -1,5 +1,5 @@
 ---
-- name: Portchannel to distribution
+- name: Portchannel to distribution (2x10GB)
   cisco.ios.ios_config:
     lines:
       - description PORTCHANNEL TO D1
@@ -7,6 +7,15 @@
       - switchport mode trunk
     parents:
       - interface Port-channel1
+
+- name: Portchannel to distribution (4x1GB)
+  cisco.ios.ios_config:
+    lines:
+      - description PORTCHANNEL TO D1
+      - switchport trunk allowed vlan {{ mgmt_vlan | string }},{{ access_vlan | string }},{{ extra_vlans | join(',') }}
+      - switchport mode trunk
+    parents:
+      - interface Port-channel2
 
 - name: Suppport all SFP
   cisco.ios.ios_config:
@@ -40,7 +49,6 @@
           - interface GigabitEthernet1/0/{{ item }}
 
 - name: Uplink Interfaces (4x1GB)
-  when: uplink_config == '4x1'
   block:
     - name: Setting up VLAN
       loop: "{{ range(1, 5) | list }}"
@@ -57,24 +65,11 @@
       loop: "{{ range(1, 5) | list }}"
       cisco.ios.ios_config:
         lines:
-          - channel-group 1 mode active
+          - channel-group 2 mode active
         parents:
           - interface GigabitEthernet1/1/{{ item }}
 
-- name: Uplink Interfaces (1x10GB)
-  when: uplink_config == '1x10'
-  cisco.ios.ios_l2_interfaces:
-    config:
-      - name: TenGigabitEthernet1/1/3
-        mode: trunk
-        trunk:
-          allowed_vlans:
-            - "{{ mgmt_vlan | string }}"
-            - "{{ access_vlan | string }}"
-            - "{{ extra_vlans }}"
-
 - name: Uplink Interfaces (2x10GB)
-  when: uplink_config == '2x10'
   block:
     - name: Setting up VLAN
       loop: "{{ range(3, 5) | list }}"
