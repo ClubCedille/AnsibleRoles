@@ -1,12 +1,11 @@
 ---
-
 - name: Fix ownership of game directory before extracting
   ansible.builtin.file:
     path: "/home/steam/cs2_server/game/csgo"
     owner: steam
     group: steam
     recurse: true
-  become: true          
+  become: true
   become_user: root
 
 - name: Download Metamod
@@ -21,7 +20,7 @@
     src: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
-    mode: '0770'
+    mode: "0770"
   become: true
   become_user: steam
 
@@ -43,7 +42,7 @@
     src: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
-    mode: '0770'
+    mode: "0770"
   become: true
   become_user: steam
 
@@ -65,7 +64,7 @@
     src: /home/steam/cs2_server/game/csgo/MatchZy.zip
     dest: /home/steam/cs2_server/game/csgo/
     remote_src: true
-    mode: '0770'
+    mode: "0770"
   become: true
   become_user: steam
 
@@ -75,12 +74,23 @@
     state: absent
   become: true
 
+- name: Copy MatchZy contents using shell
+  ansible.builtin.shell: cp -r /home/steam/cs2_server/game/csgo/MatchZy-1.4.21/* /home/steam/cs2_server/game/csgo/
+  become: true
+  become_user: steam
+
+- name: Clean up the now-empty MatchZy-XXXX directory
+  ansible.builtin.file:
+    path: "/home/steam/cs2_server/game/csgo/MatchZy-1.4.21/"
+    state: absent
+  become_user: steam
+
 - name: Backup gameinfo.gi file
   ansible.builtin.copy:
     src: /home/steam/cs2_server/game/csgo/gameinfo.gi
     dest: /home/steam/cs2_server/game/csgo/gameinfo.gi.bak
     remote_src: True
-    mode: '0770'
+    mode: "0770"
   become: true
   become_user: steam
 
@@ -88,8 +98,8 @@
   ansible.builtin.lineinfile:
     path: /home/steam/cs2_server/game/csgo/gameinfo.gi
     insertafter: 'Game_LowViolence\s*csgo_lv\s*\/\/\s*Perfect\s*World\s*content\s*override'
-    line: '        Game csgo\\addons\\metamod'
-    mode: '0770'
+    line: "        Game csgo/addons/metamod"
+    mode: "0770"
   become: true
   become_user: steam
 
@@ -99,7 +109,7 @@
     state: directory
     owner: steam
     group: steam
-    mode: '0755'
+    mode: "0755"
   become: true
   become_user: steam
 
@@ -111,10 +121,10 @@
     create: yes
     owner: steam
     group: steam
-    mode: '0644'
+    mode: "0644"
   become: true
   become_user: steam
-  
+
 - name: Verify and correct about the log on
   ansible.builtin.lineinfile:
     path: /home/steam/cs2_server/game/csgo/cfg/server.cfg
@@ -123,5 +133,5 @@
     create: yes
     owner: steam
     group: steam
-    mode: '0644'
+    mode: "0644"
   become: true
