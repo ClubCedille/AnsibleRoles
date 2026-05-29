@@ -1,6 +1,5 @@
 ---
-# Install SteamCMD and CS2 server
-- name: Tester SteamCMD sous l'utilisateur steam
+- name: Run SteamCMD to check it is installed
   ansible.builtin.command:
     cmd: /usr/games/steamcmd +quit
   become: true
@@ -9,37 +8,14 @@
     PATH: "/usr/games:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
   changed_when: false
 
-
-- name: Afficher l'état initial
-  ansible.builtin.debug:
-    msg: "Begin of installation of CS2 with SteamCMD..."
-
-- name: se connecter dans SteamCMD et installer CS2 # required. Full name of the interface excluding any logical unit number, i.e. Ethernet1/3.
+- name: Install CS2 Server # required. Full name of the interface excluding any logical unit number, i.e. Ethernet1/3.
   ansible.builtin.command:
     cmd: >
       /usr/games/steamcmd +login anonymous +force_install_dir /home/steam/cs2_server +app_update 730 validate +quit
-  #args:
-  # chdir: /home/steam
   become: true
   become_user: steam
   environment:
     PATH: "/usr/games:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-
-- name: Afficher l'état final
-  ansible.builtin.debug:
-    msg: "The download and installation of CS2 with SteamCMD is complete."
-
-# - name: Vérifier l'installation de cs2
-#   ansible.builtin.command:
-#     cmd: >
-#       /usr/games/steamcmd +login anonymous +force_install_dir /home/steam/cs2_server +app_update 730 validate +quit
-#   args:
-#     chdir: /home/steam/cs2_server
-#   become: true
-#   become_user: steam
-#   environment:
-#     PATH: "/usr/games:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
-#   tags: steam
 
 - name: Check if original and backup steamclient files exist
   ansible.builtin.stat:
@@ -66,7 +42,7 @@
     state: directory
     owner: steam
     group: steam
-    mode: '0755'
+    mode: "0755"
   become: true
 
 - name: Replace steamclient.so with updated version from steamcmd
@@ -76,5 +52,5 @@
     remote_src: true
     owner: steam
     group: steam
-    mode: '0644'
+    mode: "0644"
   become: true
