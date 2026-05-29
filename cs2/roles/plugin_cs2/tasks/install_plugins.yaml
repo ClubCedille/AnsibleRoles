@@ -8,14 +8,31 @@
   become: true
   become_user: root
 
-- name: Download Metamod
+- name: Ensure local download directory exists
+  ansible.builtin.file:
+    path: /tmp/ansible_cs2
+    state: directory
+    mode: "0755"
+  delegate_to: localhost
+
+- name: Download Metamod to control node
   ansible.builtin.get_url:
     url: "{{ cs2_metamod_url }}"
-    dest: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
+    dest: /tmp/ansible_cs2/mmsource.tar.gz
     timeout: 300
+    force: yes
+  delegate_to: localhost
+
+- name: Upload Metamod archive to remote host
+  ansible.builtin.copy:
+    src: /tmp/ansible_cs2/mmsource.tar.gz
+    dest: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
+    owner: steam
+    group: steam
+    mode: "0640"
   become: true
 
-- name: Extract Metamod
+- name: Extract Metamod on remote host
   ansible.builtin.unarchive:
     src: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
     dest: /home/steam/cs2_server/game/csgo/
@@ -24,20 +41,30 @@
   become: true
   become_user: steam
 
-- name: Remove Metamod archive
+- name: Remove remote Metamod archive
   ansible.builtin.file:
     path: /home/steam/cs2_server/game/csgo/mmsource.tar.gz
     state: absent
   become: true
 
-- name: Download CSSSharp
+- name: Download CSSSharp to control node
   ansible.builtin.get_url:
     url: "{{ cs2_csssharp_url }}"
-    dest: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
+    dest: /tmp/ansible_cs2/counterstrikesharp.zip
     timeout: 300
+    force: yes
+  delegate_to: localhost
+
+- name: Upload CSSSharp archive to remote host
+  ansible.builtin.copy:
+    src: /tmp/ansible_cs2/counterstrikesharp.zip
+    dest: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
+    owner: steam
+    group: steam
+    mode: "0640"
   become: true
 
-- name: Extract CSSSharp
+- name: Extract CSSSharp on remote host
   ansible.builtin.unarchive:
     src: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
     dest: /home/steam/cs2_server/game/csgo/
@@ -46,20 +73,30 @@
   become: true
   become_user: steam
 
-- name: Remove CSSSharp archive
+- name: Remove remote CSSSharp archive
   ansible.builtin.file:
     path: /home/steam/cs2_server/game/csgo/counterstrikesharp.zip
     state: absent
   become: true
 
-- name: Download MatchZy
+- name: Download MatchZy to control node
   ansible.builtin.get_url:
     url: "{{ cs2_matchzy_url }}"
-    dest: /home/steam/cs2_server/game/csgo/MatchZy.zip
+    dest: /tmp/ansible_cs2/MatchZy.zip
     timeout: 300
+    force: yes
+  delegate_to: localhost
+
+- name: Upload MatchZy archive to remote host
+  ansible.builtin.copy:
+    src: /tmp/ansible_cs2/MatchZy.zip
+    dest: /home/steam/cs2_server/game/csgo/MatchZy.zip
+    owner: steam
+    group: steam
+    mode: "0640"
   become: true
 
-- name: Extract MatchZy
+- name: Extract MatchZy on remote host
   ansible.builtin.unarchive:
     src: /home/steam/cs2_server/game/csgo/MatchZy.zip
     dest: /home/steam/cs2_server/game/csgo/
@@ -68,7 +105,7 @@
   become: true
   become_user: steam
 
-- name: Remove MatchZy archive
+- name: Remove remote MatchZy archive
   ansible.builtin.file:
     path: /home/steam/cs2_server/game/csgo/MatchZy.zip
     state: absent
@@ -83,6 +120,7 @@
   ansible.builtin.file:
     path: "/home/steam/cs2_server/game/csgo/MatchZy-1.4.21/"
     state: absent
+  become: true
   become_user: steam
 
 - name: Backup gameinfo.gi file
@@ -135,3 +173,10 @@
     group: steam
     mode: "0644"
   become: true
+  become_user: steam
+
+- name: Remove local plugin archives directory
+  ansible.builtin.file:
+    path: /tmp/ansible_cs2
+    state: absent
+  delegate_to: localhost
