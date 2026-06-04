@@ -1,0 +1,55 @@
+---
+- name: Enable commented community repository entries
+  ansible.builtin.lineinfile:
+    path: /etc/apk/repositories
+    regexp: '^#\s*(https?://\S+/community)\s*$'
+    line: '\1'
+    backrefs: true
+  become: true
+
+- name: Read apk repositories configuration
+  ansible.builtin.slurp:
+    path: /etc/apk/repositories
+  register: install_apk_repositories_file
+  become: true
+
+- name: Ensure an enabled community repository exists
+  ansible.builtin.lineinfile:
+    path: /etc/apk/repositories
+    line: "https://dl-cdn.alpinelinux.org/alpine/v{{ ansible_distribution_version | regex_search('^\\d+\\.\\d+') }}/community"
+    state: present
+  become: true
+  when: (install_apk_repositories_file.content | b64decode | regex_findall('(?m)^https?://\\S+/community\\s*$') | length) == 0
+
+- name: Update apk cache
+  community.general.apk:
+    update_cache: true
+  become: true
+
+- name: Perform full system upgrade
+  community.general.apk:
+    upgrade: true
+  become: true
+
+- name: Install Docker packages
+  community.general.apk:
+    name:
+      - docker
+      - docker-cli-compose
+    state: present
+  become: true
+
+- name: Enable and start Docker service
+  ansible.builtin.service:
+    name: docker
+    enabled: true
+    state: started
+  become: true
+
+- name: Add Ansible connection user to the docker group
+  ansible.builtin.user:
+    name: "{{ ansible_user }}"
+    groups: docker
+    append: true
+  become: true
+  when: ansible_user is defined
