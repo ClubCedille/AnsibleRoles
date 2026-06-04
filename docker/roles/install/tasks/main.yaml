@@ -13,3 +13,6 @@
       Unsupported distribution '{{ ansible_distribution }}' for role docker.install.
       Supported distributions: Ubuntu, Alpine.
   when: ansible_distribution not in ["Ubuntu", "Alpine"]
+
+- name: Manage docker compose file
+  ansible.builtin.include_tasks: compose.yaml

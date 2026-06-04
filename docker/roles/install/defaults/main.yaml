@@ -1,2 +1,11 @@
 ---
-docker_users:
+install_docker_users:
+install_docker_compose_source_type: none
+install_docker_compose_content: ""
+install_docker_compose_template_src: docker-compose.yml.j2
+install_docker_compose_url: ""
+install_docker_compose_filename: docker-compose.yml
+install_docker_compose_owner: "{{ ansible_user | default(ansible_user_id | default('root')) }}"
+install_docker_compose_group: "{{ install_docker_compose_owner }}"
+install_docker_compose_target_dir: "/home/{{ install_docker_compose_owner }}/ansible-docker-compose"
+install_docker_compose_file_path: "{{ install_docker_compose_target_dir }}/{{ install_docker_compose_filename }}"

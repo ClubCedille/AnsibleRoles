@@ -1,0 +1,72 @@
+---
+- name: Validate docker compose source configuration
+  ansible.builtin.assert:
+    that:
+      - install_docker_compose_source_type in ['none', 'inline', 'template', 'remote']
+      - install_docker_compose_source_type != 'inline' or (install_docker_compose_content | length > 0)
+      - install_docker_compose_source_type != 'template' or (install_docker_compose_template_src | length > 0)
+      - install_docker_compose_source_type != 'remote' or (install_docker_compose_url | length > 0)
+    fail_msg: >-
+      Invalid docker compose configuration. Supported source types are
+      none, inline, template, and remote.
+
+- name: Ensure docker compose directory exists
+  ansible.builtin.file:
+    path: "{{ install_docker_compose_target_dir }}"
+    state: directory
+    owner: "{{ install_docker_compose_owner }}"
+    group: "{{ install_docker_compose_group }}"
+    mode: "0755"
+  become: true
+
+- name: Write docker compose file from inline content
+  ansible.builtin.copy:
+    dest: "{{ install_docker_compose_file_path }}"
+    content: "{{ install_docker_compose_content }}"
+    owner: "{{ install_docker_compose_owner }}"
+    group: "{{ install_docker_compose_group }}"
+    mode: "0644"
+  become: true
+  when: install_docker_compose_source_type == 'inline'
+
+- name: Render docker compose file from template
+  ansible.builtin.template:
+    src: "{{ install_docker_compose_template_src }}"
+    dest: "{{ install_docker_compose_file_path }}"
+    owner: "{{ install_docker_compose_owner }}"
+    group: "{{ install_docker_compose_group }}"
+    mode: "0644"
+  become: true
+  when: install_docker_compose_source_type == 'template'
+
+- name: Download docker compose file from remote source
+  ansible.builtin.get_url:
+    url: "{{ install_docker_compose_url }}"
+    dest: "{{ install_docker_compose_file_path }}"
+    mode: "0644"
+    force: true
+  become: true
+  when: install_docker_compose_source_type == 'remote'
+
+- name: Ensure remote docker compose file ownership and permissions
+  ansible.builtin.file:
+    path: "{{ install_docker_compose_file_path }}"
+    owner: "{{ install_docker_compose_owner }}"
+    group: "{{ install_docker_compose_group }}"
+    mode: "0644"
+  become: true
+  when: install_docker_compose_source_type == 'remote'
+
+- name: Validate docker compose is installed
+  ansible.builtin.command: docker compose version
+  register: install_docker_compose_version
+  changed_when: false
+  become: true
+
+- name: Assert docker compose version command succeeds
+  ansible.builtin.assert:
+    that:
+      - install_docker_compose_version.rc == 0
+      - install_docker_compose_version.stdout is search('Docker Compose version')
+    fail_msg: >-
+      Docker Compose is not available after role execution.
