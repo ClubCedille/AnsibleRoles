@@ -1,0 +1,18 @@
+---
+- name: Remove the cloud-init SSH drop-in
+  ansible.builtin.file:
+    path: "{{ pwdssh_cloud_init_sshd_dropin }}"
+    state: absent
+  become: true
+  notify: Restart SSH
+
+- name: Enable KbdInteractiveAuthentication through an SSH drop-in
+  ansible.builtin.copy:
+    dest: "{{ pwdssh_sshd_dropin }}"
+    content: |
+      KbdInteractiveAuthentication yes
+    owner: root
+    group: root
+    mode: "0644"
+  become: true
+  notify: Restart SSH

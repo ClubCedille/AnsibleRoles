@@ -19,9 +19,11 @@ collections:
 ## Rôles disponibles
 
 La collection Proxmox comprend les rôles suivants :
+
 - `apt_sources` : Rôle pour configurer les sources APT sur des hôtes
 - `network` : Rôle pour configurer les interfaces réseau, les bridges, bonds et VLANs sur des hôtes Proxmox
 - `pull_disk` : Rôle pour télécharger une image disque à utiliser pour les VM Proxmox
+- `pwdssh` : Rôle pour réactiver l'authentification SSH par mot de passe sur Ubuntu en retirant le drop-in cloud-init et en activant KbdInteractiveAuthentication
 
 ## Utilisation
 
@@ -40,4 +42,8 @@ Pour utiliser les rôles de la collection Proxmox dans vos playbooks Ansible, vo
   hosts: proxmox_hosts
   roles:
     - cedille.proxmox.pull_disk
+- name: Préparer une machine Ubuntu pour l'accès SSH par mot de passe
+  hosts: ubuntu_hosts
+  roles:
+    - cedille.proxmox.pwdssh
 ```

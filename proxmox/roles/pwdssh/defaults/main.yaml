@@ -1,0 +1,3 @@
+---
+pwdssh_cloud_init_sshd_dropin: /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+pwdssh_sshd_dropin: /etc/ssh/sshd_config.d/99-pwdssh.conf
