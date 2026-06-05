@@ -1,0 +1,21 @@
+---
+galaxy_info:
+  author: "Louis Raymond <lraymond@lanets.ca>"
+  description: >
+    Rôle Ansible pour retirer la désactivation du mot de passe SSH ajoutée par cloud-init
+    et activer KbdInteractiveAuthentication sur Ubuntu
+  company: "Cedille"
+  license: "GPL-3.0-or-later"
+  min_ansible_version: "2.11"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - focal
+        - jammy
+        - noble
+  galaxy_tags:
+    - ssh
+    - ubuntu
+    - authentication
+
+dependencies: []
