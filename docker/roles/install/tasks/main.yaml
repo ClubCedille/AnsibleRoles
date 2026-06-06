@@ -16,3 +16,7 @@
 
 - name: Manage docker compose file
   ansible.builtin.include_tasks: setup_compose.yaml
+
+- name: Configure registry mirror
+  ansible.builtin.include_tasks: configure_mirror.yaml
+  when: docker_registry_mirror_enabled | bool
