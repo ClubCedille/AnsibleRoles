@@ -15,4 +15,4 @@
   when: ansible_distribution not in ["Ubuntu", "Alpine"]
 
 - name: Manage docker compose file
-  ansible.builtin.include_tasks: compose.yaml
+  ansible.builtin.include_tasks: setup_compose.yaml
