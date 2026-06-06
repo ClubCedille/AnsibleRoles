@@ -9,3 +9,16 @@ install_docker_compose_owner: "{{ ansible_user | default(ansible_user_id | defau
 install_docker_compose_group: "{{ install_docker_compose_owner }}"
 install_docker_compose_target_dir: "/home/{{ install_docker_compose_owner }}/ansible-docker-compose"
 install_docker_compose_file_path: "{{ install_docker_compose_target_dir }}/{{ install_docker_compose_filename }}"
+
+# Registry pull-through proxy
+install_docker_registry_mirror_enabled: true
+install_docker_registry_mirror_host: "10.150.0.100"
+
+install_docker_registry_mirrors:
+  - "https://{{ docker_registry_mirror_host }}:5000" # Docker Hub
+
+install_docker_registry_insecure_registries:
+  - "{{ docker_registry_mirror_host }}:5000"
+  - "{{ docker_registry_mirror_host }}:5001"
+  - "{{ docker_registry_mirror_host }}:5002"
+  - "{{ docker_registry_mirror_host }}:5003"
