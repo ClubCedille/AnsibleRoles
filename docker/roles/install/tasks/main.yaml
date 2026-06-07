@@ -20,3 +20,8 @@
 - name: Configure registry mirror
   ansible.builtin.include_tasks: configure_mirror.yaml
   when: docker_registry_mirror_enabled | bool
+
+- name: Docker compose up the path
+  community.docker.docker_compose_v2:
+    project_src: "{{ install_docker_compose_target_dir }}"
+    state: present
