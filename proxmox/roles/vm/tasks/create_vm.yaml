@@ -46,7 +46,7 @@
     memory: "{{ vm_memory_mb }}"
     net:
       # VLAN 247 - Public IP
-      net0: "{{ vm_net.device | default('virtio') }},bridge={{ vm_net.bridge }},tag={{ vm_net.vlan | default('1') }}"
+      net0: "{{ vm_net.device | default('virtio') }},bridge={{ vm_net.bridge }},tag={{ vm_net.vlan | default('1') }},mtu={{ vm_net.mtu | default(1500) }}"
       # # Trunk - Internal Networks
       # To setup manually on VMs that need it
       # net1: "{{ vm_net_trunk.device | default('virtio') }},bridge={{ vm_net_trunk.bridge }}"
