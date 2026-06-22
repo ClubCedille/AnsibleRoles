@@ -1,6 +1,6 @@
 ---
 
-- name: Rendre le script cs2.sh officiel exécutable
+- name: Make cs2.sh  executable
   ansible.builtin.file:
     path: /home/steam/cs2_server/game/cs2.sh
     owner: steam
@@ -9,8 +9,7 @@
     state: file
   become: true
 
-# Tasks to launch the CS2 server using systemd
-- name: Déployer le serveur CS2 avec systemd
+- name: Create CS2 Service
   ansible.builtin.template:
     src: cs2.service.j2
     dest: /etc/systemd/system/cs2.service
@@ -18,7 +17,7 @@
   notify: Reload systemd + start CS2
   become: true
 
-- name: Activer et démarrer CS2 daemon
+- name: Enable and start CS2 daemon
   ansible.builtin.systemd:
     name: cs2
     state: started

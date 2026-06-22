@@ -1,0 +1,29 @@
+---
+- name: Verify nginx_portal_html_template is set
+  ansible.builtin.assert:
+    that: nginx_portal_html_template | length > 0
+    fail_msg: "nginx_portal_html_template must be set to a path to a Jinja2 template file"
+
+- name: Install nginx
+  ansible.builtin.apt:
+    name: nginx
+    state: present
+    update_cache: true
+  become: true
+
+- name: Deploy portal page
+  ansible.builtin.template:
+    src: "{{ nginx_portal_html_template }}"
+    dest: "{{ nginx_portal_dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload nginx
+  become: true
+
+- name: Ensure nginx is enabled and started
+  ansible.builtin.service:
+    name: nginx
+    state: started
+    enabled: true
+  become: true
