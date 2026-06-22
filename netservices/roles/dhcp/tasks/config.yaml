@@ -1,8 +1,23 @@
 ---
+- name: Build final Kea DHCPv4 config
+  ansible.builtin.set_fact:
+    _netservices_dhcp_final_config: >-
+      {{
+        netservices_dhcp.kea_dhcp4_config
+        | combine(
+            {'Dhcp4': {'hooks-libraries': netservices_dhcp.kea_dhcp4_config.Dhcp4['hooks-libraries'] + netservices_dhcp.extra_hook_libraries}},
+            recursive=True
+          )
+        | combine(
+            {'Dhcp4': {'client-classes': netservices_dhcp.client_classes}} if netservices_dhcp.client_classes else {},
+            recursive=True
+          )
+      }}
+
 - name: Write Kea DHCPv4 configuration
   ansible.builtin.copy:
     dest: "{{ netservices_dhcp.paths.dhcp4_config }}"
-    content: "{{ netservices_dhcp.kea_dhcp4_config | to_nice_json }}"
+    content: "{{ _netservices_dhcp_final_config | to_nice_json }}"
     owner: root
     group: root
     mode: "0644"
