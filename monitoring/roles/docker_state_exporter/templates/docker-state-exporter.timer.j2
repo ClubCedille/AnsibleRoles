@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodically run docker-state-exporter
+
+[Timer]
+OnBootSec=30s
+OnUnitActiveSec={{ docker_state_exporter_interval }}
+AccuracySec=5s
+Unit=docker-state-exporter.service
+
+[Install]
+WantedBy=timers.target

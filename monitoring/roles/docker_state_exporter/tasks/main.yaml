@@ -1,0 +1,48 @@
+---
+- name: Copy Docker state exporter script
+  ansible.builtin.copy:
+    src: docker_state_exporter.py
+    dest: "{{ docker_state_exporter_script_path }}"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Write Docker state exporter environment file
+  ansible.builtin.template:
+    src: docker-state-exporter.env.j2
+    dest: "{{ docker_state_exporter_env_file }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Restart docker-state-exporter timer
+
+- name: Write Docker state exporter systemd service unit
+  ansible.builtin.template:
+    src: docker-state-exporter.service.j2
+    dest: /etc/systemd/system/docker-state-exporter.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart docker-state-exporter timer
+
+- name: Write Docker state exporter systemd timer unit
+  ansible.builtin.template:
+    src: docker-state-exporter.timer.j2
+    dest: /etc/systemd/system/docker-state-exporter.timer
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart docker-state-exporter timer
+
+- name: Flush handlers so unit files are active before enabling the timer
+  ansible.builtin.meta: flush_handlers
+
+- name: Ensure docker-state-exporter timer is enabled and started
+  ansible.builtin.systemd:
+    name: docker-state-exporter.timer
+    state: started
+    enabled: true

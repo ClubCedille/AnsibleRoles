@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: ClubCedille
+  description: |
+    Prometheus textfile collector exporter for Docker Compose workloads.
+    Exports per-container state, restart count, health, and port connectivity.
+    Requires node_exporter (cedille.monitoring.node_exporter) with textfile collector enabled.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+
+dependencies: []
