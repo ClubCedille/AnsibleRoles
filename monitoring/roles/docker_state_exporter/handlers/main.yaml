@@ -1,0 +1,10 @@
+---
+- name: Reload systemd
+  ansible.builtin.systemd:
+    daemon_reload: true
+
+- name: Restart docker-state-exporter timer
+  ansible.builtin.systemd:
+    name: docker-state-exporter.timer
+    state: restarted
+    enabled: true

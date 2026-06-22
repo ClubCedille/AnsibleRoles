@@ -1,0 +1,10 @@
+---
+docker_state_exporter_interval: 30s
+docker_state_exporter_script_path: /usr/local/bin/docker_state_exporter.py
+docker_state_exporter_env_file: /etc/default/docker-state-exporter
+docker_state_exporter_output_path: "{{ node_exporter_paths.textfile_collector_dir }}/docker_state.prom"
+
+# Arbitrary extra environment variables injected into the exporter process.
+# Use this to add Prometheus labels on the metrics (e.g. LABEL_app, LABEL_tier).
+# Each key/value pair becomes KEY=value in the env file read by the exporter.
+docker_state_exporter_extra_env: {}
