@@ -46,6 +46,15 @@ netservices_dns:
     acl_definitions: []
     zones: []
 
+  # Optional zone files to render from Jinja2 templates before configuring BIND9.
+  # Each item: {src: /absolute/path/to/template.j2, dest: /var/lib/bind/db.zone}
+  # The destination directory is created automatically (owned root:root).
+  # /var/cache/bind is always ensured bind-writable for slave zone files.
+  zone_files: []
+
+  # Set to true to wait (up to 50 s) for DNS resolution to succeed after deployment.
+  wait_for_ready: false
+
   ha:
     enabled: true
     this_server_role: master

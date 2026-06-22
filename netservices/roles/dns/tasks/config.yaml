@@ -1,4 +1,36 @@
 ---
+- name: Ensure zone file directories exist
+  ansible.builtin.file:
+    path: "{{ item.dest | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ netservices_dns.zone_files }}"
+  become: true
+  when: netservices_dns.zone_files | length > 0
+
+- name: Ensure BIND9 cache directory is writable by bind user
+  ansible.builtin.file:
+    path: /var/cache/bind
+    owner: bind
+    group: bind
+    recurse: true
+  become: true
+  when: netservices_dns.zone_files | length > 0
+
+- name: Render zone files from templates
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: "{{ item.dest }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ netservices_dns.zone_files }}"
+  notify: Restart bind9
+  become: true
+  when: netservices_dns.zone_files | length > 0
+
 - name: Write BIND9 options configuration
   ansible.builtin.template:
     dest: "{{ netservices_dns.paths.options_config }}"
@@ -30,3 +62,13 @@
     state: "{{ netservices_dns.service.state }}"
     enabled: "{{ netservices_dns.service.enabled }}"
   become: true
+
+- name: Wait for DNS to be functional
+  ansible.builtin.command:
+    cmd: nslookup archive.ubuntu.com
+  retries: 10
+  delay: 5
+  register: _dns_ready_check
+  until: _dns_ready_check.rc == 0
+  changed_when: false
+  when: netservices_dns.wait_for_ready | bool
