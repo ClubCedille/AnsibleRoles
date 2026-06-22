@@ -82,6 +82,23 @@ netservices_dhcp:
             - output: stdout
           severity: INFO
 
+  # Optional client classes injected into kea_dhcp4_config.Dhcp4.client-classes.
+  # Use to deliver different DHCP options based on vendor-class-identifier or other
+  # client attributes. Appended after the base config — no need to override the whole
+  # kea_dhcp4_config structure.
+  # Example:
+  #   client_classes:
+  #     - name: my_class
+  #       test: "option[60].text == 'myvendor'"
+  #       option-data:
+  #         - name: vendor-encapsulated-options
+  #           data: "deadbeef"
+  client_classes: []
+
+  # Optional extra Kea hook libraries to load alongside the built-in HA hook.
+  # Example: ["/usr/lib/x86_64-linux-gnu/kea/hooks/libdhcp_lease_cmds.so"]
+  extra_hook_libraries: []
+
   kea_ctrl_agent_config:
     Control-agent:
       http-host: 0.0.0.0
