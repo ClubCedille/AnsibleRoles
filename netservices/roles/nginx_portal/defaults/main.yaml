@@ -1,0 +1,8 @@
+---
+# Absolute path to the Jinja2 template to render as the portal page.
+# The caller must set this — there is no built-in default page.
+# Example: nginx_portal_html_template: "{{ playbook_dir }}/templates/my_portal.html.j2"
+nginx_portal_html_template: ""
+
+# Destination path on the remote host for the rendered HTML file.
+nginx_portal_dest: /var/www/html/index.html
