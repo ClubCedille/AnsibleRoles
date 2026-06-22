@@ -1,0 +1,11 @@
+---
+tftp_root: /srv/tftp
+
+tftp_packages:
+  - tftpd-hpa
+  - ipxe
+
+# Extra files to deploy into tftp_root beyond the standard iPXE bootloaders.
+# Each item: {src: /absolute/path/on/controller, dest: filename_in_tftp_root}
+# Use this for event-specific content (kernels, initrds, iPXE scripts, etc.)
+tftp_extra_files: []
