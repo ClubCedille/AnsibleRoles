@@ -1,0 +1,61 @@
+---
+- name: Install TFTP and iPXE packages
+  ansible.builtin.apt:
+    name: "{{ tftp_packages }}"
+    state: present
+    update_cache: true
+  become: true
+
+- name: Ensure TFTP root directory exists
+  ansible.builtin.file:
+    path: "{{ tftp_root }}"
+    state: directory
+    owner: tftp
+    group: tftp
+    mode: "0755"
+  become: true
+
+- name: Copy undionly.kpxe from ipxe package
+  ansible.builtin.copy:
+    src: /usr/lib/ipxe/undionly.kpxe
+    dest: "{{ tftp_root }}/undionly.kpxe"
+    owner: tftp
+    group: tftp
+    mode: "0644"
+    remote_src: true
+  become: true
+
+- name: Copy ipxe.efi from ipxe package
+  ansible.builtin.copy:
+    src: /usr/lib/ipxe/ipxe.efi
+    dest: "{{ tftp_root }}/ipxe.efi"
+    owner: tftp
+    group: tftp
+    mode: "0644"
+    remote_src: true
+  become: true
+
+- name: Deploy extra TFTP files
+  ansible.builtin.copy:
+    src: "{{ item.src }}"
+    dest: "{{ tftp_root }}/{{ item.dest }}"
+    owner: tftp
+    group: tftp
+    mode: "0644"
+  loop: "{{ tftp_extra_files }}"
+  become: true
+
+- name: Configure tftpd-hpa root directory
+  ansible.builtin.lineinfile:
+    path: /etc/default/tftpd-hpa
+    regexp: '^TFTP_DIRECTORY='
+    line: 'TFTP_DIRECTORY="{{ tftp_root }}"'
+  notify: Restart tftpd-hpa
+  become: true
+
+- name: Ensure tftpd-hpa is enabled and started
+  ansible.builtin.service:
+    name: tftpd-hpa
+    state: started
+    enabled: true
+  become: true
