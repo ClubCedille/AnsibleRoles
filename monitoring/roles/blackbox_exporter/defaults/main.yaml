@@ -27,7 +27,7 @@ blackbox_exporter_service:
 
 blackbox_exporter_paths:
   install_dir: /opt/blackbox_exporter
-  archive_download_dir: /tmp
+  archive_download_dir: /var/cache/ansible
   binary_dir: /usr/local/bin
   config_dir: /etc/blackbox_exporter
   config: /etc/blackbox_exporter/blackbox.yml

@@ -27,7 +27,7 @@ alertmanager_service:
 
 alertmanager_paths:
   install_dir: /opt/alertmanager
-  archive_download_dir: /tmp
+  archive_download_dir: /var/cache/ansible
   binary_dir: /usr/local/bin
   config_dir: /etc/alertmanager
   config: /etc/alertmanager/alertmanager.yml

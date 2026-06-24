@@ -22,7 +22,7 @@ prometheus_service:
 
 prometheus_paths:
   install_dir: /opt/prometheus
-  archive_download_dir: /tmp
+  archive_download_dir: /var/cache/ansible
   binary_dir: /usr/local/bin
   config: /etc/prometheus/prometheus.yml
   rules_dir: /etc/prometheus/rules
