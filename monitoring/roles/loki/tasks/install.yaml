@@ -48,6 +48,12 @@
   when: loki_install.package | length > 0
   become: true
 
+- name: Ensure loki system group exists
+  ansible.builtin.group:
+    name: loki
+    system: true
+  become: true
+
 - name: Ensure Loki directories exist
   ansible.builtin.file:
     path: "{{ item.path }}"
