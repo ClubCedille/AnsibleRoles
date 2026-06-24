@@ -12,6 +12,4 @@ modules:
 {% for oid in module.walk %}
       - {{ oid }}
 {% endfor %}
-    version: {{ module.version }}
-    auth: {{ module.auth }}
 {% endfor %}
