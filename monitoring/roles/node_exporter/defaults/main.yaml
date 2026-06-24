@@ -27,7 +27,7 @@ node_exporter_service:
 
 node_exporter_paths:
   install_dir: /opt/node_exporter
-  archive_download_dir: /tmp
+  archive_download_dir: /var/cache/ansible
   binary_dir: /usr/local/bin
   textfile_collector_dir: /var/lib/node_exporter/textfile_collector
   service_unit: /etc/systemd/system/node_exporter.service

@@ -22,7 +22,7 @@ snmp_exporter_service:
 
 snmp_exporter_paths:
   install_dir: /opt/snmp_exporter
-  archive_download_dir: /tmp
+  archive_download_dir: /var/cache/ansible
   binary_dir: /usr/local/bin
   config_dir: /etc/snmp_exporter
   config: /etc/snmp_exporter/snmp.yml
