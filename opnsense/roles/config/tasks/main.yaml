@@ -28,6 +28,7 @@
 - name: Setup OpenVPN
   ansible.builtin.include_tasks:
     file: openvpn.yaml
+  when: opnsense_openvpn | default([]) | length > 0
 
 - name: Configure firewall rules (new format)
   ansible.builtin.include_tasks:
