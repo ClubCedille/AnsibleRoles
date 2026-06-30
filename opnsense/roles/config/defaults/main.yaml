@@ -34,6 +34,10 @@ opnsense_skip_vlan_create: false
 # (e.g. during initial provisioning before interfaces are assigned via GUI).
 opnsense_assert_interfaces: true
 
+# User groups and users for VPN — empty by default (set in host_vars if needed).
+opnsense_user_groups: []
+opnsense_users: []
+
 # Whether to manage CARP VIPs. Set false when VIPs are already correctly
 # configured and description-based matching would create duplicates.
 opnsense_manage_vips: true
