@@ -6,19 +6,10 @@
 # This task NEVER modifies configuration. If assertions fail, use the
 # escape-hatch playbook (playbooks/infra/opnsense-interface-provision.yaml)
 # or configure manually via the OPNsense GUI.
+#
+# check_mode: false on URI tasks so they run even during --check dry-runs.
 
-- name: Fetch current interface overview from OPNsense API
-  ansible.builtin.uri:
-    url: "https://{{ vm_net.ip }}/api/interfaces/overview/getInterfaceNames"
-    method: GET
-    user: "{{ api_key }}"
-    password: "{{ api_secret }}"
-    force_basic_auth: true
-    validate_certs: false
-  register: _iface_names
-  no_log: true
-
-- name: Fetch detailed interface info from OPNsense API
+- name: Fetch interface list from OPNsense API
   ansible.builtin.uri:
     url: "https://{{ vm_net.ip }}/api/interfaces/overview/interfacesInfo"
     method: GET
@@ -27,12 +18,17 @@
     force_basic_auth: true
     validate_certs: false
   register: _iface_info
+  check_mode: false
   no_log: true
+
+- name: Set interface name list from API response
+  ansible.builtin.set_fact:
+    _iface_present: "{{ _iface_info.json.rows | map(attribute='identifier') | select('ne', '') | unique | list }}"
 
 - name: Assert expected interfaces exist
   ansible.builtin.assert:
     that:
-      - item.interface_name in (_iface_names.json | dict2items | map(attribute='key') | list)
+      - item.interface_name in _iface_present
     fail_msg: >-
       Interface '{{ item.interface_name }}' (VLAN {{ item.id }}) is not assigned
       in OPNsense. Assign it manually in the GUI or run the interface-provision
@@ -46,7 +42,7 @@
   ansible.builtin.debug:
     msg: >-
       {{ item.interface_name }} (VLAN {{ item.id }}):
-      present={{ item.interface_name in (_iface_names.json | dict2items | map(attribute='key') | list) }}
+      present={{ item.interface_name in _iface_present }}
   loop: "{{ vm_net_trunk.vlans }}"
   loop_control:
     label: "{{ item.interface_name }}"
