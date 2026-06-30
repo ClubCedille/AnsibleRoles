@@ -7,6 +7,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     enabled: true
 
 - name: Enable the DHCP server on selected interfaces
@@ -14,6 +15,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     interfaces: "{{ opnsense_dhcp_interfaces }}"
     lifetime: "{{ opnsense_dhcp_lease_time | default('7200') }}"
 
@@ -22,6 +24,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     description: "DHCP Pool for VLAN{{ item.id }}"
     subnet: "{{ item.network }}/{{ item.mask }}"
     pools: "{{ item.pools }}"

@@ -1,19 +1,23 @@
 ---
 
 - name: Create user groups for VPN usage
+  when: opnsense_user_groups | length > 0
   oxlorg.opnsense.group:
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     name: "{{ item.name }}"
     description: "{{ item.description }}"
   loop: "{{ opnsense_user_groups }}"
 
 - name: Create users for VPN usage
+  when: opnsense_users | length > 0
   oxlorg.opnsense.user:
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     name: "{{ item.username }}"
     password: "{{ item.password }}"
     comment: "{{ item.comment }}"

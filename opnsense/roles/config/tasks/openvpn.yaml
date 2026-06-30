@@ -5,6 +5,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     name: "{{ item.name }} - key"
     mode: "auth"
   loop: "{{ opnsense_openvpn }}"
@@ -31,6 +32,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     name: "{{ item.name }}"
     server_ip4: "{{ item.subnet }}"
     protocol: "udp4"
@@ -64,6 +66,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     match_fields: ["description"]
     interface: "wan"
     action: "pass"
@@ -81,6 +84,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     match_fields: ["description"]
     interface: "openvpn"
     action: "pass"
@@ -112,6 +116,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     match_fields: ["description"]
     interface: "{{ item.interface_name }}"
     action: "pass"
@@ -128,6 +133,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     match_fields: ["description"]
     interface: "{{ item.interface_name }}"
     action: "pass"

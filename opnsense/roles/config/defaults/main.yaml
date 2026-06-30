@@ -1,0 +1,54 @@
+---
+# Variables required by the role — define in host_vars / group_vars.
+#
+# Per-node (host_vars):
+#   vm_net.ip          — management IP used as API target
+#   vm_net.vip         — WAN CARP virtual IP
+#   vm_net.netmask     — WAN netmask (integer, e.g. 24)
+#   vm_net.custom_name — WAN interface name in OPNsense (e.g. "wan")
+#   vm_net.gateway     — WAN default gateway
+#   vm_is_master       — true on the primary CARP node
+#   opnsense_ha_device_ip  — this node's IP on the HA sync interface
+#   opnsense_ha_peer_ip    — peer's IP on the HA sync interface
+#   opnsense_api_key   — OPNsense API key (vault)
+#   opnsense_api_secret — OPNsense API secret (vault)
+#
+# Shared (group_vars/routers.yaml):
+#   opnsense_ha_interface — OPNsense interface name for pfsync (e.g. "opt15")
+#   opnsense_ha_peer_net  — CIDR of the HA sync subnet (e.g. "10.255.254.252/30")
+#   vip_password          — CARP shared password (vault)
+#   vm_user               — XMLRPC sync username
+#   vm_password           — XMLRPC sync password (vault)
+#   vm_net_trunk.vlans    — list of VLAN objects (see group_vars for schema)
+
+# HA XMLRPC sync items — empty by default (pfsync state sync only).
+# Set to a list of OPNsense sync modules (e.g. ["nat", "certs"]) to enable
+# XMLRPC config sync from master to backup.
+opnsense_ha_syncitems: []
+
+# Whether to skip VLAN device creation (set true if VLANs already exist and
+# the interface_vlan API call would be disruptive during an apply run).
+opnsense_skip_vlan_create: false
+
+# Whether to run the interface assertion gate. Set false to disable the check
+# (e.g. during initial provisioning before interfaces are assigned via GUI).
+opnsense_assert_interfaces: true
+
+# User groups and users for VPN — empty by default (set in host_vars if needed).
+opnsense_user_groups: []
+opnsense_users: []
+
+# Whether to manage CARP VIPs. Set false when VIPs are already correctly
+# configured and description-based matching would create duplicates.
+opnsense_manage_vips: true
+
+# Whether to manage outbound NAT rules. Set false to leave NAT untouched
+# (e.g. when NAT is configured in classic format and migration is pending).
+opnsense_manage_nat: true
+
+# OpenVPN servers to configure — empty by default (set in host_vars if needed).
+opnsense_openvpn: []
+
+# Mapping used in rules.yaml — api_key/secret aliased from host_vars.
+api_key: "{{ opnsense_api_key }}"
+api_secret: "{{ opnsense_api_secret }}"

@@ -4,25 +4,32 @@
   ansible.builtin.include_tasks:
     file: manual_users_groups.yaml
 
+- name: Ensure VLAN devices exist on trunk interface
+  ansible.builtin.include_tasks:
+    file: vlans.yaml
+  when: not opnsense_skip_vlan_create
+
+- name: Assert interface assignments match expected state
+  ansible.builtin.include_tasks:
+    file: interfaces_assert.yaml
+  when: opnsense_assert_interfaces
+
 - name: Configure VIPs and NAT
   ansible.builtin.include_tasks:
     file: vip_nat.yaml
-
-- name: Configure DHCP Server
-  ansible.builtin.include_tasks:
-    file: dhcp.yaml
 
 - name: Setup HA sync
   ansible.builtin.include_tasks:
     file: ha_sync.yaml
 
-# Setup a certificate authority and certificates maually
+# Setup a certificate authority and certificates manually
 # as OPNsense does not support it via API yet
 
 - name: Setup OpenVPN
   ansible.builtin.include_tasks:
     file: openvpn.yaml
+  when: opnsense_openvpn | default([]) | length > 0
 
-- name: Rules
+- name: Configure firewall rules (new format)
   ansible.builtin.include_tasks:
     file: rules.yaml

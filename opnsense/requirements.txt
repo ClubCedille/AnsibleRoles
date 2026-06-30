@@ -1,1 +1,1 @@
-httpx>=0.28.1
+oxl-opnsense-client>=0.7.0
