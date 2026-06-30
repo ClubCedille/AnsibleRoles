@@ -15,7 +15,6 @@
 #     firewall: "{{ vm_net.ip }}"
 #     api_key: "{{ api_key }}"
 #     api_secret: "{{ api_secret }}"
-    ssl_verify: false
 #     target: "openvpn_instance"
 #   register: openvpn_config
 
