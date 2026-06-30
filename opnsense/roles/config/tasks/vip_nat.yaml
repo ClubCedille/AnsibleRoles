@@ -3,6 +3,7 @@
 # The interfaces are manually set up because the OPNsense API module does not support it yet.
 
 - name: Setup Virtual IP for the Public IPs
+  when: opnsense_manage_vips | bool
   oxlorg.opnsense.interface_vip:
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
@@ -19,6 +20,7 @@
     vhid: 1
 
 - name: Setup Virtual IPs
+  when: opnsense_manage_vips | bool and item.vip is not none
   oxlorg.opnsense.interface_vip:
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
@@ -36,11 +38,10 @@
   loop_control:
     index_var: loop_index
 
-### IMPORTANT NOTE ###
-# THIS SETUP CLASHES WITH THE NAT: OUTBOUND RULES
-# DO NOT CREATE ANY OUTBOUND RULES MANUALLY IF YOU USE THIS SETUP
-######################
+# NOTE: outbound NAT clashes with manually created classic NAT rules.
+# Set opnsense_manage_nat: true ONLY after migrating classic NAT to new format.
 - name: Setup Outbound NAT for the Public VIP
+  when: opnsense_manage_nat | bool and item.vip is not none
   oxlorg.opnsense.nat_source:
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"

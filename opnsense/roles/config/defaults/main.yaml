@@ -34,6 +34,14 @@ opnsense_skip_vlan_create: false
 # (e.g. during initial provisioning before interfaces are assigned via GUI).
 opnsense_assert_interfaces: true
 
+# Whether to manage CARP VIPs. Set false when VIPs are already correctly
+# configured and description-based matching would create duplicates.
+opnsense_manage_vips: true
+
+# Whether to manage outbound NAT rules. Set false to leave NAT untouched
+# (e.g. when NAT is configured in classic format and migration is pending).
+opnsense_manage_nat: true
+
 # Mapping used in rules.yaml — api_key/secret aliased from host_vars.
 api_key: "{{ opnsense_api_key }}"
 api_secret: "{{ opnsense_api_secret }}"
