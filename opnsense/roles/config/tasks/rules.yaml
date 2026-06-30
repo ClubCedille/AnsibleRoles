@@ -160,7 +160,7 @@
     direction: in
     ip_protocol: inet6
     protocol: any
-    source_net: "{{ _opnsense_lan_cidr }}"
+    source_net: "lan"
     destination_net: any
     description: "LAN | Allow LAN to any (IPv6)"
     enabled: true
