@@ -33,21 +33,7 @@
     disconnect_ppps: false
     pfsync_interface: "{{ opnsense_ha_interface }}"
     pfsync_peer_ip: "{{ opnsense_ha_peer_ip }}"
+    synchronize_to_ip: "{{ opnsense_ha_peer_ip if vm_is_master else '' }}"
     username: "{{ vm_user }}"
     password: "{{ vm_password }}"
-
-- name: "HA | Push XMLRPC sync from master to backup"
-  oxlorg.opnsense.hasync_general:
-    firewall: "{{ vm_net.ip }}"
-    api_key: "{{ api_key }}"
-    api_secret: "{{ api_secret }}"
-    ssl_verify: false
-    preempt: true
-    disconnect_ppps: false
-    pfsync_interface: "{{ opnsense_ha_interface }}"
-    pfsync_peer_ip: "{{ opnsense_ha_peer_ip }}"
-    synchronize_to_ip: "{{ opnsense_ha_peer_ip }}"
-    username: "{{ vm_user }}"
-    password: "{{ vm_password }}"
-    syncitems: "{{ opnsense_ha_syncitems }}"
-  when: vm_is_master
+    syncitems: "{{ opnsense_ha_syncitems if vm_is_master else [] }}"
