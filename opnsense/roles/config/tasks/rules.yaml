@@ -1,13 +1,348 @@
 ---
+# Firewall rules — new format (Firewall → Automation → Filter in OPNsense UI).
+# These rules are managed via /api/firewall/filter/ and processed BEFORE the
+# classic per-interface rules.
+#
+# Migration context: the 17 classic rules currently in <filter> of config.xml
+# are replicated here in the new format. Once Ansible has applied these rules
+# and the diff playbook confirms a match, the classic rules should be removed
+# via Firewall → Rules → Migration assistant in the OPNsense GUI.
+#
+# Idempotency: match_fields=["description"] — descriptions must be unique.
+# Sequence numbers control processing order within each group.
 
-- name: Allow management to access Production
+# ---------------------------------------------------------------------------
+# Precompute derived values used in rules below
+# ---------------------------------------------------------------------------
+
+- name: Precompute rule variables
+  ansible.builtin.set_fact:
+    _opnsense_lan_cidr: >-
+      {{ (vm_net_trunk.vlans | selectattr('interface_name', 'equalto', 'lan') | list | first).network }}/{{
+         (vm_net_trunk.vlans | selectattr('interface_name', 'equalto', 'lan') | list | first).mask }}
+    _opnsense_api_common: &api_common
+      firewall: "{{ vm_net.ip }}"
+      api_key: "{{ api_key }}"
+      api_secret: "{{ api_secret }}"
+      match_fields:
+        - description
+
+# ---------------------------------------------------------------------------
+# WAN rules (sequence 10–50)
+# ---------------------------------------------------------------------------
+
+- name: "WAN | Allow WireGuard inbound (UDP 51820)"
   oxlorg.opnsense.rule:
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
     match_fields: ["description"]
-    interface: "opt3" # Production
-    action: "pass"
-    direction: "in"
-    ip_protocol: "inet"
+    sequence: 10
+    interface: ["wan"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: UDP
+    source_net: any
+    destination_net: "{{ vm_net.vip }}"
+    destination_port: "51820"
+    description: "WAN | Allow WireGuard inbound (UDP 51820)"
+    enabled: true
 
+- name: "WAN | Allow OpenVPN inbound (UDP 1194)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 20
+    interface: ["wan"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: UDP
+    source_net: any
+    destination_net: "{{ vm_net.vip }}"
+    destination_port: "1194"
+    description: "WAN | Allow OpenVPN inbound (UDP 1194)"
+    enabled: true
+
+- name: "WAN | Allow OpenVPN outbound (UDP 1194)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 30
+    interface: ["wan"]
+    action: pass
+    direction: out
+    ip_protocol: inet
+    protocol: UDP
+    source_net: any
+    destination_net: "{{ vm_net.vip }}"
+    destination_port: "1194"
+    description: "WAN | Allow OpenVPN outbound (UDP 1194)"
+    enabled: true
+
+- name: "WAN | Allow ICMP inbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 40
+    interface: ["wan"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: ICMP
+    source_net: any
+    destination_net: "{{ vm_net.vip }}"
+    description: "WAN | Allow ICMP inbound"
+    enabled: true
+
+- name: "WAN | Allow ICMP outbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 50
+    interface: ["wan"]
+    action: pass
+    direction: out
+    ip_protocol: inet
+    protocol: ICMP
+    source_net: any
+    destination_net: "{{ vm_net.vip }}"
+    description: "WAN | Allow ICMP outbound"
+    enabled: true
+
+# ---------------------------------------------------------------------------
+# LAN rules (sequence 100–110)
+# ---------------------------------------------------------------------------
+
+- name: "LAN | Allow LAN to any (IPv4)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 100
+    interface: ["lan"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: any
+    source_net: "{{ _opnsense_lan_cidr }}"
+    destination_net: any
+    description: "LAN | Allow LAN to any (IPv4)"
+    enabled: true
+
+- name: "LAN | Allow LAN to any (IPv6)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 110
+    interface: ["lan"]
+    action: pass
+    direction: in
+    ip_protocol: inet6
+    protocol: any
+    source_net: "{{ _opnsense_lan_cidr }}"
+    destination_net: any
+    description: "LAN | Allow LAN to any (IPv6)"
+    enabled: true
+
+# ---------------------------------------------------------------------------
+# OpenVPN interface rules (sequence 200–210)
+# ---------------------------------------------------------------------------
+
+- name: "OpenVPN | Allow inbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 200
+    interface: ["openvpn"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    description: "OpenVPN | Allow inbound"
+    enabled: true
+
+- name: "OpenVPN | Allow outbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 210
+    interface: ["openvpn"]
+    action: pass
+    direction: out
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    description: "OpenVPN | Allow outbound"
+    enabled: true
+
+# ---------------------------------------------------------------------------
+# k8s VLAN rules — pass any/any (sequence 300–330)
+# These are broad permit rules replicating the current state. They are
+# candidates for microsegmentation in a future iteration.
+# ---------------------------------------------------------------------------
+
+- name: "k8s03 (opt3) | Allow all inbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 300
+    interface: ["opt3"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    description: "k8s03 (opt3) | Allow all inbound"
+    enabled: true
+
+- name: "services (opt5) | Allow all inbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 310
+    interface: ["opt5"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    description: "services (opt5) | Allow all inbound"
+    enabled: true
+
+- name: "k8s09 (opt10) | Allow all inbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 320
+    interface: ["opt10"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    description: "k8s09 (opt10) | Allow all inbound"
+    enabled: true
+
+- name: "k8s10 (opt13) | Allow all inbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 330
+    interface: ["opt13"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    description: "k8s10 (opt13) | Allow all inbound"
+    enabled: true
+
+# ---------------------------------------------------------------------------
+# WireGuard breakingglass (opt11) rules (sequence 400–410)
+# ---------------------------------------------------------------------------
+
+- name: "breakingglass WG (opt11) | Allow inbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 400
+    interface: ["opt11"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    log: true
+    description: "breakingglass WG (opt11) | Allow inbound"
+    enabled: true
+
+- name: "breakingglass WG (opt11) | Allow outbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 410
+    interface: ["opt11"]
+    action: pass
+    direction: out
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    log: true
+    description: "breakingglass WG (opt11) | Allow outbound"
+    enabled: true
+
+# ---------------------------------------------------------------------------
+# WireGuard interface group rules (sequence 500–510)
+# ---------------------------------------------------------------------------
+
+- name: "WireGuard group | Allow inbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 500
+    interface: ["wireguard"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    description: "WireGuard group | Allow inbound"
+    enabled: true
+
+- name: "WireGuard group | Allow outbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields: ["description"]
+    sequence: 510
+    interface: ["wireguard"]
+    action: pass
+    direction: out
+    ip_protocol: inet
+    protocol: any
+    source_net: any
+    destination_net: any
+    description: "WireGuard group | Allow outbound"
+    enabled: true

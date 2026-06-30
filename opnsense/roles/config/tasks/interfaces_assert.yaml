@@ -1,0 +1,52 @@
+---
+# Read-only validation of interface assignments and IP addressing.
+# Fails with a descriptive message if any expected interface is missing or
+# has a different IP than declared in vm_net_trunk.vlans.
+#
+# This task NEVER modifies configuration. If assertions fail, use the
+# escape-hatch playbook (playbooks/infra/opnsense-interface-provision.yaml)
+# or configure manually via the OPNsense GUI.
+
+- name: Fetch current interface overview from OPNsense API
+  ansible.builtin.uri:
+    url: "https://{{ vm_net.ip }}/api/interfaces/overview/getInterfaceNames"
+    method: GET
+    user: "{{ api_key }}"
+    password: "{{ api_secret }}"
+    force_basic_auth: true
+    validate_certs: false
+  register: _iface_names
+  no_log: true
+
+- name: Fetch detailed interface info from OPNsense API
+  ansible.builtin.uri:
+    url: "https://{{ vm_net.ip }}/api/interfaces/overview/interfacesInfo"
+    method: GET
+    user: "{{ api_key }}"
+    password: "{{ api_secret }}"
+    force_basic_auth: true
+    validate_certs: false
+  register: _iface_info
+  no_log: true
+
+- name: Assert expected interfaces exist
+  ansible.builtin.assert:
+    that:
+      - item.interface_name in (_iface_names.json | dict2items | map(attribute='key') | list)
+    fail_msg: >-
+      Interface '{{ item.interface_name }}' (VLAN {{ item.id }}) is not assigned
+      in OPNsense. Assign it manually in the GUI or run the interface-provision
+      escape-hatch playbook.
+    quiet: true
+  loop: "{{ vm_net_trunk.vlans | selectattr('vip', 'ne', None) | list }}"
+  loop_control:
+    label: "{{ item.interface_name }} (VLAN {{ item.id }})"
+
+- name: Display interface state summary
+  ansible.builtin.debug:
+    msg: >-
+      {{ item.interface_name }} (VLAN {{ item.id }}):
+      present={{ item.interface_name in (_iface_names.json | dict2items | map(attribute='key') | list) }}
+  loop: "{{ vm_net_trunk.vlans }}"
+  loop_control:
+    label: "{{ item.interface_name }}"

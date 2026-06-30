@@ -1,0 +1,23 @@
+---
+# Creates VLAN devices on the trunk NIC via the OPNsense interfaces API.
+#
+# Limitation: the OPNsense API does NOT support interface assignment or IP
+# addressing (GitHub issue opnsense/core#9345, closed as "not planned").
+# After running this task, new VLANs must be assigned to a logical interface
+# and given an IP address manually via the GUI or via the escape-hatch playbook
+# (playbooks/infra/opnsense-interface-provision.yaml).
+
+- name: Ensure VLAN device exists on trunk
+  oxlorg.opnsense.interface_vlan:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    match_fields:
+      - parent
+      - vlan
+    parent: "{{ item.parent_nic }}"
+    vlan: "{{ item.id }}"
+    description: "VLAN {{ item.id }} — {{ item.interface_name }}"
+  loop: "{{ vm_net_trunk.vlans }}"
+  loop_control:
+    label: "VLAN {{ item.id }} ({{ item.interface_name }})"
