@@ -24,7 +24,7 @@
       firewall: "{{ vm_net.ip }}"
       api_key: "{{ api_key }}"
       api_secret: "{{ api_secret }}"
-    ssl_verify: false
+      ssl_verify: false
       match_fields:
         - description
 
