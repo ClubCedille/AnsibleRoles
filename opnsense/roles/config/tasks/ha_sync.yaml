@@ -10,6 +10,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     match_fields: ["description"]
     sequence: 600
     interface: ["{{ opnsense_ha_interface }}"]
@@ -27,6 +28,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     preempt: true
     disconnect_ppps: false
     pfsync_interface: "{{ opnsense_ha_interface }}"
@@ -39,6 +41,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     preempt: true
     disconnect_ppps: false
     pfsync_interface: "{{ opnsense_ha_interface }}"

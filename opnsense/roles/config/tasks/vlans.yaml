@@ -17,6 +17,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     interface: "{{ item.parent_nic }}"
     vlan: "{{ item.id }}"
     description: "VLAN {{ item.id }} — {{ item.interface_name }}"

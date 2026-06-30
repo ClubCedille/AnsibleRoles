@@ -6,6 +6,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     name: "{{ item.name }}"
     description: "{{ item.description }}"
   loop: "{{ opnsense_user_groups }}"
@@ -16,6 +17,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     name: "{{ item.username }}"
     password: "{{ item.password }}"
     comment: "{{ item.comment }}"

@@ -8,6 +8,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     match_fields: ["description"]
     address: "{{ vm_net.vip }}/{{ vm_net.netmask }}"
     interface: "{{ vm_net.custom_name }}"
@@ -25,6 +26,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     match_fields: ["description"]
     address: "{{ item.vip }}/{{ item.mask }}"
     interface: "{{ item.interface_name }}"
@@ -46,6 +48,7 @@
     firewall: "{{ vm_net.ip }}"
     api_key: "{{ api_key }}"
     api_secret: "{{ api_secret }}"
+    ssl_verify: false
     match_fields: ["description"]
     description: "Outbound NAT for Public VIP - VLAN {{ item.id }}"
     sequence: "{{ 1000 + loop_index }}"
