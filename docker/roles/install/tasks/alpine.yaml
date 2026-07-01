@@ -16,7 +16,7 @@
 - name: Ensure an enabled community repository exists
   ansible.builtin.lineinfile:
     path: /etc/apk/repositories
-    line: "https://dl-cdn.alpinelinux.org/alpine/v{{ ansible_distribution_version | regex_search('^\\d+\\.\\d+') }}/community"
+    line: "https://dl-cdn.alpinelinux.org/alpine/v{{ ansible_facts['distribution_version'] | regex_search('^\\d+\\.\\d+') }}/community"
     state: present
   become: true
   when: (install_apk_repositories_file.content | b64decode | regex_findall('(?m)^https?://\\S+/community\\s*$') | length) == 0
