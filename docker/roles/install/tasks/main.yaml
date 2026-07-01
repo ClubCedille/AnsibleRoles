@@ -1,18 +1,18 @@
 ---
 - name: Include Ubuntu install tasks
   ansible.builtin.include_tasks: ubuntu.yaml
-  when: ansible_distribution == "Ubuntu"
+  when: ansible_facts['distribution'] == "Ubuntu"
 
 - name: Include Alpine install tasks
   ansible.builtin.include_tasks: alpine.yaml
-  when: ansible_distribution == "Alpine"
+  when: ansible_facts['distribution'] == "Alpine"
 
 - name: Fail when distribution is unsupported
   ansible.builtin.fail:
     msg: >-
-      Unsupported distribution '{{ ansible_distribution }}' for role docker.install.
+      Unsupported distribution '{{ ansible_facts["distribution"] }}' for role docker.install.
       Supported distributions: Ubuntu, Alpine.
-  when: ansible_distribution not in ["Ubuntu", "Alpine"]
+  when: ansible_facts['distribution'] not in ["Ubuntu", "Alpine"]
 
 - name: Manage docker compose file
   ansible.builtin.include_tasks: setup_compose.yaml
