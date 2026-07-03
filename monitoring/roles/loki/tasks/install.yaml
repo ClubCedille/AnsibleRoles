@@ -54,6 +54,15 @@
     system: true
   become: true
 
+- name: Ensure loki system user exists
+  ansible.builtin.user:
+    name: loki
+    group: loki
+    system: true
+    shell: /usr/sbin/nologin
+    create_home: false
+  become: true
+
 - name: Ensure Loki directories exist
   ansible.builtin.file:
     path: "{{ item.path }}"
