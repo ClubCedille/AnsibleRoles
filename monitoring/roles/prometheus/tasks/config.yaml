@@ -1,4 +1,15 @@
 ---
+- name: Write Prometheus systemd service unit
+  ansible.builtin.template:
+    src: prometheus.service.j2
+    dest: "{{ prometheus_paths.service_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Prometheus
+  become: true
 
 - name: Write Prometheus configuration
   ansible.builtin.template:

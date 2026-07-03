@@ -1,0 +1,18 @@
+[Unit]
+Description=Prometheus
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ prometheus_service.user }}
+Group={{ prometheus_service.group }}
+ExecStart={{ prometheus_paths.binary_dir }}/prometheus \
+  --config.file={{ prometheus_paths.config }} \
+  --storage.tsdb.path={{ prometheus_paths.data_dir }} \
+  --storage.tsdb.retention.time={{ prometheus_server.retention_time }} \
+  --web.listen-address=0.0.0.0:9090
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
