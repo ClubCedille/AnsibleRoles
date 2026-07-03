@@ -8,7 +8,8 @@ User={{ node_exporter_service.user }}
 Group={{ node_exporter_service.group }}
 ExecStart={{ node_exporter_paths.binary_dir }}/node_exporter \
   --collector.textfile.directory={{ node_exporter_paths.textfile_collector_dir }}{% for arg in node_exporter_extra_args %} \
-  {{ arg }}{% endfor %}
+  {{ arg }}
+{%- endfor %}
 Restart=on-failure
 RestartSec=5
 
