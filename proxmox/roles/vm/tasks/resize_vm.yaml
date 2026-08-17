@@ -1,0 +1,29 @@
+---
+# Resize cores/memory d'une VM Proxmox existante.
+#
+# La tâche "Create the basic VM" de create_vm.yaml (proxmox_kvm, state: present, sans
+# update: true) est un no-op silencieux sur une VM déjà existante — cores/memory ne sont
+# JAMAIS appliqués par un re-run de create_vm.yaml seul. Cette tâche comble ce trou avec
+# update: true, qui applique bien le changement à une VM existante.
+#
+# cores/memory ne sont pas garantis hot-plug sur ce setup (dépend du guest/kernel Talos) —
+# prévoir un cycle arrêt/redémarrage de la VM après ce resize pour que le changement soit
+# pris en compte (cf. docs/resize-runbook.md dans AnsibleInfra).
+#
+# Usage : ansible.builtin.include_tasks avec vm_id / vm_proxmox_node / vm_cpu_cores /
+# vm_memory_mb définis (host_vars), typiquement depuis un playbook standalone qui limite
+# l'exécution à un seul host à la fois (serial: 1) pour ne jamais resize/redémarrer
+# plusieurs nodes en même temps.
+
+- name: Resize existing VM (cores/memory)
+  community.proxmox.proxmox_kvm:
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    vmid: "{{ vm_id }}"
+    node: "{{ vm_proxmox_node }}"
+    cores: "{{ vm_cpu_cores }}"
+    memory: "{{ vm_memory_mb }}"
+    state: present
+    update: true
+  delegate_to: localhost
