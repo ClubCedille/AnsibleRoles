@@ -33,12 +33,20 @@
   become: true
 
 - name: Configure Grafana APT repository
-  ansible.builtin.apt_repository:
-    repo: "{{ alloy_install.repository.source }}"
-    filename: "{{ alloy_install.repository.filename }}"
-    state: present
-    update_cache: "{{ alloy_install.update_cache | bool }}"
+  ansible.builtin.deb822_repository:
+    name: "{{ alloy_install.repository.filename }}"
+    types: deb
+    uris: "{{ alloy_install.repository.uris }}"
+    suites: "{{ alloy_install.repository.suites }}"
+    components: "{{ alloy_install.repository.components }}"
+    signed_by: "{{ alloy_install.repository.key_path }}"
   when: alloy_install.repository.enabled | bool
+  become: true
+
+- name: Refresh apt cache after adding Grafana APT repository
+  ansible.builtin.apt:
+    update_cache: true
+  when: alloy_install.repository.enabled | bool and alloy_install.update_cache | bool
   become: true
 
 - name: Install Alloy packages from repository

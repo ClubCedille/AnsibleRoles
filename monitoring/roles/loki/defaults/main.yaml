@@ -18,7 +18,9 @@ loki_install:
     key_path: /etc/apt/keyrings/grafana.asc
     keyring_dir: /etc/apt/keyrings
     filename: grafana
-    source: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+    uris: https://apt.grafana.com
+    suites: stable
+    components: main
 
 loki_service:
   name: loki

@@ -33,12 +33,20 @@
   become: true
 
 - name: Configure Grafana APT repository
-  ansible.builtin.apt_repository:
-    repo: "{{ grafana_install.repository.source }}"
-    filename: "{{ grafana_install.repository.filename }}"
-    state: present
-    update_cache: "{{ grafana_install.update_cache | bool }}"
+  ansible.builtin.deb822_repository:
+    name: "{{ grafana_install.repository.filename }}"
+    types: deb
+    uris: "{{ grafana_install.repository.uris }}"
+    suites: "{{ grafana_install.repository.suites }}"
+    components: "{{ grafana_install.repository.components }}"
+    signed_by: "{{ grafana_install.repository.key_path }}"
   when: grafana_install.repository.enabled | bool
+  become: true
+
+- name: Refresh apt cache after adding Grafana APT repository
+  ansible.builtin.apt:
+    update_cache: true
+  when: grafana_install.repository.enabled | bool and grafana_install.update_cache | bool
   become: true
 
 - name: Install Grafana package

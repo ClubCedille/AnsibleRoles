@@ -14,7 +14,9 @@ alloy_install:
     enabled: true
     key_url: https://apt.grafana.com/gpg-full.key
     key_path: /etc/apt/keyrings/grafana.asc
-    source: "deb [signed-by=/etc/apt/keyrings/grafana.asc] https://apt.grafana.com stable main"
+    uris: https://apt.grafana.com
+    suites: stable
+    components: main
     filename: grafana
 
 alloy_service:
