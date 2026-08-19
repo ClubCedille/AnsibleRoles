@@ -33,12 +33,20 @@
   become: true
 
 - name: Configure Grafana APT repository
-  ansible.builtin.apt_repository:
-    repo: "{{ loki_install.repository.source }}"
-    filename: "{{ loki_install.repository.filename }}"
-    state: present
-    update_cache: "{{ loki_install.update_cache | bool }}"
+  ansible.builtin.deb822_repository:
+    name: "{{ loki_install.repository.filename }}"
+    types: deb
+    uris: "{{ loki_install.repository.uris }}"
+    suites: "{{ loki_install.repository.suites }}"
+    components: "{{ loki_install.repository.components }}"
+    signed_by: "{{ loki_install.repository.key_path }}"
   when: loki_install.repository.enabled | bool
+  become: true
+
+- name: Refresh apt cache after adding Grafana APT repository
+  ansible.builtin.apt:
+    update_cache: true
+  when: loki_install.repository.enabled | bool and loki_install.update_cache | bool
   become: true
 
 - name: Install Loki package
