@@ -1,0 +1,16 @@
+namespace: "cedille"
+name: "pkgcache"
+description: "Collection de rôles Ansible pour configurer la flotte Cedille à utiliser les caches/mirrors de paquets internes"
+version: "0.1.0"
+readme: "./docs/README.md"
+authors:
+  - "Louis Raymond <lraymond@lanets.ca>"
+dependencies: {}
+license:
+  - "GPL-3.0-or-later"
+tags:
+  - "linux"
+  - "security"
+  - "apt"
+  - "packages"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"

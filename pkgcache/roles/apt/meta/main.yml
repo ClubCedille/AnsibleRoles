@@ -1,0 +1,17 @@
+---
+galaxy_info:
+  author: ClubCedille
+  description: Configure apt pour utiliser le cache/mirror interne Cedille (apt-cacher-ng, BasicAuth, mode mirror direct)
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+
+dependencies: []

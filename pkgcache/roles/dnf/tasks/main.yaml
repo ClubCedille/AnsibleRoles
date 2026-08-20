@@ -1,0 +1,12 @@
+---
+# Squelette réservé : plan mTLS (cert client fleet longue durée, CA
+# interne internal-ca) pas encore validé en live pour dnf/libcurl.
+# Voir ClubCedille/k8s-shared#394.
+- name: Guard against unimplemented pkgcache dnf backend
+  ansible.builtin.fail:
+    msg: >-
+      cedille.pkgcache.dnf n'est pas encore implémenté : le backend serveur
+      (cache dnf, mTLS) est en attente de validation, voir
+      ClubCedille/k8s-shared#394. Laissez pkgcache_dnf.enabled: false
+      jusqu'à ce que ce rôle soit complété.
+  when: pkgcache_dnf.enabled | bool

@@ -1,0 +1,6 @@
+{{ ansible_managed | comment }}
+Types: deb
+URIs: https://{{ pkgcache_apt.credentials.username }}:{{ pkgcache_apt.credentials.password }}@{{ pkgcache_apt.cache_host }}/{{ mirror.origin }}
+Suites: {{ mirror.suites }}
+Components: {{ mirror.components }}
+Signed-By: {{ mirror.signed_by }}
