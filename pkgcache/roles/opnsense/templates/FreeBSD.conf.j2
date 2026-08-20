@@ -1,0 +1,8 @@
+{{ ansible_managed | comment }}
+FreeBSD: {
+  url: "pkg+https://{{ pkgcache_opnsense.credentials.username }}:{{ pkgcache_opnsense.credentials.password }}@{{ pkgcache_opnsense.cache_host }}/${ABI}/latest",
+  mirror_type: "srv",
+  signature_type: "fingerprints",
+  fingerprints: "{{ pkgcache_opnsense.fingerprints_dir }}",
+  enabled: yes
+}

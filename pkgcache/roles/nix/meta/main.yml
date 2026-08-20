@@ -1,19 +1,20 @@
 ---
 galaxy_info:
   author: ClubCedille
-  description: >-
-    (Squelette, non implémenté) Configure Nix pour utiliser le cache
-    interne Cedille — voir ClubCedille/k8s-shared#395
+  description: Configure Nix pour utiliser le cache/substituter interne Cedille (BasicAuth via netrc-file)
   license: GPL-3.0-or-later
   min_ansible_version: "2.15"
   platforms:
-    - name: Debian
-      versions:
-        - bookworm
-        - trixie
     - name: Ubuntu
       versions:
         - jammy
         - noble
+    - name: Debian
+      versions:
+        - bookworm
+        - trixie
+    - name: GenericLinux
+      versions:
+        - all
 
 dependencies: []

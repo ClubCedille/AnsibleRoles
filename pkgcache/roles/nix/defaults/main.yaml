@@ -1,3 +1,32 @@
 ---
 pkgcache_nix:
-  enabled: false
+  enabled: true
+
+  # Sous-domaine dédié du cache Nix (sidecar nginx auth_basic, proxy
+  # transparent devant cache.nixos.org).
+  cache_host: nix-cache.pkg.etsmtl.club
+
+  # Identifiants BasicAuth — À NE JAMAIS committer en clair.
+  # Doivent être fournis via un vault (host_vars/group_vars), ex.:
+  #   pkgcache_nix:
+  #     credentials:
+  #       username: "{{ vault_pkgcache_nix_username }}"
+  #       password: "{{ vault_pkgcache_nix_password }}"
+  credentials:
+    username: ""
+    password: ""
+
+  # Clé publique de cache.nixos.org — ce cache est un proxy transparent,
+  # il ne re-signe rien : NE PAS remplacer par une clé maison.
+  trusted_public_key: "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+
+  nix_conf_path: /etc/nix/nix.conf
+
+  # Les identifiants sont gardés hors de nix.conf (qui reste world-readable)
+  # via le mécanisme netrc-file natif de Nix — voir credentials-runbook.md
+  # (repo k8s-shared) et la doc nix.conf pour netrc-file.
+  netrc_path: /etc/nix/netrc-pkgcache
+
+  # Redémarre nix-daemon après changement de config. Mettre à false sur
+  # une installation Nix single-user sans daemon systemd.
+  manage_daemon_service: true

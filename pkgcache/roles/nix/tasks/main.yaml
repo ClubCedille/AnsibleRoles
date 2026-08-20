@@ -1,12 +1,5 @@
 ---
-# Squelette réservé : le backend serveur (sous-domaine dédié BasicAuth
-# pour Nix) n'est pas encore implémenté côté k8s-shared.
-# Voir ClubCedille/k8s-shared#395.
-- name: Guard against unimplemented pkgcache nix backend
-  ansible.builtin.fail:
-    msg: >-
-      cedille.pkgcache.nix n'est pas encore implémenté : le backend serveur
-      (cache Nix, BasicAuth) est en attente, voir
-      ClubCedille/k8s-shared#395. Laissez pkgcache_nix.enabled: false
-      jusqu'à ce que ce rôle soit complété.
+- name: Configure Nix package cache substituter
+  ansible.builtin.include_tasks:
+    file: config.yaml
   when: pkgcache_nix.enabled | bool

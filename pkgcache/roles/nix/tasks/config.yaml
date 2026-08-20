@@ -1,0 +1,35 @@
+---
+- name: Assert pkgcache nix credentials are provided
+  ansible.builtin.assert:
+    that:
+      - pkgcache_nix.credentials.username | length > 0
+      - pkgcache_nix.credentials.password | length > 0
+    fail_msg: >-
+      pkgcache_nix.credentials.username/password sont vides. Fournissez-les
+      via un vault (host_vars/group_vars) — voir docs/README.md.
+    quiet: true
+
+- name: Write pkgcache nix credentials (netrc)
+  ansible.builtin.template:
+    src: netrc-pkgcache.j2
+    dest: "{{ pkgcache_nix.netrc_path }}"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+  become: true
+
+- name: Configure pkgcache nix substituter and trusted public key
+  ansible.builtin.blockinfile:
+    path: "{{ pkgcache_nix.nix_conf_path }}"
+    create: true
+    owner: root
+    group: root
+    mode: "0644"
+    marker: "# {mark} ANSIBLE MANAGED PKGCACHE NIX"
+    block: |
+      extra-substituters = https://{{ pkgcache_nix.cache_host }}
+      extra-trusted-public-keys = {{ pkgcache_nix.trusted_public_key }}
+      netrc-file = {{ pkgcache_nix.netrc_path }}
+  become: true
+  notify: Restart nix-daemon

@@ -1,0 +1,12 @@
+{{ ansible_managed | comment }}
+[options]
+{% for key, value in pkgcache_pacman.options.items() %}
+{{ key }} = {{ value }}
+{% endfor -%}
+SigLevel    = Required DatabaseOptional
+LocalFileSigLevel = Optional
+
+{% for repository in pkgcache_pacman.repositories %}
+[{{ repository }}]
+Include = {{ pkgcache_pacman.mirrorlist_path }}
+{% endfor -%}

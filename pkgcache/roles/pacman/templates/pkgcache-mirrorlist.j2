@@ -1,0 +1,2 @@
+{{ ansible_managed | comment }}
+Server = https://{{ pkgcache_pacman.credentials.username }}:{{ pkgcache_pacman.credentials.password }}@{{ pkgcache_pacman.cache_host }}/{{ pkgcache_pacman.mirror_path }}

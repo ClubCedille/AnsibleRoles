@@ -1,0 +1,31 @@
+---
+- name: Assert pkgcache pacman credentials are provided
+  ansible.builtin.assert:
+    that:
+      - pkgcache_pacman.credentials.username | length > 0
+      - pkgcache_pacman.credentials.password | length > 0
+    fail_msg: >-
+      pkgcache_pacman.credentials.username/password sont vides. Fournissez-les
+      via un vault (host_vars/group_vars) — voir docs/README.md.
+    quiet: true
+
+- name: Write pkgcache pacman mirrorlist
+  ansible.builtin.template:
+    src: pkgcache-mirrorlist.j2
+    dest: "{{ pkgcache_pacman.mirrorlist_path }}"
+    owner: root
+    group: root
+    mode: "{{ pkgcache_pacman.mirrorlist_mode }}"
+  no_log: true
+  become: true
+
+- name: Write pacman.conf pointing repositories at the pkgcache mirrorlist
+  ansible.builtin.template:
+    src: pacman.conf.j2
+    dest: "{{ pkgcache_pacman.pacman_conf_path }}"
+    owner: root
+    group: root
+    mode: "0644"
+    backup: true
+  become: true
+  notify: Refresh pacman databases
