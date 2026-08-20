@@ -1,16 +1,11 @@
 ---
 galaxy_info:
   author: ClubCedille
-  description: >-
-    (Squelette, non implémenté) Configure dnf pour utiliser le cache
-    interne Cedille via mTLS — voir ClubCedille/k8s-shared#394
+  description: Configure dnf pour utiliser le cache/mirror interne Cedille (BasicAuth)
   license: GPL-3.0-or-later
   min_ansible_version: "2.15"
   platforms:
     - name: Fedora
-      versions:
-        - all
-    - name: EL
       versions:
         - all
 

@@ -1,0 +1,5 @@
+---
+- name: Configure OPNsense base pkg repo cache mirror
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: pkgcache_opnsense.enabled | bool

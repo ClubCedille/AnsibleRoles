@@ -1,0 +1,4 @@
+{{ ansible_managed | comment }}
+machine {{ pkgcache_nix.cache_host }}
+login {{ pkgcache_nix.credentials.username }}
+password {{ pkgcache_nix.credentials.password }}

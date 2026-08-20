@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  author: ClubCedille
+  description: >-
+    (Expérimental) Pointe le repo pkg FreeBSD de base d'un hôte OPNsense
+    vers le cache interne Cedille. Ne gère PAS le repo OPNsense
+    lui-même (pkg.opnsense.org, firmware, plugins) — aucun backend serveur
+    dédié n'existe pour celui-ci. Non validé avec un vrai client pkg.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: FreeBSD
+      versions:
+        - all
+
+dependencies: []

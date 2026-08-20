@@ -1,0 +1,22 @@
+---
+- name: Assert pkgcache pkg credentials are provided
+  ansible.builtin.assert:
+    that:
+      - pkgcache_pkg.credentials.username | length > 0
+      - pkgcache_pkg.credentials.password | length > 0
+    fail_msg: >-
+      pkgcache_pkg.credentials.username/password sont vides. Fournissez-les
+      via un vault (host_vars/group_vars) — voir docs/README.md.
+    quiet: true
+
+- name: Write pkgcache FreeBSD repo conf
+  ansible.builtin.template:
+    src: FreeBSD.conf.j2
+    dest: "{{ pkgcache_pkg.repos_dir }}/FreeBSD.conf"
+    owner: root
+    group: wheel
+    mode: "{{ pkgcache_pkg.file_mode }}"
+    backup: true
+  no_log: true
+  become: true
+  notify: Update pkg cache

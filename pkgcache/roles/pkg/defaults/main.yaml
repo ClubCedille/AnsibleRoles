@@ -1,3 +1,31 @@
 ---
 pkgcache_pkg:
-  enabled: false
+  enabled: true
+
+  # Sous-domaine dédié du cache pkg (nginx auth_basic devant
+  # pkg.freebsd.org / dl.freebsd.org).
+  cache_host: freebsd-cache.pkg.etsmtl.club
+
+  # Identifiants BasicAuth — À NE JAMAIS committer en clair.
+  # Doivent être fournis via un vault (host_vars/group_vars), ex.:
+  #   pkgcache_pkg:
+  #     credentials:
+  #       username: "{{ vault_pkgcache_pkg_username }}"
+  #       password: "{{ vault_pkgcache_pkg_password }}"
+  credentials:
+    username: ""
+    password: ""
+
+  # Répertoire des repo confs pkg. Sur FreeBSD standard : /etc/pkg/repos.
+  # (OPNsense utilise /usr/local/etc/pkg/repos — voir rôle opnsense.)
+  repos_dir: /etc/pkg/repos
+
+  # Réutilise le nom de repo "FreeBSD" pour écraser le repo de base
+  # (${ABI}/latest, pkg+https, fingerprints), pas un nom de repo à part —
+  # c'est ce que fait pkg par convention pour remplacer le repo par défaut.
+  fingerprints_dir: /usr/share/keys/pkg
+
+  # NON VALIDÉ avec un vrai client pkg (validé seulement via curl contre
+  # meta.conf/packagesite.pkg, voir credentials-runbook.md côté
+  # k8s-shared). À valider sur une vraie machine FreeBSD avant usage flotte.
+  file_mode: "0600"

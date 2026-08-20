@@ -1,3 +1,32 @@
 ---
 pkgcache_dnf:
-  enabled: false
+  enabled: true
+
+  # Sous-domaine dédié du cache dnf (reverse proxy nginx auth_basic devant
+  # dl.fedoraproject.org, path-for-path — pas de réécriture du layout).
+  cache_host: dnf-cache.pkg.etsmtl.club
+
+  # Identifiants BasicAuth — À NE JAMAIS committer en clair.
+  # Doivent être fournis via un vault (host_vars/group_vars), ex.:
+  #   pkgcache_dnf:
+  #     credentials:
+  #       username: "{{ vault_pkgcache_dnf_username }}"
+  #       password: "{{ vault_pkgcache_dnf_password }}"
+  credentials:
+    username: ""
+    password: ""
+
+  repos_dir: /etc/yum.repos.d
+  file_mode: "0600"
+
+  # Un fichier .repo (dnf) est généré par entrée. baseurl embarque les
+  # creds dans l'URI (confirmé fonctionnel en live pour dnf, contrairement
+  # à apt : pas de distinction proxy/mirror à gérer ici).
+  # $releasever/$basearch sont laissés littéraux — dnf les substitue.
+  repos:
+    - name: pkgcache-fedora
+      description: Fedora ($releasever)
+      path: pub/fedora/linux/releases/$releasever/Everything/$basearch/os/
+      gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+
+  update_cache_on_change: true

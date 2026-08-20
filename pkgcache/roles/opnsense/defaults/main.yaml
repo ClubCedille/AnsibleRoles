@@ -1,0 +1,30 @@
+---
+pkgcache_opnsense:
+  enabled: true
+
+  # EXPÉRIMENTAL — voir docs/README.md. Il n'existe aucun backend serveur
+  # dédié au dépôt OPNsense lui-même (pkg.opnsense.org : firmware,
+  # plugins) ; ce rôle ne pointe QUE le repo FreeBSD de base d'OPNsense
+  # vers le cache freebsd-pkg générique (mirror de dl.freebsd.org). Il ne
+  # touche ni au repo "OPNsense" ni aux mises à jour firmware/plugins.
+
+  # Même cache que le rôle pkg générique (freebsd-cache.pkg.etsmtl.club).
+  cache_host: freebsd-cache.pkg.etsmtl.club
+
+  # Identifiants BasicAuth — À NE JAMAIS committer en clair.
+  # Doivent être fournis via un vault (host_vars/group_vars), ex.:
+  #   pkgcache_opnsense:
+  #     credentials:
+  #       username: "{{ vault_pkgcache_opnsense_username }}"
+  #       password: "{{ vault_pkgcache_opnsense_password }}"
+  credentials:
+    username: ""
+    password: ""
+
+  # Chemin des repo confs pkg sous OPNsense (différent du FreeBSD standard :
+  # /usr/local/etc/pkg/repos, pas /etc/pkg/repos).
+  repos_dir: /usr/local/etc/pkg/repos
+
+  fingerprints_dir: /usr/share/keys/pkg
+
+  file_mode: "0600"

@@ -2,8 +2,8 @@
 galaxy_info:
   author: ClubCedille
   description: >-
-    (Squelette, non implémenté) Configure pkg (FreeBSD) pour utiliser le
-    cache interne Cedille via mTLS — voir ClubCedille/k8s-shared#394
+    Configure pkg pour utiliser le cache/mirror interne Cedille (BasicAuth).
+    Non validé avec un vrai client pkg — voir defaults/main.yaml.
   license: GPL-3.0-or-later
   min_ansible_version: "2.15"
   platforms:

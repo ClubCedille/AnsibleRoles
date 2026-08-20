@@ -1,0 +1,7 @@
+{{ ansible_managed | comment }}
+[{{ repo.name }}]
+name={{ repo.description }}
+baseurl=https://{{ pkgcache_dnf.credentials.username }}:{{ pkgcache_dnf.credentials.password }}@{{ pkgcache_dnf.cache_host }}/{{ repo.path }}
+enabled=1
+gpgcheck=1
+gpgkey={{ repo.gpgkey }}

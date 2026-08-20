@@ -1,11 +1,5 @@
 ---
-# Squelette réservé : plan mTLS pas encore validé en live pour pkg
-# (FreeBSD). Voir ClubCedille/k8s-shared#394.
-- name: Guard against unimplemented pkgcache pkg backend
-  ansible.builtin.fail:
-    msg: >-
-      cedille.pkgcache.pkg n'est pas encore implémenté : le backend serveur
-      (cache pkg, mTLS) est en attente de validation, voir
-      ClubCedille/k8s-shared#394. Laissez pkgcache_pkg.enabled: false
-      jusqu'à ce que ce rôle soit complété.
+- name: Configure pkg package cache mirror
+  ansible.builtin.include_tasks:
+    file: config.yaml
   when: pkgcache_pkg.enabled | bool

@@ -1,0 +1,24 @@
+---
+- name: Assert pkgcache dnf credentials are provided
+  ansible.builtin.assert:
+    that:
+      - pkgcache_dnf.credentials.username | length > 0
+      - pkgcache_dnf.credentials.password | length > 0
+    fail_msg: >-
+      pkgcache_dnf.credentials.username/password sont vides. Fournissez-les
+      via un vault (host_vars/group_vars) — voir docs/README.md.
+    quiet: true
+
+- name: Write pkgcache dnf repo files
+  ansible.builtin.template:
+    src: pkgcache.repo.j2
+    dest: "{{ pkgcache_dnf.repos_dir }}/{{ repo.name }}.repo"
+    owner: root
+    group: root
+    mode: "{{ pkgcache_dnf.file_mode }}"
+  loop: "{{ pkgcache_dnf.repos }}"
+  loop_control:
+    loop_var: repo
+  no_log: true
+  become: true
+  notify: Update dnf cache

@@ -8,3 +8,16 @@ releases:
         présents comme squelettes, en attente du backend serveur
         correspondant (ClubCedille/k8s-shared#395, #394).
     release_date: "2026-08-20"
+  0.2.0:
+    changes:
+      release_summary: >-
+        Rôles nix, dnf, pacman et pkg (FreeBSD générique) implémentés —
+        tous les backends BasicAuth sont désormais validés en live côté
+        serveur (ClubCedille/k8s-shared), sauf pkg qui reste marqué
+        expérimental (validé via curl seulement, pas un vrai client pkg).
+        Ajout du rôle opnsense (expérimental) qui pointe le repo FreeBSD
+        de base d'un hôte OPNsense vers le cache freebsd-pkg générique —
+        ne gère pas le dépôt OPNsense lui-même (pkg.opnsense.org,
+        firmware, plugins), pour lequel aucun backend serveur dédié
+        n'existe.
+    release_date: "2026-08-20"

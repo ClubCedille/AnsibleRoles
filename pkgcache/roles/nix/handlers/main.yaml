@@ -1,1 +1,7 @@
 ---
+- name: Restart nix-daemon
+  ansible.builtin.systemd:
+    name: nix-daemon
+    state: restarted
+  become: true
+  when: pkgcache_nix.manage_daemon_service | bool

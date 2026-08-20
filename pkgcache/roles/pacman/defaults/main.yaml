@@ -1,3 +1,39 @@
 ---
 pkgcache_pacman:
-  enabled: false
+  enabled: true
+
+  # Sous-domaine dédié du cache pacman (nginx auth_basic devant pacoloco,
+  # qui sert les repos sous son propre chemin /repo/<name>).
+  cache_host: pacman-cache.pkg.etsmtl.club
+
+  # Identifiants BasicAuth — À NE JAMAIS committer en clair.
+  # Doivent être fournis via un vault (host_vars/group_vars), ex.:
+  #   pkgcache_pacman:
+  #     credentials:
+  #       username: "{{ vault_pkgcache_pacman_username }}"
+  #       password: "{{ vault_pkgcache_pacman_password }}"
+  credentials:
+    username: ""
+    password: ""
+
+  # pacoloco proxie archlinux.org sous /repo/archlinux — $repo et $arch
+  # sont laissés littéraux, pacman les substitue lui-même.
+  mirror_path: repo/archlinux/$repo/os/$arch
+
+  mirrorlist_path: /etc/pacman.d/pkgcache-mirrorlist
+  mirrorlist_mode: "0600"
+
+  pacman_conf_path: /etc/pacman.conf
+
+  # Rôle géré entièrement (fichier complet remplacé, backup conservé) :
+  # une sauvegarde de l'ancien /etc/pacman.conf est faite via `backup: true`
+  # avant écrasement.
+  options:
+    Architecture: auto
+    ParallelDownloads: "5"
+
+  # Dépôts activés, pointés vers pkgcache_pacman.mirrorlist_path via
+  # Include (pattern standard Arch : Include = .../mirrorlist).
+  repositories:
+    - core
+    - extra
