@@ -1,0 +1,5 @@
+---
+- name: Configure apt package cache mirrors
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: pkgcache_apt.enabled | bool

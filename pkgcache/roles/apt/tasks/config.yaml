@@ -1,0 +1,34 @@
+---
+- name: Assert pkgcache apt credentials are provided
+  ansible.builtin.assert:
+    that:
+      - pkgcache_apt.credentials.username | length > 0
+      - pkgcache_apt.credentials.password | length > 0
+    fail_msg: >-
+      pkgcache_apt.credentials.username/password sont vides. Fournissez-les
+      via un vault (host_vars/group_vars) — voir docs/README.md.
+    quiet: true
+
+- name: Disable default apt sources files in favor of the internal cache
+  ansible.builtin.command:
+    cmd: >-
+      mv {{ item }} {{ item }}.disabled-by-pkgcache
+    creates: "{{ item }}.disabled-by-pkgcache"
+    removes: "{{ item }}"
+  loop: "{{ pkgcache_apt.default_sources_files }}"
+  become: true
+  when: pkgcache_apt.manage_default_sources | bool
+
+- name: Write pkgcache apt mirror sources (deb822, mirror direct)
+  ansible.builtin.template:
+    src: pkgcache-mirror.sources.j2
+    dest: "{{ pkgcache_apt.sources_dir }}/pkgcache-{{ mirror.name }}.sources"
+    owner: root
+    group: root
+    mode: "{{ pkgcache_apt.file_mode }}"
+  loop: "{{ pkgcache_apt.mirrors }}"
+  loop_control:
+    loop_var: mirror
+  no_log: true
+  become: true
+  notify: Update apt cache

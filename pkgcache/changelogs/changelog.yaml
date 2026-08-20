@@ -1,0 +1,10 @@
+ancestor: null
+releases:
+  0.1.0:
+    changes:
+      release_summary: >-
+        Version initiale — rôle apt fonctionnel (BasicAuth, mirror direct
+        via sources.list.d/*.sources). Rôles nix, dnf, pacman et pkg
+        présents comme squelettes, en attente du backend serveur
+        correspondant (ClubCedille/k8s-shared#395, #394).
+    release_date: "2026-08-20"

@@ -1,0 +1,51 @@
+---
+pkgcache_apt:
+  enabled: true
+
+  # Sous-domaine dédié du cache apt-cacher-ng (sidecar nginx auth_basic).
+  cache_host: apt-cache.pkg.etsmtl.club
+
+  # Identifiants BasicAuth — À NE JAMAIS committer en clair.
+  # Doivent être fournis via un vault (host_vars/group_vars), ex.:
+  #   pkgcache_apt:
+  #     credentials:
+  #       username: "{{ vault_pkgcache_apt_username }}"
+  #       password: "{{ vault_pkgcache_apt_password }}"
+  credentials:
+    username: ""
+    password: ""
+
+  sources_dir: /etc/apt/sources.list.d
+  file_mode: "0600"
+
+  # Si vrai, désactive (renomme en .disabled-by-pkgcache) les fichiers de
+  # sources par défaut listés dans default_sources_files, pour éviter que
+  # apt continue de taper directement sur les mirrors publics en parallèle
+  # du cache interne.
+  manage_default_sources: true
+  default_sources_files:
+    - /etc/apt/sources.list.d/ubuntu.sources
+    - /etc/apt/sources.list.d/debian.sources
+    - /etc/apt/sources.list
+
+  # Un fichier .sources (deb822) est généré par entrée, en mode "mirror
+  # direct" (URIs: https://user:pass@{{ cache_host }}/<origin>/<path>).
+  # Ne PAS utiliser Acquire::http::Proxy : les creds partiraient en
+  # Proxy-Authorization, que le auth_basic nginx du cache ignore (401
+  # systématique, confirmé en test live).
+  mirrors:
+    - name: ubuntu-archive
+      origin: archive.ubuntu.com/ubuntu
+      suites: >-
+        {{ ansible_distribution_release }}
+        {{ ansible_distribution_release }}-updates
+        {{ ansible_distribution_release }}-backports
+      components: main restricted universe multiverse
+      signed_by: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+    - name: ubuntu-security
+      origin: security.ubuntu.com/ubuntu
+      suites: "{{ ansible_distribution_release }}-security"
+      components: main restricted universe multiverse
+      signed_by: /usr/share/keyrings/ubuntu-archive-keyring.gpg
+
+  update_cache_on_change: true

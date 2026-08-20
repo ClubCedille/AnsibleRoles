@@ -1,0 +1,11 @@
+---
+# Squelette réservé : plan mTLS pas encore validé en live pour pacman.
+# Voir ClubCedille/k8s-shared#394.
+- name: Guard against unimplemented pkgcache pacman backend
+  ansible.builtin.fail:
+    msg: >-
+      cedille.pkgcache.pacman n'est pas encore implémenté : le backend
+      serveur (cache pacman, mTLS) est en attente de validation, voir
+      ClubCedille/k8s-shared#394. Laissez pkgcache_pacman.enabled: false
+      jusqu'à ce que ce rôle soit complété.
+  when: pkgcache_pacman.enabled | bool
