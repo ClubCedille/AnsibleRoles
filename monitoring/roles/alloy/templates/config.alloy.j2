@@ -19,9 +19,9 @@ local.file_match "{{ source.name }}_targets" {
   path_targets = [
 {% for path in source.paths %}
     {
-      __path__ = "{{ path }}"
+      __path__ = "{{ path }}",
 {% for key, value in source.labels.items() %}
-      {{ key }} = "{{ value }}"
+      {{ key }} = "{{ value }}",
 {% endfor %}
     },
 {% endfor %}
