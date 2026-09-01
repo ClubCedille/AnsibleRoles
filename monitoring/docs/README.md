@@ -11,6 +11,7 @@ La collection `cedille.monitoring` regroupe les rôles nécessaires pour constru
 - `loki` : centralisation des logs dans une pile plus légère qu'Elastic.
 - `alloy` : collecte et envoi des logs vers Loki.
 - `node_exporter` : métriques système des hôtes Linux.
+- `smartctl_exporter` : métriques S.M.A.R.T. des disques (santé, secteurs réalloués, température).
 - `blackbox_exporter` : checks réseau, HTTP et ICMP.
 - `snmp_exporter` : métriques SNMP des switches et équipements réseau.
 - `alertmanager` : routage des alertes Prometheus.
