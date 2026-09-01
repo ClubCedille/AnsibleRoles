@@ -1,0 +1,19 @@
+[Unit]
+Description=Prometheus smartctl Exporter
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User={{ smartctl_exporter_service.user }}
+Group={{ smartctl_exporter_service.group }}
+AmbientCapabilities={{ smartctl_exporter_capabilities | join(' ') }}
+CapabilityBoundingSet={{ smartctl_exporter_capabilities | join(' ') }}
+ExecStart={{ smartctl_exporter_paths.binary_dir }}/smartctl_exporter \
+  --web.listen-address={{ smartctl_exporter_listen_address }}{% for arg in smartctl_exporter_extra_args %} \
+  {{ arg }}
+{%- endfor %}
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

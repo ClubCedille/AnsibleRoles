@@ -1,0 +1,11 @@
+---
+
+- name: Install smartctl_exporter
+  ansible.builtin.include_tasks:
+    file: install.yaml
+  when: smartctl_exporter_enabled | bool
+
+- name: Configure smartctl_exporter
+  ansible.builtin.include_tasks:
+    file: config.yaml
+  when: smartctl_exporter_enabled | bool

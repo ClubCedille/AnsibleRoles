@@ -1,0 +1,19 @@
+---
+- name: Write smartctl_exporter systemd unit
+  ansible.builtin.template:
+    src: smartctl_exporter.service.j2
+    dest: "{{ smartctl_exporter_paths.service_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart smartctl_exporter
+  become: true
+
+- name: Ensure smartctl_exporter service state
+  ansible.builtin.service:
+    name: "{{ smartctl_exporter_service.name }}"
+    state: "{{ smartctl_exporter_service.state }}"
+    enabled: "{{ smartctl_exporter_service.enabled }}"
+  become: true

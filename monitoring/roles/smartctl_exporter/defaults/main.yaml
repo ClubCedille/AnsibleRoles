@@ -1,0 +1,42 @@
+---
+smartctl_exporter_enabled: true
+
+smartctl_exporter_install:
+  update_cache: true
+  prereq_packages:
+    - tar
+    - smartmontools
+  version: "0.14.0"
+  archive_url: >-
+    {{ 'https://github.com/prometheus-community/smartctl_exporter/releases/download/v'
+    ~ smartctl_exporter_install.version
+    ~ '/smartctl_exporter-'
+    ~ smartctl_exporter_install.version
+    ~ '.linux-amd64.tar.gz' }}
+  archive_checksum: "875983cd27affc5a682401930e5a8eea3f06c325fe6d6a7228c5547d882685b3"
+  archive_name: "smartctl_exporter-{{ smartctl_exporter_install.version }}.linux-amd64.tar.gz"
+  extracted_dir: "smartctl_exporter-{{ smartctl_exporter_install.version }}.linux-amd64"
+
+smartctl_exporter_service:
+  name: smartctl_exporter
+  state: started
+  enabled: true
+  user: smartctl_exporter
+  group: smartctl_exporter
+
+smartctl_exporter_paths:
+  install_dir: /opt/smartctl_exporter
+  archive_download_dir: /var/cache/ansible
+  binary_dir: /usr/local/bin
+  service_unit: /etc/systemd/system/smartctl_exporter.service
+
+smartctl_exporter_listen_address: "127.0.0.1:9633"
+
+# smartctl needs raw device ioctl access; the service user is added to the
+# "disk" group and granted these capabilities instead of running as root.
+smartctl_exporter_capabilities:
+  - CAP_SYS_ADMIN
+  - CAP_SYS_RAWIO
+  - CAP_MKNOD
+
+smartctl_exporter_extra_args: []
