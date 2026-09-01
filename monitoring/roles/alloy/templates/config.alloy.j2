@@ -37,3 +37,20 @@ loki.source.file "{{ source.name }}" {
   ]
 }
 {% endfor %}
+
+{% for source in alloy_journal_sources %}
+loki.source.journal "{{ source.name }}" {
+  matches       = "{{ source.matches }}"
+  format_as_json = false
+  labels        = {
+{% for key, value in source.labels.items() %}
+    {{ key }} = "{{ value }}",
+{% endfor %}
+  }
+  forward_to = [
+{% for endpoint in alloy_loki_endpoints %}
+    loki.write.{{ endpoint.name }}.receiver,
+{% endfor %}
+  ]
+}
+{% endfor %}
