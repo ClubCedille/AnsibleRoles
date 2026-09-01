@@ -47,12 +47,30 @@ loki.source.journal "{{ source.name }}" {
     {{ key }} = "{{ value }}",
 {% endfor %}
   }
+{% if source.drop_regex is defined %}
+  forward_to = [loki.process.{{ source.name }}.receiver]
+}
+
+loki.process "{{ source.name }}" {
+  forward_to = [
+{% for endpoint in alloy_loki_endpoints %}
+    loki.write.{{ endpoint.name }}.receiver,
+{% endfor %}
+  ]
+
+  stage.drop {
+    expression          = "{{ source.drop_regex }}"
+    drop_counter_reason  = "noisy_line"
+  }
+}
+{% else %}
   forward_to = [
 {% for endpoint in alloy_loki_endpoints %}
     loki.write.{{ endpoint.name }}.receiver,
 {% endfor %}
   ]
 }
+{% endif %}
 {% endfor %}
 
 {% for source in alloy_syslog_sources %}
