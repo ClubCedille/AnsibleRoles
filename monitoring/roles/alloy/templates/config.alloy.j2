@@ -54,3 +54,37 @@ loki.source.journal "{{ source.name }}" {
   ]
 }
 {% endfor %}
+
+{% for source in alloy_syslog_sources %}
+loki.source.syslog "{{ source.name }}" {
+  listener {
+    address       = "{{ source.listen_address }}"
+    protocol      = "{{ source.protocol | default('udp') }}"
+    syslog_format = "{{ source.syslog_format | default('rfc3164') }}"
+    labels        = {
+{% for key, value in source.labels.items() %}
+      {{ key }} = "{{ value }}",
+{% endfor %}
+    }
+  }
+  forward_to = [loki.process.{{ source.name }}.receiver]
+}
+
+loki.process "{{ source.name }}" {
+  forward_to = [
+{% for endpoint in alloy_loki_endpoints %}
+    loki.write.{{ endpoint.name }}.receiver,
+{% endfor %}
+  ]
+
+  stage.regex {
+    expression = "{{ source.keep_regex }}"
+  }
+
+  stage.drop {
+    source              = "interesting"
+    expression           = "^$"
+    drop_counter_reason  = "not_in_allowlist"
+  }
+}
+{% endfor %}

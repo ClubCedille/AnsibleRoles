@@ -46,3 +46,5 @@ alloy_file_sources:
       job: system
 
 alloy_journal_sources: []
+
+alloy_syslog_sources: []
