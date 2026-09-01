@@ -30,7 +30,7 @@ smartctl_exporter_paths:
   binary_dir: /usr/local/bin
   service_unit: /etc/systemd/system/smartctl_exporter.service
 
-smartctl_exporter_listen_address: "127.0.0.1:9633"
+smartctl_exporter_listen_address: ":9633"
 
 # smartctl needs raw device ioctl access; the service user is added to the
 # "disk" group and granted these capabilities instead of running as root.
