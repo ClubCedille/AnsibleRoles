@@ -5,11 +5,4 @@ auths:
     version: {{ auth.version }}
 {% endfor %}
 
-modules:
-{% for module_name, module in snmp_exporter_modules.items() %}
-  {{ module_name }}:
-    walk:
-{% for oid in module.walk %}
-      - {{ oid }}
-{% endfor %}
-{% endfor %}
+{{ lookup('file', 'snmp_modules.yml') }}
