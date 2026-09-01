@@ -10,6 +10,31 @@
     - Restart Alloy
   become: true
 
+# loki.source.syslog listeners on privileged ports (e.g. UDP 514) need this;
+# Alloy's packaged systemd unit runs as the unprivileged "alloy" user.
+- name: Create Alloy systemd override directory
+  ansible.builtin.file:
+    path: /etc/systemd/system/alloy.service.d
+    state: directory
+    owner: root
+    group: root
+    mode: "0755"
+  become: true
+  when: alloy_syslog_sources | length > 0
+
+- name: Grant Alloy CAP_NET_BIND_SERVICE for syslog listeners
+  ansible.builtin.template:
+    src: alloy-override.conf.j2
+    dest: /etc/systemd/system/alloy.service.d/override.conf
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart Alloy
+  become: true
+  when: alloy_syslog_sources | length > 0
+
 - name: Ensure Alloy service state
   ansible.builtin.service:
     name: "{{ alloy_service.name }}"

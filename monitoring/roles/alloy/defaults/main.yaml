@@ -44,3 +44,7 @@ alloy_file_sources:
       - /var/log/*.log
     labels:
       job: system
+
+alloy_journal_sources: []
+
+alloy_syslog_sources: []
