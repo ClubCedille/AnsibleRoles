@@ -48,3 +48,8 @@ alloy_file_sources:
 alloy_journal_sources: []
 
 alloy_syslog_sources: []
+
+# CLI flags passed to `alloy run` via the packaged unit's EnvironmentFile
+# (/etc/default/alloy, CUSTOM_ARGS). Needed e.g. for
+# --stability.level=experimental, required by syslog_format=raw.
+alloy_custom_args: []
