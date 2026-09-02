@@ -1,4 +1,31 @@
 ---
+# prometheus.yml is deployed 0644 (world-readable, see below) -- remote_write
+# passwords are kept out of it entirely and referenced via password_file
+# instead, root:prometheus 0640.
+- name: Create Prometheus secrets directory
+  ansible.builtin.file:
+    path: "{{ prometheus_paths.secrets_dir }}"
+    state: directory
+    owner: root
+    group: "{{ prometheus_service.group }}"
+    mode: "0750"
+  become: true
+  when: prometheus_remote_write | selectattr('basic_auth', 'defined') | list | length > 0
+
+- name: Write remote_write BasicAuth password files
+  ansible.builtin.copy:
+    content: "{{ remote_write.basic_auth.password }}"
+    dest: "{{ prometheus_paths.secrets_dir }}/{{ remote_write.name }}-password"
+    owner: root
+    group: "{{ prometheus_service.group }}"
+    mode: "0640"
+  become: true
+  no_log: true
+  loop: "{{ prometheus_remote_write | selectattr('basic_auth', 'defined') | list }}"
+  loop_control:
+    loop_var: remote_write
+  notify: Restart Prometheus
+
 - name: Write Prometheus systemd service unit
   ansible.builtin.template:
     src: prometheus.service.j2

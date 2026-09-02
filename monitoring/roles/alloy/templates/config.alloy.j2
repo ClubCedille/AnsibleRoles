@@ -10,6 +10,12 @@ livedebugging {
 loki.write "{{ endpoint.name }}" {
   endpoint {
     url = "{{ endpoint.url }}"
+{% if endpoint.basic_auth is defined %}
+    basic_auth {
+      username      = "{{ endpoint.basic_auth.username }}"
+      password_file = "{{ alloy_paths.secrets_dir }}/{{ endpoint.name }}-password"
+    }
+{% endif %}
   }
 }
 {% endfor %}

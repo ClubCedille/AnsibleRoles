@@ -1,4 +1,33 @@
 ---
+# Alloy's packaged systemd unit runs as the unprivileged "alloy" user (see
+# the CAP_NET_BIND_SERVICE override below) -- password files are
+# root:alloy 0640 rather than embedding credentials directly in
+# config.alloy (mode 0644, world-readable).
+- name: Create Alloy secrets directory
+  ansible.builtin.file:
+    path: "{{ alloy_paths.secrets_dir }}"
+    state: directory
+    owner: root
+    group: alloy
+    mode: "0750"
+  become: true
+  when: alloy_loki_endpoints | selectattr('basic_auth', 'defined') | list | length > 0
+
+- name: Write Loki endpoint BasicAuth password files
+  ansible.builtin.copy:
+    content: "{{ endpoint.basic_auth.password }}"
+    dest: "{{ alloy_paths.secrets_dir }}/{{ endpoint.name }}-password"
+    owner: root
+    group: alloy
+    mode: "0640"
+  become: true
+  no_log: true
+  loop: "{{ alloy_loki_endpoints | selectattr('basic_auth', 'defined') | list }}"
+  loop_control:
+    loop_var: endpoint
+  notify:
+    - Restart Alloy
+
 - name: Write Alloy configuration
   ansible.builtin.template:
     src: "{{ alloy_paths.config_template }}"

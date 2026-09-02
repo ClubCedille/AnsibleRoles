@@ -28,6 +28,7 @@ alloy_paths:
   config: /etc/alloy/config.alloy
   config_template: config.alloy.j2
   config_dir: /etc/alloy
+  secrets_dir: /etc/alloy/secrets
   apt_keyrings_dir: /etc/apt/keyrings
 
 alloy_server:
