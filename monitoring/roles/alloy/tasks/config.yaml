@@ -10,6 +10,18 @@
     - Restart Alloy
   become: true
 
+- name: Configure Alloy CLI args (/etc/default/alloy)
+  ansible.builtin.template:
+    src: alloy-default.j2
+    dest: /etc/default/alloy
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Restart Alloy
+  become: true
+  when: alloy_custom_args | length > 0
+
 # loki.source.syslog listeners on privileged ports (e.g. UDP 514) need this;
 # Alloy's packaged systemd unit runs as the unprivileged "alloy" user.
 - name: Create Alloy systemd override directory
