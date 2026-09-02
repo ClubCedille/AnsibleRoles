@@ -15,6 +15,18 @@ rule_files:
 {% endfor %}
 {% endif %}
 
+{% if prometheus_remote_write | length > 0 %}
+remote_write:
+{% for remote_write in prometheus_remote_write %}
+  - url: {{ remote_write.url }}
+{% if remote_write.basic_auth is defined %}
+    basic_auth:
+      username: {{ remote_write.basic_auth.username }}
+      password_file: {{ prometheus_paths.secrets_dir }}/{{ remote_write.name }}-password
+{% endif %}
+{% endfor %}
+{% endif %}
+
 {% if prometheus_alerting.alertmanagers | length > 0 %}
 alerting:
   alertmanagers:

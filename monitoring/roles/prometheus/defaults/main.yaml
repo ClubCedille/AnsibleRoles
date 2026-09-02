@@ -27,6 +27,7 @@ prometheus_paths:
   config: /etc/prometheus/prometheus.yml
   rules_dir: /etc/prometheus/rules
   data_dir: /var/lib/prometheus
+  secrets_dir: /etc/prometheus/secrets
   config_template: prometheus.yml.j2
   service_unit: /etc/systemd/system/prometheus.service
 
@@ -38,5 +39,15 @@ prometheus_server:
 
 prometheus_rule_files: []
 prometheus_scrape_configs: []
+# List of remote_write targets, e.g.:
+#   - name: mimir
+#     url: "https://mimir.example.com/api/v1/push"
+#     basic_auth:
+#       username: prometheus
+#       password: "{{ vaulted_password }}"
+# The password is written to prometheus_paths.secrets_dir and referenced as
+# password_file in prometheus.yml -- never embedded directly, since
+# prometheus.yml itself is deployed world-readable (0644).
+prometheus_remote_write: []
 prometheus_alerting:
   alertmanagers: []
