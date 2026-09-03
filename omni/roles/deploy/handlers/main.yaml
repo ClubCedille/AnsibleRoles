@@ -1,0 +1,13 @@
+---
+- name: Restart Omni stack
+  community.docker.docker_compose_v2:
+    project_src: "{{ omni_deploy_dir }}"
+    state: present
+    recreate: always
+
+- name: Wait for Omni HTTPS to be ready
+  ansible.builtin.wait_for:
+    host: "{{ omni_fqdn }}"
+    port: 443
+    timeout: 120
+

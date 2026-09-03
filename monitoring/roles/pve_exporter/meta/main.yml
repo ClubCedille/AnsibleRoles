@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: Cedille
+  description: Deploy prometheus-pve-exporter to expose Proxmox VE API metrics
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.14"
+dependencies: []

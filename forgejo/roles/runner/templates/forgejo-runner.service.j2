@@ -1,0 +1,15 @@
+[Unit]
+Description=Forgejo Actions Runner
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+User={{ forgejo_runner_service.user }}
+Group={{ forgejo_runner_service.group }}
+WorkingDirectory={{ forgejo_runner_paths.data_dir }}
+ExecStart={{ forgejo_runner_paths.binary }} daemon --config {{ forgejo_runner_paths.config }}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

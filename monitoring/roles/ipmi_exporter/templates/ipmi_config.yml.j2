@@ -1,0 +1,13 @@
+modules:
+  default:
+    user: "{{ monitoring_ipmi_username }}"
+    pass: "{{ monitoring_ipmi_password }}"
+    driver: "LAN_2_0"
+    privilege: "user"
+    collectors:
+      - bmc
+      - ipmi
+      - chassis
+      - dcmi
+      - sel
+    exclude_sensor_ids: []

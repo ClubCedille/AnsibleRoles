@@ -15,7 +15,18 @@ Il est à noter que les fichiers .yml et .yaml sont utilisés dans des cas spéc
 - [proxmox](proxmox/docs/README.md) : Collection de rôles Ansible pour gérer Proxmox.
 - [opnsense](opnsense/docs/README.md) : Collection générique pour gérer OPNsense.
 - [netservices](netservices/docs/README.md) : Collection de rôles réseau pour Kea DHCP, BIND9 et Stork.
-- [monitoring](monitoring/docs/README.md) : Collection de rôles pour Prometheus, Grafana, Loki et les exporters.
+- [monitoring](monitoring/docs/README.md) : Collection de rôles pour Prometheus, Grafana, Loki et les exporters (node, smartctl, blackbox, snmp, ipmi, pve).
+- [docker](docker/docs/README.md) : Collection de rôles pour installer et configurer Docker.
+- [forgejo](forgejo/docs/README.md) : Collection de rôles pour déployer les runners Forgejo Actions.
+- [omni](omni/docs/README.md) : Collection de rôles pour déployer Sidero Omni (gestionnaire de clusters Talos Kubernetes).
+- [cisco-3850](cisco-3850/docs/README.md) : Collection de rôles pour la configuration des switches Cisco 3850.
+- [cs2](cs2/docs/README.md) : Collection de rôles pour le déploiement de serveurs CS2 (LanETS).
+- [pkgcache](pkgcache/docs/README.md) : Collection de rôles pour les mirrors de cache de paquets (apt, dnf, nix, pacman, pkg, OPNsense).
+
+Tous les rôles réutilisables de l'infrastructure Cedille vivent ici — le
+repository d'exécution [AnsibleInfra](https://github.com/ClubCedille/AnsibleInfra)
+ne contient plus aucun rôle local, uniquement des playbooks et inventaires qui
+consomment ces collections via `collections/requirements.yml`.
 
 ## Extensions suggérées
 

@@ -1,0 +1,15 @@
+---
+pve_exporter_version: "3.9.0"
+pve_exporter_listen_port: 9221
+pve_exporter_listen_address: "0.0.0.0"
+
+pve_exporter_service:
+  name: pve_exporter
+  user: pve_exporter
+  group: pve_exporter
+
+pve_exporter_paths:
+  venv: /opt/pve_exporter
+  config_dir: /etc/pve_exporter
+  config: /etc/pve_exporter/pve_exporter.yml
+  service_unit: /etc/systemd/system/pve_exporter.service
