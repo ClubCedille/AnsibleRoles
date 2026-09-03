@@ -1,0 +1,93 @@
+---
+- name: Ensure the Forgejo connection is configured
+  ansible.builtin.assert:
+    that:
+      - forgejo_runner_instance_url != "REPLACE_WITH_FORGEJO_INSTANCE_URL"
+      - forgejo_runner_uuid != "REPLACE_WITH_RUNNER_UUID"
+      - forgejo_runner_registration_token != "REPLACE_WITH_VAULTED_REGISTRATION_TOKEN"
+    fail_msg: >-
+      forgejo_runner_instance_url / forgejo_runner_uuid / forgejo_runner_registration_token
+      still have their placeholder values — set them in inventories/infra/group_vars/forgejo_runners.yaml
+      and host_vars before running this role.
+
+- name: Create forgejo-runner system group
+  ansible.builtin.group:
+    name: "{{ forgejo_runner_service.group }}"
+    system: true
+
+- name: Install extra packages for host-native job execution
+  ansible.builtin.apt:
+    name: "{{ forgejo_runner_extra_packages }}"
+    state: present
+    update_cache: true
+  when: forgejo_runner_extra_packages | length > 0
+
+- name: Create forgejo-runner system user
+  ansible.builtin.user:
+    name: "{{ forgejo_runner_service.user }}"
+    group: "{{ forgejo_runner_service.group }}"
+    groups: "{{ ['docker'] + forgejo_runner_extra_groups }}"
+    append: true
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ forgejo_runner_paths.data_dir }}"
+    create_home: false
+
+- name: Create forgejo-runner data directory
+  ansible.builtin.file:
+    path: "{{ forgejo_runner_paths.data_dir }}"
+    state: directory
+    owner: "{{ forgejo_runner_service.user }}"
+    group: "{{ forgejo_runner_service.group }}"
+    mode: "0750"
+
+- name: Create forgejo-runner config directory
+  ansible.builtin.file:
+    path: "{{ forgejo_runner_paths.config_dir }}"
+    state: directory
+    owner: "{{ forgejo_runner_service.user }}"
+    group: "{{ forgejo_runner_service.group }}"
+    mode: "0750"
+
+- name: Download forgejo-runner binary
+  ansible.builtin.get_url:
+    url: "https://code.forgejo.org/forgejo/runner/releases/download/v{{ forgejo_runner_version }}/forgejo-runner-{{ forgejo_runner_version }}-linux-{{ forgejo_runner_arch }}"
+    dest: "{{ forgejo_runner_paths.archive_download_dir }}/forgejo-runner-{{ forgejo_runner_version }}"
+    mode: "0644"
+
+- name: Install forgejo-runner binary
+  ansible.builtin.copy:
+    src: "{{ forgejo_runner_paths.archive_download_dir }}/forgejo-runner-{{ forgejo_runner_version }}"
+    dest: "{{ forgejo_runner_paths.binary }}"
+    owner: root
+    group: root
+    mode: "0755"
+    remote_src: true
+  notify: Restart forgejo-runner
+
+- name: Write forgejo-runner configuration
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "{{ forgejo_runner_paths.config }}"
+    owner: "{{ forgejo_runner_service.user }}"
+    group: "{{ forgejo_runner_service.group }}"
+    mode: "0640"
+  notify: Restart forgejo-runner
+
+- name: Write forgejo-runner systemd unit
+  ansible.builtin.template:
+    src: forgejo-runner.service.j2
+    dest: "{{ forgejo_runner_paths.service_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart forgejo-runner
+
+- name: Enable and start forgejo-runner
+  ansible.builtin.systemd:
+    name: "{{ forgejo_runner_service.name }}"
+    state: started
+    enabled: true
+    daemon_reload: true

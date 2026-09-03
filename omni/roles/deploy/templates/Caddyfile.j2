@@ -1,0 +1,44 @@
+# Managed by Ansible — do not edit manually
+{
+    email {{ caddy_acme_email }}
+}
+
+# UI + REST API + gRPC (omnictl) — Caddy terminates Let's Encrypt TLS, proxies to Omni's internal TLS
+{{ omni_fqdn }} {
+    reverse_proxy https://omni:{{ omni_internal_https_port }} {
+        transport http {
+            tls_insecure_skip_verify
+        }
+        flush_interval -1
+    }
+}
+
+# SideroLink / Machine API — gRPC (Talos nodes register here)
+{{ omni_fqdn }}:8090 {
+    reverse_proxy https://omni:{{ omni_internal_siderolink_port }} {
+        transport http {
+            tls_insecure_skip_verify
+        }
+        flush_interval -1
+    }
+}
+
+# Event sink — gRPC
+{{ omni_fqdn }}:8091 {
+    reverse_proxy https://omni:{{ omni_internal_eventsink_port }} {
+        transport http {
+            tls_insecure_skip_verify
+        }
+        flush_interval -1
+    }
+}
+
+# Kubernetes API proxy — gRPC
+{{ omni_fqdn }}:8100 {
+    reverse_proxy https://omni:{{ omni_internal_k8sproxy_port }} {
+        transport http {
+            tls_insecure_skip_verify
+        }
+        flush_interval -1
+    }
+}

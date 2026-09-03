@@ -1,0 +1,43 @@
+---
+forgejo_runner_version: "12.13.1"
+forgejo_runner_arch: amd64
+
+forgejo_runner_service:
+  name: forgejo-runner
+  user: forgejo-runner
+  group: forgejo-runner
+
+forgejo_runner_paths:
+  archive_download_dir: /tmp
+  binary: /usr/local/bin/forgejo-runner
+  config_dir: /etc/forgejo-runner
+  config: /etc/forgejo-runner/config.yml
+  data_dir: /var/lib/forgejo-runner
+  service_unit: /etc/systemd/system/forgejo-runner.service
+
+# Connection to the Forgejo instance, declared statically in config.yml under
+# server.connections.forgejo instead of via `forgejo-runner register`. url is
+# shared, uuid/token are per-runner (from /admin/actions/runners "New runner").
+# All three must be set to a real value before running the role.
+forgejo_runner_instance_url: "REPLACE_WITH_FORGEJO_INSTANCE_URL"
+forgejo_runner_uuid: "REPLACE_WITH_RUNNER_UUID"
+forgejo_runner_registration_token: "REPLACE_WITH_VAULTED_REGISTRATION_TOKEN"
+
+forgejo_runner_labels:
+  - "ubuntu-latest:docker://ghcr.io/catthehacker/ubuntu:act-latest"
+
+forgejo_runner_log_level: info
+forgejo_runner_capacity: 4
+forgejo_runner_timeout: 1h
+
+forgejo_runner_container:
+  privileged: false
+  docker_host: ""
+  force_pull: false
+
+# Extra system groups (e.g. "kvm") and apt packages (e.g. qemu-system-x86)
+# for runners that execute jobs natively on the host instead of in Docker
+# (label with a ":host" scheme, e.g. "kvm-runner:host" — a label with no
+# scheme suffix at all falls back to Docker execution, not host-native).
+forgejo_runner_extra_groups: []
+forgejo_runner_extra_packages: []

@@ -1,0 +1,15 @@
+[Unit]
+Description=Prometheus PVE Exporter
+After=network.target
+
+[Service]
+User={{ pve_exporter_service.user }}
+Group={{ pve_exporter_service.group }}
+ExecStart={{ pve_exporter_paths.venv }}/bin/pve_exporter \
+  --config.file={{ pve_exporter_paths.config }} \
+  --web.listen-address={{ pve_exporter_listen_address }}:{{ pve_exporter_listen_port }}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

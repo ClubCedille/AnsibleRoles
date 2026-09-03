@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Cedille
+  description: >
+    Déploie Sidero Omni (gestionnaire de clusters Talos Kubernetes) via Docker
+    Compose : répertoire de déploiement, certificat TLS interne, Caddyfile
+    (reverse proxy TLS externe) et application idempotente des SAMLLabelRules
+    via omnictl.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.14"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+dependencies: []

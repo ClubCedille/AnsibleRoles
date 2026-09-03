@@ -1,0 +1,17 @@
+---
+ipmi_exporter_version: "1.9.0"
+ipmi_exporter_listen_port: 9290
+ipmi_exporter_listen_address: "127.0.0.1"
+
+ipmi_exporter_service:
+  name: ipmi_exporter
+  user: ipmi_exporter
+  group: ipmi_exporter
+
+ipmi_exporter_paths:
+  install_dir: /opt/ipmi_exporter
+  archive_download_dir: /tmp
+  binary: /usr/local/bin/ipmi_exporter
+  config_dir: /etc/ipmi_exporter
+  config: /etc/ipmi_exporter/ipmi_config.yml
+  service_unit: /etc/systemd/system/ipmi_exporter.service

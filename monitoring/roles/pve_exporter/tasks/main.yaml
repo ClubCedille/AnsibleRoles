@@ -1,0 +1,65 @@
+---
+- name: Install dependencies for pve_exporter
+  ansible.builtin.apt:
+    name:
+      - python3
+      - python3-pip
+      - python3-venv
+    state: present
+    update_cache: true
+
+- name: Create pve_exporter system group
+  ansible.builtin.group:
+    name: "{{ pve_exporter_service.group }}"
+    system: true
+
+- name: Create pve_exporter system user
+  ansible.builtin.user:
+    name: "{{ pve_exporter_service.user }}"
+    group: "{{ pve_exporter_service.group }}"
+    system: true
+    shell: /usr/sbin/nologin
+    home: "{{ pve_exporter_paths.venv }}"
+    create_home: false
+
+- name: Create pve_exporter virtualenv and install package
+  ansible.builtin.pip:
+    name: "prometheus-pve-exporter=={{ pve_exporter_version }}"
+    virtualenv: "{{ pve_exporter_paths.venv }}"
+    virtualenv_command: python3 -m venv
+  notify: Restart pve_exporter
+
+- name: Create pve_exporter config directory
+  ansible.builtin.file:
+    path: "{{ pve_exporter_paths.config_dir }}"
+    state: directory
+    owner: "{{ pve_exporter_service.user }}"
+    group: "{{ pve_exporter_service.group }}"
+    mode: "0750"
+
+- name: Write pve_exporter configuration
+  ansible.builtin.template:
+    src: pve_exporter.yml.j2
+    dest: "{{ pve_exporter_paths.config }}"
+    owner: "{{ pve_exporter_service.user }}"
+    group: "{{ pve_exporter_service.group }}"
+    mode: "0640"
+  notify: Restart pve_exporter
+
+- name: Write pve_exporter systemd unit
+  ansible.builtin.template:
+    src: pve_exporter.service.j2
+    dest: "{{ pve_exporter_paths.service_unit }}"
+    owner: root
+    group: root
+    mode: "0644"
+  notify:
+    - Reload systemd
+    - Restart pve_exporter
+
+- name: Enable and start pve_exporter
+  ansible.builtin.systemd:
+    name: "{{ pve_exporter_service.name }}"
+    state: started
+    enabled: true
+    daemon_reload: true

@@ -1,0 +1,35 @@
+log:
+  level: {{ forgejo_runner_log_level }}
+
+server:
+  connections:
+    forgejo:
+      url: "{{ forgejo_runner_instance_url }}"
+      uuid: "{{ forgejo_runner_uuid }}"
+      token: "{{ forgejo_runner_registration_token }}"
+
+runner:
+  capacity: {{ forgejo_runner_capacity }}
+  envs: {}
+  env_file: ""
+  timeout: {{ forgejo_runner_timeout }}
+  insecure: false
+  fetch_timeout: 5s
+  fetch_interval: 2s
+  labels: {{ forgejo_runner_labels | to_json }}
+
+cache:
+  enabled: true
+  dir: ""
+  host: ""
+  port: 0
+  external_server: ""
+
+container:
+  network: ""
+  privileged: {{ forgejo_runner_container.privileged | lower }}
+  docker_host: "{{ forgejo_runner_container.docker_host }}"
+  force_pull: {{ forgejo_runner_container.force_pull | lower }}
+
+host:
+  workdir_parent: ""

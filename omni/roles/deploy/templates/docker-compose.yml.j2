@@ -1,0 +1,73 @@
+# Managed by Ansible — do not edit manually
+---
+services:
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"       # HTTP/3 QUIC
+      - "8090:8090"         # SideroLink API (Talos nodes → Omni)
+      - "8091:8091"         # Event sink
+      - "8100:8100"         # Kubernetes API proxy
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - omni
+
+  omni:
+    image: ghcr.io/siderolabs/omni:{{ omni_version }}
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - "{{ omni_wireguard_port }}:{{ omni_wireguard_port }}/udp"
+    volumes:
+      - omni_data:/var/lib/omni
+      - ./omni.asc:/omni.asc:ro
+      - ./certs/server.pem:/server-chain.pem:ro
+      - ./certs/server-key.pem:/server-key.pem:ro
+    command:
+      - --name={{ omni_name }}
+      - --account-id={{ omni_account_id }}
+      - --private-key-source=file:///omni.asc
+      # TLS (self-signed, internal only — Caddy terminates external TLS)
+      - --cert=/server-chain.pem
+      - --key=/server-key.pem
+      - --machine-api-cert=/server-chain.pem
+      - --machine-api-key=/server-key.pem
+      # Bind addresses (internal — Caddy proxies these externally)
+      - --bind-addr=0.0.0.0:{{ omni_internal_https_port }}
+      - --machine-api-bind-addr=0.0.0.0:{{ omni_internal_siderolink_port }}
+      - --event-sink-port={{ omni_internal_eventsink_port }}
+      - --k8s-proxy-bind-addr=0.0.0.0:{{ omni_internal_k8sproxy_port }}
+      # Advertised URLs (what clients and Talos nodes use)
+      - --advertised-api-url=https://{{ omni_fqdn }}/
+      - --siderolink-api-advertised-url=https://{{ omni_fqdn }}:8090/
+      - --siderolink-wireguard-advertised-addr={{ omni_public_ip }}:{{ omni_wireguard_port }}
+      - --advertised-kubernetes-proxy-url=https://{{ omni_fqdn }}:8100/
+      # Authentication — Authentik SAML
+      - --auth-saml-enabled
+      - --auth-saml-url={{ omni_saml_url }}
+{% if omni_saml_label_rules | length > 0 %}
+      - '--auth-saml-label-rules={{ omni_saml_attribute_mappings | tojson }}'
+{% endif %}
+      # Storage
+      - --sqlite-storage-path=/var/lib/omni/omni.db
+      # Bootstrap
+{% if omni_initial_users | length > 0 %}
+      - --initial-users={{ omni_initial_users | join(',') }}
+{% endif %}
+      - --eula-accept-name={{ omni_eula_name }}
+      - --eula-accept-email={{ omni_eula_email }}
+
+volumes:
+  caddy_data:
+  caddy_config:
+  omni_data:

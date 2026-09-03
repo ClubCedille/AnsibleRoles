@@ -1,0 +1,61 @@
+---
+omni_version: "v1.9.0"
+omni_name: omni
+omni_fqdn: omni.etsmtl.club
+omni_account_id: "b8c13c02-96cd-406e-8cc9-b200fc51b590"
+
+omni_deploy_dir: /opt/omni
+
+# Public IP advertised to WireGuard peers (Talos nodes)
+omni_public_ip: "142.137.247.99"
+
+# External ports (published on the host)
+omni_wireguard_port: 50180
+
+# Internal ports — Caddy proxies external → these
+omni_internal_https_port: 8443      # Omni UI/API (TLS, Caddy → https://omni:8443)
+omni_internal_siderolink_port: 9090 # SideroLink / Machine API  (external 8090)
+omni_internal_eventsink_port: 9091  # Event sink                (external 8091)
+omni_internal_k8sproxy_port: 9100   # Kubernetes API proxy      (external 8100)
+
+# Authentication — Authentik SAML
+# In Authentik: create a SAML provider with:
+#   ACS URL      : https://{{ omni_fqdn }}/saml/acs
+#   Audience     : https://{{ omni_fqdn }}/saml/acs
+#   Redirect URI : https://{{ omni_fqdn }}/saml/acs
+# Then set omni_saml_url to the Authentik metadata URL for that provider.
+omni_saml_url: ""  # e.g. https://auth.etsmtl.club/application/saml/omni/metadata/
+
+# SAMLLabelRules — applied via omnictl on every Ansible run (idempotent).
+# match_labels items must be full COSI label keys: saml.omni.sidero.dev/<attribute>/<value>
+# Each entry: {id: str, match_labels: [...], role: Admin|Operator|Reader, update_on_each_login: true}
+# update_on_each_login defaults to true — SAML groups are the source of truth for roles.
+omni_saml_label_rules: []
+
+# Mapping of SAML assertion attribute names → Omni identity label key suffixes.
+# e.g. {groups: groups} causes a SAML attr "groups=omni-admin" to produce label
+# "saml.omni.sidero.dev/groups/omni-admin" on the Identity resource.
+# Passed as --auth-saml-label-rules JSON to Omni on startup.
+omni_saml_attribute_mappings: {}
+
+# Breaking-glass admin — email(s) granted Omni admin on first boot
+omni_initial_users: []              # e.g. ["admin@etsmtl.club"]
+
+# Service account key for omnictl automation (ansible-vault encrypted)
+omni_service_account_key: ""
+
+# BSL EULA acceptance (required)
+omni_eula_name: ""
+omni_eula_email: ""
+
+# omni.asc — GPG key (RSA4096, no passphrase) for etcd encryption
+# Generate:
+#   gpg --batch --passphrase '' --quick-generate-key \
+#     "Omni (Used for etcd data encryption) omni@internal.local" rsa4096 cert never
+#   FINGERPRINT=$(gpg --with-colons --list-keys "omni@internal.local" | awk -F: '$1=="fpr"{print $10;exit}')
+#   gpg --batch --passphrase '' --quick-add-key ${FINGERPRINT} rsa4096 encr never
+#   gpg --export-secret-key --armor omni@internal.local | ansible-vault encrypt_string --stdin-name omni_wireguard_private_key
+omni_wireguard_private_key: ""
+
+# Caddy — Let's Encrypt contact
+caddy_acme_email: "infra@etsmtl.club"

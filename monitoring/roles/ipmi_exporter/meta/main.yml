@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: Cedille
+  description: Deploy ipmi_exporter to expose IPMI/BMC hardware metrics (iLO, iDRAC)
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.14"
+dependencies: []

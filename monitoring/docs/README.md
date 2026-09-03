@@ -15,6 +15,8 @@ La collection `cedille.monitoring` regroupe les rôles nécessaires pour constru
 - `blackbox_exporter` : checks réseau, HTTP et ICMP.
 - `snmp_exporter` : métriques SNMP des switches et équipements réseau.
 - `alertmanager` : routage des alertes Prometheus.
+- `ipmi_exporter` : métriques matérielles IPMI/BMC (iLO, iDRAC) via FreeIPMI.
+- `pve_exporter` : métriques de l'API Proxmox VE (`prometheus-pve-exporter`).
 
 ## Usage
 

@@ -1,0 +1,17 @@
+# Managed by Ansible — do not edit manually
+# Apply with: omnictl apply -f /opt/omni/saml-label-rules.yaml
+# Note: rules take effect on next user login; existing users keep their current role.
+{% for rule in omni_saml_label_rules %}
+---
+metadata:
+  namespace: default
+  type: SAMLLabelRules.omni.sidero.dev
+  id: {{ rule.id }}
+spec:
+  matchlabels:
+{% for label in rule.match_labels %}
+    - "{{ label }}"
+{% endfor %}
+  assignrole: "{{ rule.role }}"
+  updateoneachlogin: {{ rule.update_on_each_login | default(true) | lower }}
+{% endfor %}

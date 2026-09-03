@@ -1,0 +1,15 @@
+[Unit]
+Description=Prometheus IPMI Exporter
+After=network.target
+
+[Service]
+User={{ ipmi_exporter_service.user }}
+Group={{ ipmi_exporter_service.group }}
+ExecStart={{ ipmi_exporter_paths.binary }} \
+  --config.file={{ ipmi_exporter_paths.config }} \
+  --web.listen-address={{ ipmi_exporter_listen_address }}:{{ ipmi_exporter_listen_port }}
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
