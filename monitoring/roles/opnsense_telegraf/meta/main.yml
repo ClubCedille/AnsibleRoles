@@ -1,0 +1,10 @@
+---
+galaxy_info:
+  author: Cedille
+  description: >-
+    Configure the os-telegraf OPNsense plugin via its REST API — system,
+    interface and PF metrics exposed on a native Prometheus exporter port
+    for monitoring01 to scrape.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.14"
+dependencies: []

@@ -1,0 +1,19 @@
+---
+# Requires connection: local at the play level (API calls issued from the
+# control node — see role README and cedille.opnsense.config for precedent).
+
+- name: Configure remote syslog destination (monitoring01 / Alloy)
+  oxlorg.opnsense.syslog:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ opnsense_api_key }}"
+    api_secret: "{{ opnsense_api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    target: "{{ opnsense_syslog_target }}"
+    port: "{{ opnsense_syslog_port }}"
+    transport: "{{ opnsense_syslog_transport }}"
+    facility: "{{ opnsense_syslog_facility if opnsense_syslog_facility | length > 0 else omit }}"
+    level: "{{ opnsense_syslog_level if opnsense_syslog_level | length > 0 else omit }}"
+    rfc5424: "{{ opnsense_syslog_rfc5424 }}"
+    description: "{{ opnsense_syslog_description }}"
+    state: present

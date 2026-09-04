@@ -1,0 +1,73 @@
+---
+# Requires connection: local at the play level (API calls issued from the
+# control node, not over SSH to the firewall — see role README).
+
+- name: Ensure os-telegraf plugin is installed
+  oxlorg.opnsense.package:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ opnsense_api_key }}"
+    api_secret: "{{ opnsense_api_secret }}"
+    ssl_verify: false
+    name: os-telegraf
+    action: install
+  when: opnsense_telegraf_manage_plugin | bool
+
+- name: Configure Telegraf general settings
+  ansible.builtin.uri:
+    url: "https://{{ vm_net.ip }}/api/telegraf/general/set"
+    method: POST
+    user: "{{ opnsense_api_key }}"
+    password: "{{ opnsense_api_secret }}"
+    force_basic_auth: true
+    validate_certs: false
+    body_format: json
+    body:
+      general: "{{ opnsense_telegraf_general_body }}"
+    status_code: [200]
+  register: _opnsense_telegraf_general
+  failed_when: _opnsense_telegraf_general.json.result | default('') != 'saved'
+
+- name: Configure Telegraf inputs
+  ansible.builtin.uri:
+    url: "https://{{ vm_net.ip }}/api/telegraf/input/set"
+    method: POST
+    user: "{{ opnsense_api_key }}"
+    password: "{{ opnsense_api_secret }}"
+    force_basic_auth: true
+    validate_certs: false
+    body_format: json
+    body:
+      input: "{{ opnsense_telegraf_input_body }}"
+    status_code: [200]
+  register: _opnsense_telegraf_input
+  failed_when: _opnsense_telegraf_input.json.result | default('') != 'saved'
+
+- name: Configure Telegraf outputs
+  ansible.builtin.uri:
+    url: "https://{{ vm_net.ip }}/api/telegraf/output/set"
+    method: POST
+    user: "{{ opnsense_api_key }}"
+    password: "{{ opnsense_api_secret }}"
+    force_basic_auth: true
+    validate_certs: false
+    body_format: json
+    body:
+      output: "{{ opnsense_telegraf_output_body }}"
+    status_code: [200]
+  register: _opnsense_telegraf_output
+  failed_when: _opnsense_telegraf_output.json.result | default('') != 'saved'
+
+# Regenerates telegraf.conf from the models above and (re)starts the daemon —
+# this is the only endpoint that actually applies the config; general/input/
+# output "set" calls only persist to config.xml (see role README).
+- name: Apply Telegraf configuration (regenerate + restart daemon)
+  ansible.builtin.uri:
+    url: "https://{{ vm_net.ip }}/api/telegraf/service/reconfigure"
+    method: POST
+    user: "{{ opnsense_api_key }}"
+    password: "{{ opnsense_api_secret }}"
+    force_basic_auth: true
+    validate_certs: false
+    status_code: [200]
+  register: _opnsense_telegraf_reconfigure
+  failed_when: _opnsense_telegraf_reconfigure.json.status | default('') != 'ok'
