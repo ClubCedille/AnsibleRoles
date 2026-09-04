@@ -1,0 +1,48 @@
+---
+# Ensure the os-telegraf plugin is present before configuring it. Set to
+# false if the plugin is already installed and you'd rather not give this
+# role package-install rights.
+opnsense_telegraf_manage_plugin: true
+
+# ─── General agent settings — //OPNsense/telegraf/general ────────────────────
+# Field names verified against the os-telegraf 1.0.4 General.xml model
+# (opnsense/plugins, net-mgmt/telegraf) on 2026-09-03. NOT exercised against
+# a live OPNsense instance — see role README "État de validation".
+opnsense_telegraf_general_body:
+  enabled: "1"
+  interval: "10"
+  hostname: "{{ inventory_hostname_short }}"
+
+# ─── Inputs — //OPNsense/telegraf/input ───────────────────────────────────────
+# "network" (not "net") enables Telegraf's inputs.net: per-interface
+# bytes/packets/errors/drops counters. It does NOT expose an explicit
+# link up/down boolean — FreeBSD interface admin/link state isn't collected
+# by this plugin at all; combine with blackbox_icmp_infra (already scraping
+# opnsense01/02) or a future ifconfig-parsing check if that state matters.
+# "pf" enables PF state-table/rule counters (existing firewall coverage).
+opnsense_telegraf_input_body:
+  cpu: "1"
+  mem: "1"
+  system: "1"
+  disk: "1"
+  diskio: "1"
+  network: "1"
+  pf: "1"
+  processes: "1"
+  swap: "0"
+  ntpq: "0"
+  zfs: "0"
+
+# ─── Output — //OPNsense/telegraf/output ──────────────────────────────────────
+# os-telegraf has NO Prometheus remote_write output (verified in Output.xml —
+# only prometheus_enable/_listen/_exclude/_stringaslabel exist, a pull-style
+# native exporter). This is a deliberate architecture change from the old,
+# never-run playbooks/infra/opnsense-telegraf.yaml, which assumed a
+# remote_write output that does not exist in this plugin. Prometheus on
+# monitoring01 must scrape this port instead; it already remote_writes
+# everything onward to Mimir (see monitoring_core.yaml prometheus_remote_write
+# — "anything ingested into this Prometheus... gets relayed onward from here").
+opnsense_telegraf_output_body:
+  prometheus_enable: "1"
+  prometheus_listen: "9273"
+  prometheus_stringaslabel: "1"

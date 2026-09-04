@@ -1,0 +1,34 @@
+---
+# Alloy syslog receiver on monitoring01 (see cedille.monitoring.alloy,
+# alloy_syslog_sources — AnsibleInfra/playbooks/monitoring/infra-syslog-switches.yaml).
+opnsense_syslog_target: "10.0.21.95"
+opnsense_syslog_transport: udp4
+
+# Each node needs its own listener port on monitoring01's Alloy instance —
+# the shared config.alloy.j2 template applies one *static* label set per
+# loki.source.syslog listener, so two OPNsense nodes sharing one port would
+# be indistinguishable in Loki. Set per-host in host_vars
+# (opnsense_syslog_alloy_port: 5140 / 5141) — no default on purpose, fails
+# loudly if forgotten rather than silently colliding both nodes on one port.
+opnsense_syslog_port: "{{ opnsense_syslog_alloy_port }}"
+
+# No facility/level filtering by default — "system + firewall + CARP/HA"
+# is intentionally broad (unlike the switch use case, which allowlists a
+# handful of event classes). Trim with opnsense_syslog_facility /
+# opnsense_syslog_level if volume becomes a problem; leave empty for "all".
+opnsense_syslog_facility: []
+opnsense_syslog_level: []
+
+# RFC5424 vs legacy/BSD framing — see role README "État de validation". The
+# switch (NX-OS) integration hit a real bug here (non-conformant framing
+# silently dropped by Alloy's rfc3164 parser); this OPNsense-side toggle is
+# what's being validated by the corresponding alloy_syslog_sources entry's
+# syslog_format. Keep these two in sync:
+#   opnsense_syslog_rfc5424: false  <->  alloy source syslog_format: rfc3164
+#   opnsense_syslog_rfc5424: true   <->  alloy source syslog_format: rfc5424
+# If validation shows OPNsense's framing is non-conformant either way
+# (as happened with NX-OS), fall back syslog_format to "raw" on the Alloy
+# side — no change needed here.
+opnsense_syslog_rfc5424: false
+
+opnsense_syslog_description: "monitoring01-alloy-{{ inventory_hostname_short }}"

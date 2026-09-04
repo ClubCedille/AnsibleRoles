@@ -1,0 +1,9 @@
+---
+galaxy_info:
+  author: Cedille
+  description: >-
+    Configure an OPNsense remote syslog destination (system, firewall,
+    CARP/HA) pointing at the Alloy syslog receiver on monitoring01.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.14"
+dependencies: []

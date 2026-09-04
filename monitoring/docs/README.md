@@ -17,6 +17,8 @@ La collection `cedille.monitoring` regroupe les rôles nécessaires pour constru
 - `alertmanager` : routage des alertes Prometheus.
 - `ipmi_exporter` : métriques matérielles IPMI/BMC (iLO, iDRAC) via FreeIPMI.
 - `pve_exporter` : métriques de l'API Proxmox VE (`prometheus-pve-exporter`).
+- `opnsense_telegraf` : active le plugin os-telegraf sur OPNsense (API) — métriques système/interfaces/PF exposées en Prometheus natif (pull, port 9273).
+- `opnsense_syslog` : configure une destination syslog distante sur OPNsense (API) vers le récepteur Alloy de monitoring01 (system + firewall + CARP/HA).
 
 ## Usage
 
