@@ -17,3 +17,24 @@
     rfc5424: "{{ opnsense_syslog_rfc5424 }}"
     description: "{{ opnsense_syslog_description }}"
     state: present
+  register: _opnsense_syslog_destination
+
+# The "set" call above only persists to config.xml — it does NOT regenerate
+# /usr/local/etc/syslog-ng.conf.d/syslog-ng-destinations.conf nor reload the
+# running syslog-ng daemon (confirmed empirically: the generated file stayed
+# empty and no packets left the box after "set" alone, on OPNsense 26.7.3_8).
+# There is no dedicated "reconfigure" action on this controller — "reset" is
+# the actual apply action (OPNsense\Syslog\Api\ServiceController::resetAction,
+# runs configd job "syslog reset").
+- name: Apply syslog configuration (regenerate destinations + reload daemon)
+  ansible.builtin.uri:
+    url: "https://{{ vm_net.ip }}/api/syslog/service/reset"
+    method: POST
+    user: "{{ opnsense_api_key }}"
+    password: "{{ opnsense_api_secret }}"
+    force_basic_auth: true
+    validate_certs: false
+    status_code: [200]
+  register: _opnsense_syslog_reset
+  failed_when: _opnsense_syslog_reset.json.status | default('') != 'ok'
+  when: _opnsense_syslog_destination.changed | default(true)
