@@ -443,3 +443,21 @@
     destination_net: any
     description: "CI/CD (opt-dynamic) | Allow ICMP outbound"
     enabled: true
+
+- name: "Apply pending firewall filter changes"
+  # None of the rule tasks above set reload/apply (module default false)
+  # and there was no separate apply step anywhere in this role — masked
+  # until now because every rule previously created here had also had a
+  # human click "Apply" in the GUI at some point after an early Ansible
+  # run. The first rules created with NO such manual follow-up (CI/CD
+  # VLAN 40 rules, 2026-09-10) sat created-but-inactive in config.xml
+  # until this call — confirmed live: rule count in `pfctl -sr` didn't
+  # change and connectivity from a migrated host failed until this ran.
+  ansible.builtin.uri:
+    url: "https://{{ vm_net.ip }}/api/firewall/filter/apply"
+    method: POST
+    user: "{{ api_key }}"
+    password: "{{ api_secret }}"
+    force_basic_auth: true
+    validate_certs: false
+  no_log: true
