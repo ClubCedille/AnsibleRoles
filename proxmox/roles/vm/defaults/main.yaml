@@ -27,6 +27,15 @@ vm_sshkeys:
 
 vm_onboot: true
 
+# Proxmox pool (grouping/RBAC scope) and tags (free labels, semicolon
+# taxonomy already in use cluster-wide e.g. "PRODUCTION;CEDILLE;CI-RUNNER").
+# Empty by default — set both in group_vars/host_vars to manage them as
+# IaC. vm_pool_comment is only used the first time the pool is created;
+# Proxmox ignores it afterwards (see community.proxmox.proxmox_pool docs).
+vm_pool: ""
+vm_pool_comment: ""
+vm_tags: []
+
 vm_disk_image_path:
 vm_disk_storage: "local-lvm"
 vm_disk_format: "qcow2"
