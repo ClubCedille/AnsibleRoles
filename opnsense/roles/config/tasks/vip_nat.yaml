@@ -53,6 +53,13 @@
 # for these 3 to conflict with. vhid continues after the existing
 # 1 (WAN) and 10-16 (7 pre-existing trunk VLANs) — 17/18/19.
 - name: "Setup Virtual IPs for newly segmented VLANs (40/45/48)"
+  # reload/apply defaults to false on this module — without it, the VIP
+  # object is saved to config.xml but never actually brought up on the
+  # interface (confirmed live, 2026-09-10: had to trigger
+  # /api/interfaces/vip_settings/reconfigure by hand after this task
+  # reported "changed" with no visible CARP interface). The other VIP
+  # tasks in this file have the same gap, currently masked by
+  # opnsense_manage_vips being false.
   when: item.vip is not none
   oxlorg.opnsense.interface_vip:
     firewall: "{{ vm_net.ip }}"
@@ -68,6 +75,7 @@
     description: "Trunk VLAN {{ item.id }} VIP"
     password: "{{ vip_password }}"
     vhid: "{{ loop_index + 17 }}"
+    reload: true
   loop: "{{ vm_net_trunk.vlans | selectattr('id', 'in', [40, 45, 48]) | list }}"
   loop_control:
     index_var: loop_index
