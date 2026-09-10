@@ -28,6 +28,18 @@
   when: vm_delete_if_exists | default(false)
   delegate_to: localhost
 
+- name: Ensure Proxmox pool exists
+  community.proxmox.proxmox_pool:
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    poolid: "{{ vm_pool }}"
+    comment: "{{ vm_pool_comment | default(omit) }}"
+    state: present
+  when: vm_pool | default('') | length > 0
+  delegate_to: localhost
+  throttle: 1
+
 - name: Create the basic VM
   community.proxmox.proxmox_kvm:
     description: "=== ANSIBLE MANAGED VM ==="
@@ -39,6 +51,15 @@
     vmid: "{{ vm_id }}"
     name: "{{ vm_name }}"
     node: "{{ vm_proxmox_node }}"
+    # Pool assignment only takes effect at creation — proxmox_kvm can't
+    # move an existing VM's pool via the config-update API endpoint, see
+    # "Ensure VM pool membership" below for that case. tags is set here
+    # too for genuinely new VMs, but state:present without update:true is
+    # a documented no-op on a VM that already exists (see resize_vm.yaml)
+    # — see "Ensure VM tags" below for the case that actually matters for
+    # existing VMs.
+    pool: "{{ vm_pool | default(omit) }}"
+    tags: "{{ vm_tags | default(omit) }}"
     # VM resources
     machine: "q35"
     cpu: "{{ vm_cpu_type | default('host') }}"
@@ -84,6 +105,48 @@
     discard: true
     state: present
   when: not (vm_delete_if_exists | default(false))
+  delegate_to: localhost
+
+- name: Ensure VM pool membership
+  # proxmox_pool_member isn't idempotent: state:present errors instead of
+  # no-op'ing when the VM is already a member (confirmed live, 2026-09-10)
+  # — treat that specific error as success, fail on anything else. Also
+  # throttled to 1: the Proxmox pool-update endpoint does a read-modify-
+  # write on the pool's member list, so concurrent host runs targeting
+  # the same pool raced and produced unexplained failures (confirmed
+  # live — 6 hosts run in parallel against the same new pool failed with
+  # no usable error message, one at a time succeeded fine).
+  community.proxmox.proxmox_pool_member:
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    poolid: "{{ vm_pool }}"
+    members:
+      - vm: "{{ vm_id }}"
+    state: present
+  when: vm_pool | default('') | length > 0 and not (vm_delete_if_exists | default(false))
+  delegate_to: localhost
+  throttle: 1
+  register: _vm_pool_membership
+  failed_when: >-
+    _vm_pool_membership is failed and
+    'already a pool member' not in (_vm_pool_membership.msg | default(''))
+
+- name: Ensure VM tags
+  # "Create the basic VM" above sets tags too, but state:present without
+  # update:true is a documented no-op on a VM that already exists (see
+  # resize_vm.yaml) — this is the task that actually converges tags on
+  # already-existing VMs.
+  community.proxmox.proxmox_kvm:
+    api_user: "{{ vm_proxmox_api.user }}"
+    api_password: "{{ vm_proxmox_api.password }}"
+    api_host: "{{ vm_proxmox_api.host }}"
+    vmid: "{{ vm_id }}"
+    node: "{{ vm_proxmox_node }}"
+    tags: "{{ vm_tags }}"
+    state: present
+    update: true
+  when: vm_tags | default([]) | length > 0 and not (vm_delete_if_exists | default(false))
   delegate_to: localhost
 
 - name: Resize the VM disk
