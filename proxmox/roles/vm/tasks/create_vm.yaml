@@ -38,6 +38,7 @@
     state: present
   when: vm_pool | default('') | length > 0
   delegate_to: localhost
+  throttle: 1
 
 - name: Create the basic VM
   community.proxmox.proxmox_kvm:
@@ -109,7 +110,12 @@
 - name: Ensure VM pool membership
   # proxmox_pool_member isn't idempotent: state:present errors instead of
   # no-op'ing when the VM is already a member (confirmed live, 2026-09-10)
-  # — treat that specific error as success, fail on anything else.
+  # — treat that specific error as success, fail on anything else. Also
+  # throttled to 1: the Proxmox pool-update endpoint does a read-modify-
+  # write on the pool's member list, so concurrent host runs targeting
+  # the same pool raced and produced unexplained failures (confirmed
+  # live — 6 hosts run in parallel against the same new pool failed with
+  # no usable error message, one at a time succeeded fine).
   community.proxmox.proxmox_pool_member:
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
@@ -120,6 +126,7 @@
     state: present
   when: vm_pool | default('') | length > 0 and not (vm_delete_if_exists | default(false))
   delegate_to: localhost
+  throttle: 1
   register: _vm_pool_membership
   failed_when: >-
     _vm_pool_membership is failed and
