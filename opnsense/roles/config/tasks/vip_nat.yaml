@@ -40,6 +40,38 @@
   loop_control:
     index_var: loop_index
 
+# Segmentation VLANs (40 CI/CD, 45 Monitoring, 48 Utilities) have no VIP
+# at all yet — confirmed live (2026-09-10): both routers only have their
+# real per-node interface IP (10.0.40.2/.3), no 10.0.40.1 gateway
+# anywhere. Added independently of opnsense_manage_vips (stays false):
+# enabling it broadly would re-touch the 7 pre-existing trunk VIPs too,
+# whose manually-created objects likely have descriptions that don't
+# match what this module would generate (blank vs "Trunk VLAN N VIP"),
+# risking duplicate/conflicting CARP VIPs on the same vhid+interface —
+# exactly what the "disabled until vip_nat.yaml matching is updated"
+# note above is about. No such clash risk here: nothing existed before
+# for these 3 to conflict with. vhid continues after the existing
+# 1 (WAN) and 10-16 (7 pre-existing trunk VLANs) — 17/18/19.
+- name: "Setup Virtual IPs for newly segmented VLANs (40/45/48)"
+  when: item.vip is not none
+  oxlorg.opnsense.interface_vip:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    address: "{{ item.vip }}/{{ item.mask }}"
+    interface: "{{ item.interface_name }}"
+    mode: "carp"
+    bind: true
+    advertising_base: "{% if vm_is_master %}1{% else %}5{% endif %}"
+    description: "Trunk VLAN {{ item.id }} VIP"
+    password: "{{ vip_password }}"
+    vhid: "{{ loop_index + 17 }}"
+  loop: "{{ vm_net_trunk.vlans | selectattr('id', 'in', [40, 45, 48]) | list }}"
+  loop_control:
+    index_var: loop_index
+
 # NOTE: outbound NAT clashes with manually created classic NAT rules.
 # Set opnsense_manage_nat: true ONLY after migrating classic NAT to new format.
 - name: Setup Outbound NAT for the Public VIP
