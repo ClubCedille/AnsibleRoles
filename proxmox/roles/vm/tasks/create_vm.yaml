@@ -107,6 +107,9 @@
   delegate_to: localhost
 
 - name: Ensure VM pool membership
+  # proxmox_pool_member isn't idempotent: state:present errors instead of
+  # no-op'ing when the VM is already a member (confirmed live, 2026-09-10)
+  # — treat that specific error as success, fail on anything else.
   community.proxmox.proxmox_pool_member:
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
@@ -117,6 +120,10 @@
     state: present
   when: vm_pool | default('') | length > 0 and not (vm_delete_if_exists | default(false))
   delegate_to: localhost
+  register: _vm_pool_membership
+  failed_when: >-
+    _vm_pool_membership is failed and
+    'already a pool member' not in (_vm_pool_membership.msg | default(''))
 
 - name: Ensure VM tags
   # "Create the basic VM" above sets tags too, but state:present without
