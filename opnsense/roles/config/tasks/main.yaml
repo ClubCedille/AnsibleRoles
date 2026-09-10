@@ -22,6 +22,11 @@
   ansible.builtin.include_tasks:
     file: ha_sync.yaml
 
+- name: Fix WireGuard CARP transition hook (active-active bug)
+  ansible.builtin.include_tasks:
+    file: carp_wireguard_hook.yaml
+  when: opnsense_fix_wireguard_carp_hook
+
 # Setup a certificate authority and certificates manually
 # as OPNsense does not support it via API yet
 

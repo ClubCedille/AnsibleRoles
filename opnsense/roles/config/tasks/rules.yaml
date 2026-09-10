@@ -27,6 +27,11 @@
       ssl_verify: false
       match_fields:
         - description
+    # VLAN 40 (CI/CD) interface name differs per node (opt1 on opnsense01,
+    # opt2 on opnsense02 — GUI-assigned, not synced between HA members).
+    # Resolve dynamically instead of hardcoding either value.
+    _opnsense_cicd_iface: >-
+      {{ (vm_net_trunk.vlans | selectattr('id', 'equalto', 40) | list | first).interface_name }}
 
 # ---------------------------------------------------------------------------
 # WAN rules (sequence 10–50)
@@ -363,4 +368,78 @@
     source_net: any
     destination_net: any
     description: "WireGuard group | Allow outbound"
+    enabled: true
+
+# ---------------------------------------------------------------------------
+# CI/CD VLAN (tag 40) rules — sequence 700-730
+#
+# New VLAN, no legacy "any any" to preserve — written scoped from day one
+# per the VLAN21 segmentation design (see AnsibleInfra
+# docs/revue-infra-2026-09): runners execute arbitrary CI code from any
+# club repo, the highest compromise-exposure workload. Egress limited to
+# what CI actually needs (DNS, HTTPS for package/image pulls and the
+# Forgejo instance, ICMP for diagnostics). No inter-runner rule — none
+# identified as needed.
+#
+# No separate "admin SSH from LAN" rule here: pf evaluates `direction: in`
+# on the *source* interface (see [[project_cedille_firewall_opt10_rules_draft]]),
+# so admin access from LAN into this VLAN is already covered by the
+# existing "LAN | Allow LAN to any" rule above — a rule scoped to this
+# interface would only govern traffic CI/CD hosts themselves originate.
+# ---------------------------------------------------------------------------
+
+- name: "CI/CD (opt-dynamic) | Allow DNS outbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    sequence: 700
+    interface: ["{{ _opnsense_cicd_iface }}"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: "TCP/UDP"
+    source_net: any
+    destination_net: any
+    destination_port: "53"
+    description: "CI/CD (opt-dynamic) | Allow DNS outbound"
+    enabled: true
+
+- name: "CI/CD (opt-dynamic) | Allow HTTPS outbound (internet + Forgejo)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    sequence: 710
+    interface: ["{{ _opnsense_cicd_iface }}"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: TCP
+    source_net: any
+    destination_net: any
+    destination_port: "443"
+    description: "CI/CD (opt-dynamic) | Allow HTTPS outbound (internet + Forgejo)"
+    enabled: true
+
+- name: "CI/CD (opt-dynamic) | Allow ICMP outbound"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    sequence: 720
+    interface: ["{{ _opnsense_cicd_iface }}"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: ICMP
+    source_net: any
+    destination_net: any
+    description: "CI/CD (opt-dynamic) | Allow ICMP outbound"
     enabled: true
