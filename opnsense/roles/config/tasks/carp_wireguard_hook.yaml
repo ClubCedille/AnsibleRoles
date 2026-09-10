@@ -1,0 +1,21 @@
+# Fix WireGuard's CARP HA behavior — see templates/carp-wireguard-hook.sh.j2
+# for the full diagnosis. Runs over SSH regardless of the play's default
+# connection: this is a filesystem change the OPNsense API can't manage,
+# and on opnsense02 specifically it must not depend on API reachability
+# (the bug this fixes is precisely why the API can be unreachable there).
+- name: "CARP | Backup existing WireGuard hook before replacing"
+  ansible.builtin.command:
+    cmd: cp /usr/local/etc/rc.syshook.d/carp/20-wireguard /usr/local/etc/rc.syshook.d/carp/20-wireguard.pre-ansible-fix
+    creates: /usr/local/etc/rc.syshook.d/carp/20-wireguard.pre-ansible-fix
+  vars:
+    ansible_connection: ssh
+
+- name: "CARP | Deploy corrected WireGuard CARP transition hook"
+  ansible.builtin.template:
+    src: carp-wireguard-hook.sh.j2
+    dest: /usr/local/etc/rc.syshook.d/carp/20-wireguard
+    owner: root
+    group: wheel
+    mode: "0755"
+  vars:
+    ansible_connection: ssh

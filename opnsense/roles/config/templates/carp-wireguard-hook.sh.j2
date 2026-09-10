@@ -1,0 +1,66 @@
+#!/bin/sh
+# Managed by Ansible (cedille.opnsense.config, carp_wireguard_hook.yaml).
+#
+# Replaces the stock os-wireguard CARP hook, which only ever runs
+# `configctl wireguard configure` regardless of the transition type — it
+# never actually stops the service on BACKUP. Unlike OpenVPN (whose server
+# binds to the CARP VIP interface object and is therefore naturally inert
+# on the backup node), WireGuard binds to a real per-node address, so
+# without this fix wg0 stays fully active on both HA members at once: the
+# backup keeps routes claiming the VPN client pool and silently swallows
+# reply traffic that should instead transit back to the client via the
+# master.
+#
+# Full sequence below was worked out and validated live against
+# opnsense01/02 on 2026-09-09 (see AnsibleInfra
+# docs/revue-infra-2026-09 for the write-up):
+#   1. `configctl wireguard stop` is a no-op here — wg0 is an *assigned*
+#      OPNsense interface ("breakingglass", opt11, now the primary admin
+#      VPN; the name is legacy from when OpenVPN was primary and
+#      WireGuard was the fallback) — the service stop/start actions don't
+#      touch its interface/route state. `ifconfig down` does remove the
+#      broad connected route for the tunnel subnet — necessary but not
+#      sufficient.
+#   2. The WireGuard kernel driver injects a /32 host route per peer,
+#      independent of the interface's admin up/down state — these persist
+#      after `ifconfig down` and keep swallowing replies for any peer that
+#      already has one. They must be deleted explicitly.
+#   3. Once wg0 is down and its routes are gone, the backup has *no* route
+#      at all back to the VPN pool — an explicit static route via the
+#      peer's real LAN IP is required so replies transit back to the
+#      client through the master, which still owns the live tunnel
+#      session.
+#
+# Args (standard OPNsense CARP syshook convention): $1 = subsystem
+# ("vhid@interface"), $2 = event type (MASTER/BACKUP/INIT).
+
+WG_IF="wg0"
+PEER_LAN_IP="{{ opnsense_peer_lan_ip }}"
+VPN_POOL_NET="{{ opnsense_wireguard_pool_net }}"
+subsystem="$1"
+type="$2"
+
+case "$type" in
+  MASTER)
+    # Drop any stale backup-mode static route before taking over as the
+    # real tunnel endpoint again — harmless no-op if it isn't present.
+    route delete -net "$VPN_POOL_NET" "$PEER_LAN_IP" >/dev/null 2>&1
+    ifconfig "$WG_IF" up
+    configctl -dq wireguard configure
+    ;;
+  BACKUP)
+    ifconfig "$WG_IF" down
+    netstat -rn -f inet \
+      | awk -v ifn="$WG_IF" '$NF == ifn && $3 ~ /H/ && $1 !~ /\// {print $1}' \
+      | while read -r peer_ip; do
+          route delete -host "$peer_ip" -iface "$WG_IF" >/dev/null 2>&1
+        done
+    route add -net "$VPN_POOL_NET" "$PEER_LAN_IP" >/dev/null 2>&1
+    ;;
+  INIT)
+    configctl -dq wireguard configure
+    ;;
+  *)
+    logger -t carp-wireguard-hook "unknown CARP event type '$type' from '$subsystem'"
+    ;;
+esac

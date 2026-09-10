@@ -49,6 +49,22 @@ opnsense_manage_nat: true
 # OpenVPN servers to configure — empty by default (set in host_vars if needed).
 opnsense_openvpn: []
 
+# Whether to fix the stock os-wireguard CARP hook so wg0 actually stops on
+# BACKUP transitions instead of staying active-active on both HA nodes
+# (see carp_wireguard_hook.yaml). Runs over SSH regardless of the play's
+# connection — safe to leave on even when the API is unreachable.
+opnsense_fix_wireguard_carp_hook: true
+
+# Peer's real LAN IP (not the CARP VIP) — set per-node in host_vars, e.g.
+# opnsense01: 10.0.21.3, opnsense02: 10.0.21.2. Used by the WireGuard CARP
+# hook as the gateway for the backup-mode static route back to the VPN
+# pool (see carp-wireguard-hook.sh.j2).
+opnsense_peer_lan_ip: "REPLACE_WITH_PEER_LAN_IP"
+
+# WireGuard ("breakingglass") client pool subnet — used by the CARP hook
+# to route replies back to the master when this node is BACKUP.
+opnsense_wireguard_pool_net: "10.254.0.0/24"
+
 # Mapping used in rules.yaml — api_key/secret aliased from host_vars.
 api_key: "{{ opnsense_api_key }}"
 api_secret: "{{ opnsense_api_secret }}"
