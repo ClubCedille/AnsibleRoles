@@ -64,3 +64,32 @@
   loop: "{{ vm_net_trunk.vlans }}"
   loop_control:
     index_var: loop_index
+
+# Segmentation VLANs (40 CI/CD, 45 Monitoring, 48 Utilities) have no
+# classic NAT rule at all yet — added independently of
+# opnsense_manage_nat (which stays false: flipping it globally would
+# also try to manage NAT for every pre-existing VLAN, clashing with
+# their manually-configured classic rules per the note above). No such
+# clash risk here since these subnets are brand new.
+- name: "Setup Outbound NAT for newly segmented VLANs (40/45/48)"
+  when: item.vip is not none
+  oxlorg.opnsense.nat_source:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    description: "Outbound NAT for Public VIP - VLAN {{ item.id }}"
+    sequence: "{{ 1040 + loop_index }}"
+    interface: "wan"
+    ip_protocol: "inet"
+    protocol: "any"
+    source_net: "{{ item.network }}/{{ item.mask }}"
+    destination_net: "any"
+    target: "{{ vm_net.vip }}"
+    log: false
+    state: present
+    enabled: true
+  loop: "{{ vm_net_trunk.vlans | selectattr('id', 'in', [40, 45, 48]) | list }}"
+  loop_control:
+    index_var: loop_index
