@@ -1,0 +1,35 @@
+---
+github_runner_version: "2.337.0"
+github_runner_arch: x64
+
+github_runner_service:
+  user: github-runner
+  group: github-runner
+
+github_runner_paths:
+  archive_download_dir: /tmp
+  data_dir: /var/lib/github-runner
+
+# Organisation GitHub cible (enregistrement au niveau org, pas repo).
+# https://github.com/{{ github_runner_org }}
+github_runner_org: "REPLACE_WITH_GITHUB_ORG"
+
+# Jeton d'enregistrement — valide 1h seulement, calculé à l'exécution du
+# playbook (jamais une valeur statique vaultée). Voir docs/README.md.
+github_runner_registration_token: "REPLACE_WITH_RUNTIME_REGISTRATION_TOKEN"
+
+# Nom du runner tel qu'affiché dans GitHub — par défaut le premier segment
+# du hostname (ex: forgejo-runner-dind01.mgmt.etsmtl.club -> forgejo-runner-dind01).
+github_runner_name: "{{ inventory_hostname.split('.')[0] }}"
+
+github_runner_labels:
+  - "generic"
+
+github_runner_replace_existing: true
+
+# Extra system groups (e.g. "kvm") and apt packages (e.g. qemu-system-x86)
+# for runners that need host-level device access. Docker access is always
+# granted (runner user added to the "docker" group) since jobs execute
+# natively on the host unless the workflow specifies its own container:.
+github_runner_extra_groups: []
+github_runner_extra_packages: []
