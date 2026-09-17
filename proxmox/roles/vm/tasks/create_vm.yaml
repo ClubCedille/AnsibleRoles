@@ -28,6 +28,65 @@
   when: vm_delete_if_exists | default(false)
   delegate_to: localhost
 
+- name: Determine effective list of NICs (vm_nets takes precedence over legacy vm_net)
+  ansible.builtin.set_fact:
+    _vm_net_list: "{{ vm_nets if (vm_nets | default([]) | length > 0) else [vm_net] }}"
+  when: not (vm_delete_if_exists | default(false))
+
+- name: Check whether `make gen-mac` is available in the calling repo
+  # Pas de chdir explicite : on part du principe que le CWD est déjà la
+  # racine du repo appelant (cas normal -- make ou ansible-playbook lancés
+  # depuis là), pas de chemin relatif fiable à déduire de playbook_dir
+  # (profondeur variable selon l'appelant).
+  ansible.builtin.command: make -n gen-mac
+  register: _gen_mac_target_check
+  changed_when: false
+  failed_when: false
+  delegate_to: localhost
+  when: not (vm_delete_if_exists | default(false))
+
+# Une MAC générée par Proxmox à la création n'est pas déclarative : elle ne
+# peut pas être auditée/reproduite depuis Ansible seul (cf. l'historique de
+# playbooks/proxmox/census_vms.yaml dans AnsibleInfra, qui a dû aller la
+# redécouvrir après coup). Requis depuis 2.0.0.
+- name: Fail early if a NIC is missing its mac field
+  ansible.builtin.fail:
+    msg: >-
+      {{ 'vm_nets[' ~ idx ~ ']' if (vm_nets | default([]) | length > 0) else 'vm_net' }}
+      n'a pas de champ `mac` défini -- requis depuis cedille.proxmox.vm 2.0.0.
+      Générez-en une avec
+      {{ 'make gen-mac' if _gen_mac_target_check.rc == 0 else (role_path ~ '/scripts/gen_mac.py') }}
+      et ajoutez-la dans le host_vars correspondant.
+  loop: "{{ _vm_net_list }}"
+  loop_control:
+    index_var: idx
+    label: "NIC {{ idx }}"
+  when:
+    - not (vm_delete_if_exists | default(false))
+    - not (item.mac | default(''))
+
+- name: Build net<N>/ipconfig<N> maps from the NIC list
+  ansible.builtin.set_fact:
+    _vm_net_map: >-
+      {{ (_vm_net_map | default({})) | combine({
+           ('net' ~ idx): (
+             (item.device | default('virtio')) ~ ',bridge=' ~ item.bridge
+             ~ ',tag=' ~ (item.vlan | default('1'))
+             ~ ',mtu=' ~ (item.mtu | default(1500))
+             ~ ',macaddr=' ~ item.mac
+           )
+      }) }}
+    _vm_ipconfig_map: >-
+      {{ (_vm_ipconfig_map | default({})) | combine(
+           {('ipconfig' ~ idx): ('ip=' ~ item.ip ~ '/' ~ item.netmask ~ ',gw=' ~ item.gateway)}
+           if (item.ip | default('')) | length > 0 else {}
+      ) }}
+  loop: "{{ _vm_net_list }}"
+  loop_control:
+    index_var: idx
+    label: "NIC {{ idx }}"
+  when: not (vm_delete_if_exists | default(false))
+
 - name: Ensure Proxmox pool exists
   community.proxmox.proxmox_pool:
     api_user: "{{ vm_proxmox_api.user }}"
@@ -65,12 +124,7 @@
     cpu: "{{ vm_cpu_type | default('host') }}"
     cores: "{{ vm_cpu_cores }}"
     memory: "{{ vm_memory_mb }}"
-    net:
-      # VLAN 247 - Public IP
-      net0: "{{ vm_net.device | default('virtio') }},bridge={{ vm_net.bridge }},tag={{ vm_net.vlan | default('1') }},mtu={{ vm_net.mtu | default(1500) }}"
-      # # Trunk - Internal Networks
-      # To setup manually on VMs that need it
-      # net1: "{{ vm_net_trunk.device | default('virtio') }},bridge={{ vm_net_trunk.bridge }}"
+    net: "{{ _vm_net_map }}"
     # Cloud Init configuration
     # Will not apply on OPNsense VMs as they do not support cloud-init
     ide:
@@ -80,8 +134,7 @@
     sshkeys: "{{ vm_sshkeys }}"
     searchdomains: "{{ vm_net.search_domain | default('localdomain') }}"
     nameservers: "{{ omit if vm_net.nameservers is not defined else vm_net.nameservers }}"
-    ipconfig:
-      ipconfig0: "ip={{ vm_net.ip }}/{{ vm_net.netmask }},gw={{ vm_net.gateway }}"
+    ipconfig: "{{ _vm_ipconfig_map }}"
     ostype: "{{ vm_os_type | default('l26') }}"
     onboot: "{{ vm_onboot | default(true) }}"
     agent: true
