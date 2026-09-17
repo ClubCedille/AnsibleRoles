@@ -371,7 +371,7 @@
     enabled: true
 
 # ---------------------------------------------------------------------------
-# CI/CD VLAN (tag 40) rules — sequence 700-730
+# CI/CD VLAN (tag 40) rules — sequence 700-760
 #
 # New VLAN, no legacy "any any" to preserve — written scoped from day one
 # per the VLAN21 segmentation design (see AnsibleInfra
@@ -386,6 +386,15 @@
 # so admin access from LAN into this VLAN is already covered by the
 # existing "LAN | Allow LAN to any" rule above — a rule scoped to this
 # interface would only govern traffic CI/CD hosts themselves originate.
+#
+# sequence 730-760 (added for AnsibleInfra's "Ansible Dry Run" CI job, which
+# runs `ansible-playbook --check --diff` from the self-hosted runners on this
+# VLAN): the Proxmox API (8006) and SSH (22) egress needed to actually reach
+# targets, scoped to the destination subnets the dry-run job exercises —
+# infra mgmt (10.0.21.0/24, Proxmox API + SSH) and the permanent-infra event
+# VLANs 66/67 (10.66.0.0/16, 10.67.0.0/16 — SSH only, no Proxmox API there).
+# Deliberately NOT opened to LanETS/SummerCamp: those sit behind their own,
+# separate OPNsense instances outside this cluster's `routers` scope.
 # ---------------------------------------------------------------------------
 
 - name: "CI/CD (opt-dynamic) | Allow DNS outbound"
@@ -442,6 +451,82 @@
     source_net: any
     destination_net: any
     description: "CI/CD (opt-dynamic) | Allow ICMP outbound"
+    enabled: true
+
+- name: "CI/CD (opt-dynamic) | Allow Proxmox API outbound to mgmt (TCP 8006)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    sequence: 730
+    interface: ["{{ _opnsense_cicd_iface }}"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: TCP
+    source_net: any
+    destination_net: "10.0.21.0/24"
+    destination_port: "8006"
+    description: "CI/CD (opt-dynamic) | Allow Proxmox API outbound to mgmt (TCP 8006)"
+    enabled: true
+
+- name: "CI/CD (opt-dynamic) | Allow SSH outbound to mgmt (TCP 22)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    sequence: 740
+    interface: ["{{ _opnsense_cicd_iface }}"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: TCP
+    source_net: any
+    destination_net: "10.0.21.0/24"
+    destination_port: "22"
+    description: "CI/CD (opt-dynamic) | Allow SSH outbound to mgmt (TCP 22)"
+    enabled: true
+
+- name: "CI/CD (opt-dynamic) | Allow SSH outbound to VLAN 66 (TCP 22)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    sequence: 750
+    interface: ["{{ _opnsense_cicd_iface }}"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: TCP
+    source_net: any
+    destination_net: "10.66.0.0/16"
+    destination_port: "22"
+    description: "CI/CD (opt-dynamic) | Allow SSH outbound to VLAN 66 (TCP 22)"
+    enabled: true
+
+- name: "CI/CD (opt-dynamic) | Allow SSH outbound to VLAN 67 (TCP 22)"
+  oxlorg.opnsense.rule:
+    firewall: "{{ vm_net.ip }}"
+    api_key: "{{ api_key }}"
+    api_secret: "{{ api_secret }}"
+    ssl_verify: false
+    match_fields: ["description"]
+    sequence: 760
+    interface: ["{{ _opnsense_cicd_iface }}"]
+    action: pass
+    direction: in
+    ip_protocol: inet
+    protocol: TCP
+    source_net: any
+    destination_net: "10.67.0.0/16"
+    destination_port: "22"
+    description: "CI/CD (opt-dynamic) | Allow SSH outbound to VLAN 67 (TCP 22)"
     enabled: true
 
 - name: "Apply pending firewall filter changes"
