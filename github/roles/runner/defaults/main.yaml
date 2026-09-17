@@ -25,6 +25,12 @@ github_runner_name: "{{ inventory_hostname.split('.')[0] }}"
 github_runner_labels:
   - "generic"
 
+# Runner group côté organisation GitHub (doit déjà exister — voir la play
+# "Ensure GitHub org runner groups exist" dans le playbook AnsibleInfra, qui
+# les crée avant l'enregistrement). Un groupe par pool, pas le groupe
+# "Default" implicite.
+github_runner_group: "REPLACE_WITH_RUNNER_GROUP"
+
 github_runner_replace_existing: true
 
 # Extra system groups (e.g. "kvm") and apt packages (e.g. qemu-system-x86)
