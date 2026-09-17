@@ -35,6 +35,15 @@
 
 # ---------------------------------------------------------------------------
 # WAN rules (sequence 10–50)
+#
+# interface uses vm_net.custom_name, not the literal "wan": WAN is
+# GUI-assigned per node like any other opt interface and is NOT synced
+# between HA members. Confirmed 2026-09-17 via /api/firewall/filter/get on
+# both prod nodes: opnsense01's WAN key is "wan", opnsense02's is "opt1"
+# (its "opt2" is CICD — see _opnsense_cicd_iface above, same root cause).
+# Hardcoding "wan" here caused every rule in this role to fail on
+# opnsense02 from the very first task, since Ansible aborts the whole
+# play on the first unhandled failure.
 # ---------------------------------------------------------------------------
 
 - name: "WAN | Allow WireGuard inbound (UDP 51820)"
@@ -45,7 +54,7 @@
     ssl_verify: false
     match_fields: ["description"]
     sequence: 10
-    interface: ["wan"]
+    interface: ["{{ vm_net.custom_name }}"]
     action: pass
     direction: in
     ip_protocol: inet
@@ -64,7 +73,7 @@
     ssl_verify: false
     match_fields: ["description"]
     sequence: 20
-    interface: ["wan"]
+    interface: ["{{ vm_net.custom_name }}"]
     action: pass
     direction: in
     ip_protocol: inet
@@ -83,7 +92,7 @@
     ssl_verify: false
     match_fields: ["description"]
     sequence: 30
-    interface: ["wan"]
+    interface: ["{{ vm_net.custom_name }}"]
     action: pass
     direction: out
     ip_protocol: inet
@@ -102,7 +111,7 @@
     ssl_verify: false
     match_fields: ["description"]
     sequence: 40
-    interface: ["wan"]
+    interface: ["{{ vm_net.custom_name }}"]
     action: pass
     direction: in
     ip_protocol: inet
@@ -120,7 +129,7 @@
     ssl_verify: false
     match_fields: ["description"]
     sequence: 50
-    interface: ["wan"]
+    interface: ["{{ vm_net.custom_name }}"]
     action: pass
     direction: out
     ip_protocol: inet
