@@ -161,14 +161,21 @@
   delegate_to: localhost
 
 - name: Ensure VM pool membership
-  # proxmox_pool_member isn't idempotent: state:present errors instead of
-  # no-op'ing when the VM is already a member (confirmed live, 2026-09-10)
-  # — treat that specific error as success, fail on anything else. Also
-  # throttled to 1: the Proxmox pool-update endpoint does a read-modify-
-  # write on the pool's member list, so concurrent host runs targeting
-  # the same pool raced and produced unexplained failures (confirmed
-  # live — 6 hosts run in parallel against the same new pool failed with
-  # no usable error message, one at a time succeeded fine).
+  # community.proxmox 2.0.0 fixed the pool_member idempotency bug this task
+  # used to work around (state:present used to error instead of no-op'ing
+  # when the VM was already a member — confirmed live, 2026-09-10). The
+  # module now diffs current vs. desired membership itself (reconcile_members)
+  # and declares full check_mode support, so the custom failed_when below is
+  # both unnecessary and actively broken under --check: it crashed dry-run
+  # CI with "A 'failed_when' expression evaluated to 'True'" (confirmed
+  # 2026-09-17) since the module no longer ever returns the "already a pool
+  # member" error the workaround was matching on. Removed — rely on the
+  # module's native idempotency instead.
+  # Still throttled to 1: the Proxmox pool-update endpoint does a read-
+  # modify-write on the pool's member list, so concurrent host runs
+  # targeting the same pool raced and produced unexplained failures
+  # (confirmed live — 6 hosts run in parallel against the same new pool
+  # failed with no usable error message, one at a time succeeded fine).
   community.proxmox.proxmox_pool_member:
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
@@ -180,10 +187,6 @@
   when: vm_pool | default('') | length > 0 and not (vm_delete_if_exists | default(false))
   delegate_to: localhost
   throttle: 1
-  register: _vm_pool_membership
-  failed_when: >-
-    _vm_pool_membership is failed and
-    'already a pool member' not in (_vm_pool_membership.msg | default(''))
 
 - name: Ensure VM tags
   # "Create the basic VM" above sets tags too, but state:present without
