@@ -6,10 +6,15 @@
   register: steamcmd_bin
   become: true
 
+# L'installation (apt, dans steamcmd_install.yaml) supporte pleinement le
+# check mode et est simulée sous --check : sur un hôte jamais provisionné
+# pour de vrai, le binaire n'existe donc pas encore, et cet échec se
+# produirait systématiquement en dry-run même quand tout serait correct
+# en application réelle.
 - name: Échouer si steamcmd n'est pas installé
   ansible.builtin.fail:
     msg: "steamcmd est introuvable à /usr/games/steamcmd. Vérifie la tâche d'installation."
-  when: not steamcmd_bin.stat.exists
+  when: not steamcmd_bin.stat.exists and not ansible_check_mode
 
 - name: Vérifier steamcmd (run minimal)
   ansible.builtin.command: /usr/games/steamcmd +quit
