@@ -1,0 +1,7 @@
+---
+galaxy_info:
+  author: Cedille
+  description: Deploy and register a GitHub Actions self-hosted runner (official binary, host-native execution)
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.14"
+dependencies: []
