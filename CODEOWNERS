@@ -1,0 +1,3 @@
+# Toute PR sur ce repo doit être approuvée par un membre de la team infra
+# (voir le ruleset "Require infra approval" sur la branche main).
+* @ClubCedille/infra
