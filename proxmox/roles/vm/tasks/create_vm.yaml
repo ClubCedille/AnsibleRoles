@@ -165,12 +165,22 @@
   # used to work around (state:present used to error instead of no-op'ing
   # when the VM was already a member — confirmed live, 2026-09-10). The
   # module now diffs current vs. desired membership itself (reconcile_members)
-  # and declares full check_mode support, so the custom failed_when below is
-  # both unnecessary and actively broken under --check: it crashed dry-run
-  # CI with "A 'failed_when' expression evaluated to 'True'" (confirmed
-  # 2026-09-17) since the module no longer ever returns the "already a pool
-  # member" error the workaround was matching on. Removed — rely on the
-  # module's native idempotency instead.
+  # and declares full check_mode support, so the custom failed_when we used
+  # to have here was both unnecessary and actively broken under --check —
+  # removed, relying on the module's native idempotency instead.
+  #
+  # Still excluded from --check (see `when` below): reconcile_members()
+  # mixes current_vm_ids (ints, straight from the Proxmox API's pool member
+  # list) with desired_vm_ids (strings, from _resolve_member's str(int(raw)))
+  # in a single set. In real-apply mode the code path that hits this stays
+  # string-only (vms_to_add = desired - current, unaffected by the mismatched
+  # existing entries) so it's harmless there — but the check_mode/no-op
+  # preview path unions the two sets before sorting them for the diff
+  # output, crashing with "'<' not supported between instances of 'int' and
+  # 'str'" (confirmed in CI dry-run, 2026-09-17 — a real upstream bug in
+  # community.proxmox 2.0.0, not something fixable from the calling side).
+  # Revisit once that's fixed upstream.
+  #
   # Still throttled to 1: the Proxmox pool-update endpoint does a read-
   # modify-write on the pool's member list, so concurrent host runs
   # targeting the same pool raced and produced unexplained failures
@@ -184,7 +194,10 @@
     members:
       - vm: "{{ vm_id }}"
     state: present
-  when: vm_pool | default('') | length > 0 and not (vm_delete_if_exists | default(false))
+  when: >-
+    vm_pool | default('') | length > 0 and
+    not (vm_delete_if_exists | default(false)) and
+    not ansible_check_mode
   delegate_to: localhost
   throttle: 1
 
