@@ -12,14 +12,27 @@ vm_cpu_type: "host"
 vm_cpu_cores: 2
 vm_memory_mb: 4096
 
+# Single-NIC VM (legacy, toujours supporté). mac est requis depuis 2.0.0
+# -- Proxmox en génère une au hasard si omise, ce qui rend la VM non
+# reproductible/auditable depuis Ansible seul. Générer une MAC :
+# `make gen-mac` (si ce target existe dans le repo appelant) ou
+# scripts/gen_mac.py de ce rôle.
 vm_net:
   bridge: "vmbr1" # Management bridge is vmbr0; trunk bridge is vmbr1
   vlan: 1
+  mac:
   ip:
   netmask:
   gateway:
   nameservers: "1.1.1.1,8.8.8.8"
   search_domain: "localdomain"
+
+# VM multi-NIC : liste de dicts au même format que vm_net (bridge/vlan/mac/
+# ip/netmask/gateway/device/mtu), un net<N> créé par entrée dans l'ordre.
+# Prend le pas sur vm_net pour la définition des NICs si non vide -- mais
+# vm_net.nameservers/search_domain restent lus dans tous les cas (réglages
+# cloud-init globaux à la VM, pas par NIC côté Proxmox).
+vm_nets: []
 
 vm_user: localadmin
 vm_password:
