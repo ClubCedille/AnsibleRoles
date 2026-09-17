@@ -89,6 +89,17 @@
       docs/README.md) — it cannot be a static vaulted value.
   when: not _runner_registered.stat.exists
 
+- name: Ensure the runner group is configured
+  ansible.builtin.assert:
+    that:
+      - github_runner_group != "REPLACE_WITH_RUNNER_GROUP"
+    fail_msg: >-
+      github_runner_group still has its placeholder value — set it per pool
+      in inventories/infra/group_vars/github_runners_*.yaml. The group must
+      already exist on the org (see the "Ensure GitHub org runner groups
+      exist" play in the playbook).
+  when: not _runner_registered.stat.exists
+
 - name: Register the runner with GitHub
   ansible.builtin.command:
     cmd: >-
@@ -97,6 +108,7 @@
       --token {{ github_runner_registration_token }}
       --name {{ github_runner_name }}
       --labels {{ github_runner_labels | join(',') }}
+      --runnergroup {{ github_runner_group }}
       --unattended
       {{ '--replace' if github_runner_replace_existing else '' }}
     chdir: "{{ github_runner_paths.data_dir }}"
