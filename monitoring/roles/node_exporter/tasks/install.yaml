@@ -2,6 +2,9 @@
 - name: Refresh apt cache
   ansible.builtin.apt:
     update_cache: true
+    # Sans ça, un update_cache isolé se marque toujours "changed" et casse
+    # l'idempotence Molecule (cf. AnsibleRoles#116, même pattern qu'alloy).
+    cache_valid_time: 3600
   when: node_exporter_install.update_cache | bool
   become: true
 
