@@ -1,11 +1,20 @@
-- name: Backup existing /etc/network/interfaces
+- name: Read existing /etc/network/interfaces content from the target
+  ansible.builtin.slurp:
+    src: /etc/network/interfaces
+  register: network_interfaces_existing
+  failed_when: false
+  become: true
+
+- name: Backup pristine /etc/network/interfaces before Ansible ever manages it
   ansible.builtin.copy:
     src: /etc/network/interfaces
     dest: /etc/network/interfaces.bak
+    remote_src: true
     backup: true
     mode: '0644'
-    user: root
+    owner: root
     group: root
+  when: "'# BEGIN ANSIBLE MANAGED' not in (network_interfaces_existing.content | default('') | b64decode)"
   become: true
 
 - name: Template base /etc/network/interfaces file if no 'ANSIBLE MANAGED' blocks exist
@@ -13,9 +22,9 @@
     src: interfaces.j2
     dest: /etc/network/interfaces
     mode: '0644'
-    user: root
+    owner: root
     group: root
-  when: "'# BEGIN ANSIBLE MANAGED' not in lookup('file', '/etc/network/interfaces')"
+  when: "'# BEGIN ANSIBLE MANAGED' not in (network_interfaces_existing.content | default('') | b64decode)"
   become: true
 
 - name: Cleanup
@@ -23,7 +32,7 @@
     path: /etc/network/interfaces
     regexp: '# BEGIN ANSIBLE MANAGED .*?\n(.*?)# END ANSIBLE MANAGED .*?\n'
     replace: ''
-  when: "'# BEGIN ANSIBLE MANAGED' in lookup('file', '/etc/network/interfaces')"
+  when: "'# BEGIN ANSIBLE MANAGED' in (network_interfaces_existing.content | default('') | b64decode)"
   become: true
 
 - name: Configure management network interface
@@ -52,7 +61,7 @@
 - name: Configure trunk trunk interfaces
   ansible.builtin.blockinfile:
     path: /etc/network/interfaces
-    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR TRUNK INTERFACE {{ network_trunk.names }}"
+    marker: "# {mark} ANSIBLE MANAGED BLOCK FOR TRUNK INTERFACE {{ item }}"
     block: |
       auto {{ item }}
       iface {{ item }} inet manual
