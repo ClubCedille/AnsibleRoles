@@ -1,0 +1,66 @@
+---
+name: Molecule - docker.install
+
+on:
+  pull_request:
+    paths:
+      - "docker/**"
+      - ".github/workflows/molecule-docker.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "docker/**"
+      - ".github/workflows/molecule-docker.yaml"
+
+concurrency:
+  group: molecule-docker-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  molecule:
+    name: Molecule test (docker.install)
+    runs-on: [self-hosted, docker-dind]
+    defaults:
+      run:
+        working-directory: docker/roles/install
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Molecule and dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install \
+            "ansible-core>=2.15,<2.18" \
+            molecule \
+            "molecule-plugins[docker]" \
+            docker \
+            ansible-lint
+
+      - name: Install required Ansible collections
+        run: |
+          ansible-galaxy collection install -r molecule/default/requirements.yml
+
+      - name: Molecule check (dry-run regression, PR #92)
+        run: molecule check
+        env:
+          PY_COLOR: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+      - name: Molecule test
+        run: molecule test
+        env:
+          PY_COLOR: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+      - name: Clean up Molecule containers and images
+        if: always()
+        run: |
+          molecule destroy || true
+          docker rm -f docker-install-ubuntu2204 docker-install-alpine318 2>/dev/null || true

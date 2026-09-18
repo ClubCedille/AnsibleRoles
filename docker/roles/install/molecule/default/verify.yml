@@ -1,0 +1,36 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the docker service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert docker service is active
+      ansible.builtin.assert:
+        that:
+          - "'docker.service' in ansible_facts.services"
+          - ansible_facts.services['docker.service'].state == 'running'
+        fail_msg: "Le service docker n'est pas démarré."
+
+    - name: Get docker compose version
+      ansible.builtin.command: docker compose version
+      register: molecule_verify_compose_version
+      changed_when: false
+
+    - name: Assert docker compose plugin is available
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_compose_version.stdout is search('Docker Compose version')
+        fail_msg: "Le plugin docker compose n'est pas disponible."
+
+    - name: List running containers based on the busybox test image
+      ansible.builtin.command: docker ps --filter ancestor=busybox:latest --filter status=running --format '{{ "{{" }}.Image{{ "}}" }}'
+      register: molecule_verify_docker_ps
+      changed_when: false
+
+    - name: Assert the busybox test service is up
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_docker_ps.stdout | length > 0
+        fail_msg: "Le conteneur de test busybox (via docker compose) n'est pas démarré."
