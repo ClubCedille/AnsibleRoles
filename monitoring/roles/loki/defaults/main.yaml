@@ -11,6 +11,8 @@ loki_install:
     - apt-transport-https
     - wget
     - gpg
+    # Requis par deb822_repository plus bas (AnsibleRoles#95).
+    - python3-debian
   package: loki
   repository:
     enabled: true
