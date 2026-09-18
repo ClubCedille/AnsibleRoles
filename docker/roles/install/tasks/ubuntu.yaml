@@ -22,6 +22,11 @@
       - apt-transport-https
       - software-properties-common
       - python3-pip
+      # Requis par ansible.builtin.deb822_repository (tâche "Add Docker apt
+      # repository" plus bas) — sans ça, la tâche plante avec
+      # "ModuleNotFoundError: No module named 'debian'" sur un hôte qui ne
+      # l'a pas déjà par ailleurs.
+      - python3-debian
     state: present
   become: true
 
