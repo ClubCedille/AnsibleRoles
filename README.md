@@ -28,6 +28,33 @@ repository d'exécution [AnsibleInfra](https://github.com/ClubCedille/AnsibleInf
 ne contient plus aucun rôle local, uniquement des playbooks et inventaires qui
 consomment ces collections via `collections/requirements.yml`.
 
+## Environnement de dev
+
+Le repo fournit un `flake.nix` + `.envrc` (direnv). En entrant dans le
+répertoire (avec direnv activé, `direnv allow` la première fois) ou via
+`nix develop`, un venv Python est créé/mis à jour automatiquement depuis
+`requirements-dev.txt` (ansible-core, molecule, molecule-plugins[docker],
+ansible-lint, yamllint). Le client `docker` est fourni par le devShell, mais
+le **daemon Docker doit tourner sur la machine hôte** (le devShell ne le
+gère pas).
+
+### Lancer Molecule pour un rôle
+
+Molecule tourne par rôle (driver docker, images `geerlingguy/docker-*-ansible`
+avec systemd). Pour reproduire localement ce que fait la CI
+(`.github/workflows/molecule-*.yaml`) :
+
+```bash
+cd <collection>/roles/<role>
+ansible-galaxy collection install -r molecule/default/requirements.yml
+molecule test
+```
+
+`molecule test` fait tourner toute la séquence (create, converge,
+idempotence, verify, destroy). Pour itérer plus vite pendant le dev d'un
+rôle, `molecule converge` puis `molecule verify` évitent de recréer le
+conteneur à chaque essai ; `molecule destroy` nettoie à la fin.
+
 ## Extensions suggérées
 
 Le dossier ./.vscode contient des configurations pour les extensions suivantes, qui sont recommandées pour une expérience de développement optimale :
