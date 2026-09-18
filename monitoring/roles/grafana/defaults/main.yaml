@@ -11,6 +11,8 @@ grafana_install:
     - apt-transport-https
     - wget
     - gnupg
+    # Requis par deb822_repository plus bas (cf. AnsibleRoles#95).
+    - python3-debian
   repository:
     enabled: true
     key_url: https://apt.grafana.com/gpg-full.key
