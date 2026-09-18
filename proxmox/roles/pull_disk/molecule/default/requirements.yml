@@ -1,0 +1,4 @@
+---
+collections:
+  # Requis par le driver docker de molecule-plugins lui-même (pas par le rôle).
+  - name: ansible.posix

@@ -1,10 +1,11 @@
 ---
 
 - name: Create the folder for images
+  # recurse retiré : réécrivait le mode des fichiers déjà téléchargés à
+  # chaque run, cassait l'idempotence (cf. AnsibleRoles#127).
   ansible.builtin.file:
     path: "{{ pull_disk_image_path | default('/var/lib/vz/images/pulled_disks') }}"
     state: directory
-    recurse: true
     mode: '0755'
     owner: root
     group: root
