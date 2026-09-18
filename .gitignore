@@ -1,0 +1,14 @@
+# venv (nix devShell / pip)
+.venv
+
+# ansible local state (collections installées, cache de facts, etc.)
+.ansible
+
+# direnv
+.direnv
+
+# molecule
+.cache
+
+# prompts
+.claude
