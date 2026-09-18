@@ -2,6 +2,7 @@
 - name: Refresh apt cache
   ansible.builtin.apt:
     update_cache: true
+    cache_valid_time: 3600
   when: alloy_install.update_cache | bool
   become: true
 
@@ -43,16 +44,15 @@
   when: alloy_install.repository.enabled | bool
   become: true
 
-- name: Refresh apt cache after adding Grafana APT repository
-  ansible.builtin.apt:
-    update_cache: true
-  when: alloy_install.repository.enabled | bool and alloy_install.update_cache | bool
-  become: true
-
 - name: Install Alloy packages from repository
   ansible.builtin.apt:
     name: "{{ alloy_install.packages }}"
     state: "{{ alloy_install.package_state }}"
+    # update_cache ici (plutôt qu'une tâche "refresh" séparée) : un
+    # update_cache isolé se marque toujours "changed" et casse
+    # l'idempotence Molecule ; combiné à l'install il ne l'est que si un
+    # paquet a réellement changé (cf. cedille.docker.install).
+    update_cache: "{{ alloy_install.repository.enabled | bool and alloy_install.update_cache | bool }}"
   when: alloy_install.packages | length > 0
   become: true
 
