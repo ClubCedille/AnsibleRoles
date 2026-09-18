@@ -5,10 +5,12 @@
     # /var/lib/vz n'existe pas dans un conteneur de test isolé.
     pull_disk_image_path: /tmp/pulled_disks
     pull_disk_images:
-      # Petit fichier texte réel, téléchargement rapide en CI (pas une
-      # image disque de plusieurs centaines de Mo).
-      - url: https://raw.githubusercontent.com/ClubCedille/AnsibleRoles/main/README.md
+      # Petit fichier texte réel épinglé à un commit (immuable) : un ref de
+      # branche fait re-télécharger à chaque run (Last-Modified instable),
+      # ce qui casse le test d'idempotence de Molecule.
+      - url: https://raw.githubusercontent.com/ClubCedille/AnsibleRoles/b54ccec3e97ae1fd8a15e5d338691bbce18c8a2f/README.md
         dest_filename: pulled_disk_test_file
+        checksum: sha256:54fed85dbfcbbfd973f7eee91b66030eedb27f28e4b4151e5da34143a1f4c188
   # Image officielle minimale sans sudo ; le rôle a "become: true" en dur
   # sur ses tâches, donc on l'installe avant plutôt que de le contourner.
   pre_tasks:
