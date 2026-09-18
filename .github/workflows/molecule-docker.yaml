@@ -47,6 +47,15 @@ jobs:
         run: |
           ansible-galaxy collection install -r molecule/default/requirements.yml
 
+      # converge.yml référence le rôle par son FQCN cedille.docker.install.
+      # Un simple checkout ne place pas le repo sous une arborescence
+      # ansible_collections/<namespace>/<name> : sans ce lien, Ansible ne
+      # résout pas la collection et échoue avec "role not found".
+      - name: Expose this checkout as the cedille.docker collection
+        run: |
+          mkdir -p ~/.ansible/collections/ansible_collections/cedille
+          ln -sfn "${{ github.workspace }}/docker" ~/.ansible/collections/ansible_collections/cedille/docker
+
       - name: Molecule check (dry-run regression, PR #92)
         run: molecule check
         env:
