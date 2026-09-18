@@ -40,36 +40,13 @@ github_runner_replace_existing: true
 github_runner_extra_groups: []
 github_runner_extra_packages: []
 
-# Mode containerized : le runner tourne dans un conteneur Docker privilégié
-# avec son propre dockerd imbriqué (nested DinD), au lieu du binaire
-# actions-runner installé directement sur l'hôte (mode par défaut ci-dessus).
-# Les jobs continuent de s'exécuter comme des process natifs à l'intérieur de
-# ce conteneur (comportement standard actions-runner, inchangé), mais ce
-# conteneur — pas l'hôte — est la frontière d'isolation, et `docker build`
-# dans un job parle au dockerd imbriqué, jamais à celui de l'hôte.
-#
-# Limite connue : le conteneur est long-vécu (restart_policy: always) et non
-# éphémère par job — un vrai runner "un conteneur jetable par job" exigerait
-# de reminter un jeton d'enregistrement à chaque redémarrage, ce que ce rôle
-# ne fait pas encore. Isolation vis-à-vis de l'hôte garantie ; isolation
-# stricte job-à-job (jobs séquentiels sur le même runner) non garantie.
-#
-# À valider avant premier déploiement en prod : le comportement exact de
-# github_runner_container_image (démarrage du dockerd imbriqué via
-# DOCKER_IN_DOCKER, chemin de persistance de l'état d'enregistrement) dépend
-# de la version de l'image tierce — vérifier sa documentation actuelle avant
-# d'activer ce mode sur un pool de production.
+# Mode containerized : runner dans un conteneur privilégié avec dockerd
+# imbriqué, au lieu du binaire bare-metal. Isolation hôte garantie, pas
+# l'isolation job-à-job (conteneur long-vécu) — voir AnsibleRoles#98/#102.
 github_runner_containerized: false
 github_runner_container_image: "myoung34/github-runner:latest"
 github_runner_docker_in_docker: true
 
-# Répertoire de persistance dédié au mode containerized, volontairement
-# distinct de github_runner_paths.data_dir (utilisé par le mode bare-metal).
-# Un hôte qui bascule de bare-metal vers containerized a déjà une
-# installation actions-runner complète (binaire natif, .credentials, .runner)
-# dans data_dir — monter ce même répertoire dans le conteneur mélangerait ce
-# layout avec celui attendu par l'image, avec risque de double
-# enregistrement. Le passage bare-metal → containerized sur un hôte déjà
-# enregistré est une opération manuelle (désenregistrement propre côté
-# GitHub avant bascule), pas quelque chose que ce rôle automatise.
+# Distinct de data_dir (bare-metal) pour ne pas mélanger les deux layouts
+# sur un hôte migré — voir AnsibleRoles#102.
 github_runner_container_data_dir: /var/lib/github-runner-container
