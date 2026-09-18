@@ -1,5 +1,5 @@
 - name: Manage APT sources for Proxmox hosts
   # become est déjà déclaré sur chaque tâche de apt-sources.yaml ; le garder
-  # ici casse sur ansible-core récent (cf. AnsibleRoles#123).
+  # ici casse sur ansible-core récent (cf. AnsibleRoles#129).
   ansible.builtin.include_tasks:
     file: apt-sources.yaml
