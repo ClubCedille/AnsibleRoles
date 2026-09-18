@@ -1,0 +1,31 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    # Dict complet (pas un override partiel) : Ansible ne fusionne pas les
+    # dicts de vars par défaut (hash_behaviour=replace, non configuré ici).
+    pkgcache_dnf:
+      enabled: true
+      # dl.fedoraproject.org tient lieu de "cache" ici : mêmes chemins que
+      # le reverse proxy interne Cedille (path-for-path, cf. defaults/main.yaml),
+      # donc reconstruit une vraie URL de repo Fedora. Les identifiants
+      # fictifs sont envoyés en Basic Auth mais ignorés par un mirroir qui
+      # n'en fait pas — ça permet un test bout-en-bout réel (dnf makecache +
+      # installation d'un paquet) sans dépendre du cache interne Cedille,
+      # injoignable depuis un conteneur de test isolé.
+      cache_host: dl.fedoraproject.org
+      credentials:
+        username: molecule
+        password: molecule
+      repos_dir: /etc/yum.repos.d
+      file_mode: "0600"
+      repos:
+        - name: pkgcache-fedora
+          description: "Fedora ($releasever)"
+          path: pub/fedora/linux/releases/$releasever/Everything/$basearch/os/
+          gpgkey: file:///etc/pki/rpm-gpg/RPM-GPG-KEY-fedora-$releasever-$basearch
+      update_cache_on_change: true
+  # Pas de pre_tasks pour sudo : contrairement à ubuntu:24.04, l'image
+  # officielle fedora:latest l'embarque déjà (vérifié empiriquement).
+  roles:
+    - role: cedille.pkgcache.dnf

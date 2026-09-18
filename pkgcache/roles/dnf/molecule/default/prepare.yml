@@ -1,0 +1,11 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    # fedora:latest officiel n'embarque pas python3 — raw ne dépend pas
+    # d'un interpréteur distant, contrairement à tous les autres modules
+    # Ansible (cf. pkgcache.apt/molecule/default/prepare.yml).
+    - name: Install Python (missing from the minimal fedora:latest image)
+      ansible.builtin.raw: dnf install -y python3
+      changed_when: true

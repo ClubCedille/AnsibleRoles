@@ -1,0 +1,29 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Read the rendered repo file
+      ansible.builtin.slurp:
+        src: /etc/yum.repos.d/pkgcache-fedora.repo
+      register: molecule_verify_repo
+
+    - name: Assert the baseurl embeds the configured cache host and credentials
+      ansible.builtin.assert:
+        that:
+          - >-
+            'baseurl=https://molecule:molecule@dl.fedoraproject.org/pub/fedora/linux/releases/$releasever/Everything/$basearch/os/'
+            in (molecule_verify_repo.content | b64decode)
+        fail_msg: "L'URI baseurl rendue ne correspond pas à ce qui est attendu."
+
+    - name: Confirm dnf can actually install a package through the mirror
+      ansible.builtin.dnf:
+        name: less
+        state: present
+      register: molecule_verify_install
+
+    - name: Assert the package installed successfully via the pkgcache mirror
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_install is success
+        fail_msg: "L'installation d'un paquet via le mirror pkgcache a échoué."
