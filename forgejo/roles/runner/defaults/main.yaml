@@ -35,18 +35,8 @@ forgejo_runner_container:
   docker_host: ""
   force_pull: false
 
-# Sidecar Docker-in-Docker réel : un conteneur docker:dind privilégié, séparé
-# du conteneur de job, avec son propre dockerd et son propre stockage de
-# couches — par opposition à docker_host:automount (DooD) qui partage le
-# dockerd de l'hôte. Quand activé, container.docker_host/network dans
-# config.yml.j2 sont recalculés pour pointer vers ce sidecar ; les valeurs de
-# forgejo_runner_container ci-dessus sont alors ignorées (privileged doit
-# rester false côté conteneur de job : c'est le sidecar qui a besoin du mode
-# privilégié, pas le job).
-#
-# Limite connue : le sidecar est partagé par tous les jobs concurrents du
-# runner (forgejo_runner_capacity) — isolation vis-à-vis de l'hôte garantie,
-# isolation stricte job-à-job non garantie tant que capacity > 1.
+# Sidecar DinD réel (dockerd séparé), remplace docker_host:automount (DooD).
+# Isolation hôte garantie, pas job-à-job (sidecar partagé) — voir AnsibleRoles#98.
 forgejo_runner_dind_sidecar_enabled: false
 forgejo_runner_dind_sidecar_image: "docker:27-dind"
 forgejo_runner_dind_sidecar_name: "{{ forgejo_runner_service.name }}-dind"
