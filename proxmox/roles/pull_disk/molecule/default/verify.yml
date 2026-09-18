@@ -1,0 +1,28 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Stat the images directory
+      ansible.builtin.stat:
+        path: /tmp/pulled_disks
+      register: molecule_verify_dir
+
+    - name: Assert the images directory was created
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_dir.stat.exists
+          - molecule_verify_dir.stat.isdir
+        fail_msg: "Le répertoire des images pulled_disks n'a pas été créé."
+
+    - name: Stat the downloaded file
+      ansible.builtin.stat:
+        path: /tmp/pulled_disks/pulled_disk_test_file
+      register: molecule_verify_file
+
+    - name: Assert the file was downloaded and is non-empty
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_file.stat.exists
+          - molecule_verify_file.stat.size > 0
+        fail_msg: "Le fichier téléchargé par pull_disk est absent ou vide."
