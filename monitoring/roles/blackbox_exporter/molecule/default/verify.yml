@@ -1,0 +1,40 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the blackbox_exporter service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert blackbox_exporter service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'blackbox_exporter.service' in ansible_facts.services"
+          - ansible_facts.services['blackbox_exporter.service'].state == 'running'
+          - ansible_facts.services['blackbox_exporter.service'].status == 'enabled'
+        fail_msg: "Le service blackbox_exporter n'est pas démarré/activé."
+
+    - name: Stat the blackbox_exporter binary
+      ansible.builtin.stat:
+        path: /usr/local/bin/blackbox_exporter
+      register: molecule_verify_binary
+
+    - name: Assert the blackbox_exporter binary is installed and executable
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_binary.stat.exists
+          - molecule_verify_binary.stat.executable
+        fail_msg: "Le binaire blackbox_exporter n'est pas installé ou pas exécutable."
+
+    - name: Query a real probe against the icmp module on loopback
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9115/probe?target=127.0.0.1&module=icmp"
+        return_content: true
+      register: molecule_verify_probe
+
+    - name: Assert the probe actually succeeded against the loopback target
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_probe.status == 200
+          - "'probe_success 1' in molecule_verify_probe.content"
+        fail_msg: "Le probe icmp de blackbox_exporter sur 127.0.0.1 n'a pas réussi."
