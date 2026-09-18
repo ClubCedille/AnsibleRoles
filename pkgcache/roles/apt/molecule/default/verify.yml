@@ -1,0 +1,40 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Read the rendered mirror sources file
+      ansible.builtin.slurp:
+        src: /etc/apt/sources.list.d/pkgcache-ubuntu-archive.sources
+      register: molecule_verify_sources
+
+    - name: Assert the mirror URI embeds the configured cache host and credentials
+      ansible.builtin.assert:
+        that:
+          - "'https://molecule:molecule@archive.ubuntu.com/ubuntu' in (molecule_verify_sources.content | b64decode)"
+        fail_msg: "L'URI mirror direct rendue ne correspond pas à ce qui est attendu."
+
+    - name: Stat the disabled default sources files
+      ansible.builtin.stat:
+        path: "{{ item }}.disabled-by-pkgcache"
+      loop:
+        - /etc/apt/sources.list.d/ubuntu.sources
+      register: molecule_verify_disabled
+
+    - name: Assert default sources were disabled in favor of the cache
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_disabled.results[0].stat.exists
+        fail_msg: "ubuntu.sources n'a pas été désactivé au profit du mirror pkgcache."
+
+    - name: Confirm apt can actually install a package through the mirror
+      ansible.builtin.apt:
+        name: less
+        state: present
+      register: molecule_verify_install
+
+    - name: Assert the package installed successfully via the pkgcache mirror
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_install is success
+        fail_msg: "L'installation d'un paquet via le mirror pkgcache a échoué."
