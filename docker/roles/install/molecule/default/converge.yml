@@ -14,17 +14,11 @@
     # dans defaults/main.yaml. Bug déjà tracké séparément, ne pas corriger ici.
     docker_registry_mirror_enabled: false
     install_docker_registry_mirror_enabled: false
-    # tasks/ubuntu.yaml "Add specified user(s) to the docker group" lit
-    # ansible_user (le user de connexion SSH en usage réel) — non défini ici
-    # car Molecule se connecte via le driver docker, pas SSH.
+    # ansible_user (connexion SSH en usage réel) est absent ici, Molecule
+    # se connecte via le driver docker (AnsibleRoles#95).
     ansible_user: root
-  # Le conteneur de test tourne lui-même sur un système de fichiers overlay
-  # (celui du Docker de l'hôte/runner) : le containerd installé par le rôle
-  # ne peut pas empiler un second overlayfs par-dessus (confirmé en CI :
-  # "failed to mount ... overlay ... invalid argument" au premier
-  # "docker compose up"). Force le storage-driver vfs — plus lent, mais
-  # fonctionne indépendamment du driver de stockage de l'hôte qui exécute
-  # les conteneurs Molecule.
+  # vfs : le containerd du rôle ne peut pas empiler un overlayfs sur celui
+  # du conteneur de test lui-même (AnsibleRoles#95).
   pre_tasks:
     - name: Ensure /etc/docker exists
       ansible.builtin.file:

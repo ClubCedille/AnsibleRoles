@@ -6,8 +6,7 @@
     - name: Check that the docker service is running
       ansible.builtin.service_facts:
 
-    # Nom d'unité différent selon l'init system : "docker.service" sous
-    # systemd (Ubuntu), "docker" sous OpenRC (Alpine, voir tasks/alpine.yaml).
+    # "docker.service" (systemd) ou "docker" (OpenRC) selon la plateforme.
     - name: Determine the docker service name for this platform
       ansible.builtin.set_fact:
         _molecule_verify_docker_service: >-

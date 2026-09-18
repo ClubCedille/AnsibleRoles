@@ -36,11 +36,7 @@ jobs:
       - name: Install Molecule and dependencies
         run: |
           python3 -m pip install --upgrade pip
-          # Pas de plafond de version : community.docker/community.general
-          # avancent plus vite que ansible-core et refusent de s'installer
-          # sur une version trop ancienne ("Collection community.docker does
-          # not support Ansible version X"). Même pin que AnsibleInfra
-          # (requirements.txt), qui tourne avec ces mêmes collections.
+          # Pas de plafond : community.docker/community.general le refusent (AnsibleRoles#95).
           pip install \
             "ansible-core>=2.16.3" \
             molecule \
@@ -52,16 +48,8 @@ jobs:
         run: |
           ansible-galaxy collection install -r molecule/default/requirements.yml
 
-      # Molecule (via ansible-compat) installe lui-même la collection locale
-      # cedille.docker sous ~/.ansible/collections/... au démarrage de chaque
-      # sous-commande ("prerun" -> ansible-galaxy collection install --force
-      # ../.."), donc converge.yml peut référencer cedille.docker.install
-      # sans setup manuel. Ce runner self-hosted est persistant (pas
-      # éphémère) : on purge l'éventuel résidu d'un run précédent avant de
-      # laisser Molecule réinstaller proprement — un `--force` de
-      # ansible-galaxy plante sinon avec "Cannot call rmtree on a symbolic
-      # link" si le chemin cible est un vieux lien symbolique (ou tout autre
-      # état inattendu) laissé par une exécution antérieure.
+      # Molecule réinstalle cedille.docker à chaque run ; sur ce runner
+      # persistant, un résidu du run précédent le fait échouer (AnsibleRoles#95).
       - name: Clean up any leftover cedille.docker collection install
         run: rm -rf ~/.ansible/collections/ansible_collections/cedille/docker
 

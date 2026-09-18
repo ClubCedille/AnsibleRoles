@@ -5,27 +5,14 @@ dependency:
     requirements-file: molecule/default/requirements.yml
 driver:
   name: docker
-# Alpine volontairement absent : geerlingguy ne publie pas d'image
-# "docker-alpineXXX-ansible" (vérifié sur Docker Hub — son catalogue ne
-# couvre que les distros systemd). Alpine utilise OpenRC, qui n'a pas
-# d'équivalent prêt à l'emploi pour tourner comme PID 1 en conteneur
-# privilégié ; ça demanderait une image maison, hors scope ici. Le rôle
-# reste donc testé automatiquement sur Ubuntu seulement — la branche
-# Alpine (tasks/alpine.yaml) n'est pas couverte par ce scénario.
+# Alpine absent : pas d'image geerlingguy équivalente (OpenRC). Voir AnsibleRoles#95.
 platforms:
   - name: docker-install-ubuntu2204
     image: geerlingguy/docker-ubuntu2204-ansible:latest
     privileged: true
     cgroupns_mode: host
     pre_build_image: true
-    # Le driver docker de Molecule remplace par défaut la commande du
-    # conteneur par un "keep-alive" (override_command: true, sa valeur par
-    # défaut), ce qui empêche systemd de démarrer en PID 1 — l'image
-    # geerlingguy lance systemd elle-même via sa propre CMD ("docker run
-    # --privileged ..." sans commande custom, cf. sa doc Docker Hub).
-    # Confirmé en CI : sans ce override_command: false, la tâche "Enable
-    # and start Docker service" plantait avec "System has not been booted
-    # with systemd as init system (PID 1)".
+    # false : laisse l'image lancer systemd elle-même (AnsibleRoles#95).
     override_command: false
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
