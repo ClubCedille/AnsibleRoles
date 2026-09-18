@@ -6,7 +6,12 @@ dependency:
 driver:
   name: docker
 platforms:
-  - name: dhcp-ubuntu2404
+  # Nom = ha.primary.name par défaut du rôle : this-server-name (dérivé
+  # d'inventory_hostname) doit matcher un pair HA existant pour que Kea
+  # démarre (AnsibleRoles#122). Éviter un override par set_fact/combine du
+  # dict netservices_dhcp -- son propre rendu interne (auto-référence vers
+  # ha.this_server_name) fige alors une valeur obsolète.
+  - name: dhcp-primary
     image: geerlingguy/docker-ubuntu2404-ansible:latest
     privileged: true
     cgroupns_mode: host

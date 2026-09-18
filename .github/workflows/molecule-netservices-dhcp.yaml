@@ -68,4 +68,4 @@ jobs:
         if: always()
         run: |
           molecule destroy || true
-          docker rm -f dhcp-ubuntu2404 2>/dev/null || true
+          docker rm -f dhcp-primary 2>/dev/null || true
