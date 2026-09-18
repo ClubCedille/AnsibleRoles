@@ -15,13 +15,12 @@
     group: root
     mode: "0640"
     content: |
-      STORK_SERVER_HTTP_HOST={{ netservices_stork.server.http_host }}
-      STORK_SERVER_HTTP_PORT={{ netservices_stork.server.http_port }}
-      STORK_DATABASE_TYPE={{ netservices_stork.server.database.type }}
+      STORK_REST_HOST={{ netservices_stork.server.http_host }}
+      STORK_REST_PORT={{ netservices_stork.server.http_port }}
       STORK_DATABASE_HOST={{ netservices_stork.server.database.host }}
       STORK_DATABASE_PORT={{ netservices_stork.server.database.port }}
       STORK_DATABASE_NAME={{ netservices_stork.server.database.name }}
-      STORK_DATABASE_USER={{ netservices_stork.server.database.user }}
+      STORK_DATABASE_USER_NAME={{ netservices_stork.server.database.user }}
       STORK_DATABASE_PASSWORD={{ netservices_stork.server.database.password }}
   notify: Restart stork-server
   become: true
@@ -33,9 +32,9 @@
     group: root
     mode: "0640"
     content: |
+      STORK_AGENT_HOST={{ netservices_stork.agent.host }}
+      STORK_AGENT_PORT={{ netservices_stork.agent.port }}
       STORK_AGENT_SERVER_URL={{ netservices_stork.agent.server_url }}
-      STORK_AGENT_TOKEN={{ netservices_stork.agent.token }}
-      STORK_AGENT_MONITORED_SERVICES={{ netservices_stork.agent.monitored_services | join(',') }}
   notify: Restart stork-agent
   become: true
 
