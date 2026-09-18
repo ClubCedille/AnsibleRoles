@@ -19,7 +19,14 @@
 
 - name: Configure registry mirror
   ansible.builtin.include_tasks: configure_mirror.yaml
-  when: docker_registry_mirror_enabled | bool
+  # "docker_registry_mirror_enabled" (sans préfixe) accepté pour
+  # rétrocompatibilité : les defaults du rôle définissent
+  # install_docker_registry_mirror_enabled (préfixé, cohérent avec le reste
+  # du rôle), mais tous les consommateurs actuels dans AnsibleInfra
+  # définissent le nom sans préfixe — sans ce fallback, install_docker_*
+  # ne sert jamais et un nouveau consommateur qui ne définirait ni l'un ni
+  # l'autre plante sur une variable non définie.
+  when: (docker_registry_mirror_enabled | default(install_docker_registry_mirror_enabled)) | bool
 
 - name: Docker compose up the path
   community.docker.docker_compose_v2:

@@ -14,11 +14,15 @@ install_docker_compose_file_path: "{{ install_docker_compose_target_dir }}/{{ in
 install_docker_registry_mirror_enabled: true
 install_docker_registry_mirror_host: "10.150.0.100"
 
+# "docker_registry_mirror_host" (sans préfixe) accepté pour rétrocompatibilité :
+# c'est le nom que définissent déjà tous les consommateurs actuels dans
+# AnsibleInfra (group_vars forgejo_runners/github_runners/dci_vms/summercamp,
+# playbooks/omni/deploy.yaml) — voir aussi tasks/main.yaml.
 install_docker_registry_mirrors:
-  - "https://{{ docker_registry_mirror_host }}:5000" # Docker Hub
+  - "https://{{ docker_registry_mirror_host | default(install_docker_registry_mirror_host) }}:5000" # Docker Hub
 
 install_docker_registry_insecure_registries:
-  - "{{ docker_registry_mirror_host }}:5000"
-  - "{{ docker_registry_mirror_host }}:5001"
-  - "{{ docker_registry_mirror_host }}:5002"
-  - "{{ docker_registry_mirror_host }}:5003"
+  - "{{ docker_registry_mirror_host | default(install_docker_registry_mirror_host) }}:5000"
+  - "{{ docker_registry_mirror_host | default(install_docker_registry_mirror_host) }}:5001"
+  - "{{ docker_registry_mirror_host | default(install_docker_registry_mirror_host) }}:5002"
+  - "{{ docker_registry_mirror_host | default(install_docker_registry_mirror_host) }}:5003"
