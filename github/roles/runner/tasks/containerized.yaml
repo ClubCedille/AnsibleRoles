@@ -44,6 +44,10 @@
     name: "{{ github_runner_name }}"
     image: "{{ github_runner_container_image }}"
     privileged: "{{ github_runner_docker_in_docker }}"
+    # host : sans ça, le dockerd imbriqué (cgroupfs) hérite d'un cgroupns
+    # privé qui casse la délégation cgroup v2 pour tout conteneur petit-fils
+    # lançant systemd en PID1 (ex: Molecule geerlingguy/docker-*-ansible).
+    cgroupns_mode: "{{ 'host' if github_runner_docker_in_docker else omit }}"
     restart_policy: always
     env:
       RUNNER_NAME: "{{ github_runner_name }}"
