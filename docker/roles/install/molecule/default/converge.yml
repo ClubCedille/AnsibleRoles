@@ -14,5 +14,9 @@
     # dans defaults/main.yaml. Bug déjà tracké séparément, ne pas corriger ici.
     docker_registry_mirror_enabled: false
     install_docker_registry_mirror_enabled: false
+    # tasks/ubuntu.yaml "Add specified user(s) to the docker group" lit
+    # ansible_user (le user de connexion SSH en usage réel) — non défini ici
+    # car Molecule se connecte via le driver docker, pas SSH.
+    ansible_user: root
   roles:
     - role: cedille.docker.install
