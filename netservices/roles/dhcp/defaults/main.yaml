@@ -8,9 +8,10 @@ netservices_dhcp:
     update_cache: true
     package_state: present
     packages:
+      # libdhcp_ha.so et les autres hooks viennent de kea-common (dépendance
+      # transitive) -- "kea-hooks" n'existe pas comme paquet APT (AnsibleRoles#122).
       - kea-dhcp4-server
       - kea-ctrl-agent
-      - kea-hooks
 
   service:
     dhcp4_name: kea-dhcp4-server
