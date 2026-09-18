@@ -1,0 +1,5 @@
+---
+- name: Refresh APT cache
+  ansible.builtin.apt:
+    update_cache: true
+  become: true

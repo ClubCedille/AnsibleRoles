@@ -49,6 +49,7 @@
     path: "/etc/apt/sources.list.d/{{ item }}"
     state: absent
   loop: "{{ apt_sources_obsolete_files }}"
+  notify: Refresh APT cache
   become: true
 
 - name: Ensure the Grafana APT keyring directory exists
@@ -91,4 +92,5 @@
     owner: root
     group: root
     mode: '0644'
+  notify: Refresh APT cache
   become: true

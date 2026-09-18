@@ -59,6 +59,21 @@
           - molecule_verify_grafana_key.stat.exists
         fail_msg: "La clé APT Grafana n'a pas été téléchargée."
 
+    - name: Confirm apt can actually read every configured repository
+      # Possible depuis AnsibleRoles#132 : prepare.yml installe le vrai
+      # trousseau Proxmox (présent nativement sur tout hôte PVE réel),
+      # donc les 4 dépôts sont maintenant vérifiables signature comprise.
+      ansible.builtin.command: apt-get update
+      register: molecule_verify_apt_update
+      changed_when: false
+
+    - name: Assert apt-get update reports no signature/repo error
+      ansible.builtin.assert:
+        that:
+          - "'is not signed' not in molecule_verify_apt_update.stdout"
+          - "'is not signed' not in molecule_verify_apt_update.stderr"
+        fail_msg: "apt-get update signale un dépôt non signé ou en erreur."
+
     - name: Stat the legacy sources list
       ansible.builtin.stat:
         path: /etc/apt/sources.list
