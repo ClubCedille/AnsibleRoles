@@ -1,0 +1,58 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the prometheus service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert prometheus service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'prometheus.service' in ansible_facts.services"
+          - ansible_facts.services['prometheus.service'].state == 'running'
+          - ansible_facts.services['prometheus.service'].status == 'enabled'
+        fail_msg: "Le service prometheus n'est pas démarré/activé."
+
+    - name: Stat the prometheus and promtool binaries
+      ansible.builtin.stat:
+        path: "/usr/local/bin/{{ item }}"
+      register: molecule_verify_binaries
+      loop:
+        - prometheus
+        - promtool
+
+    - name: Assert the binaries are installed and executable
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.executable
+        fail_msg: "Un binaire prometheus/promtool est manquant ou non exécutable."
+      loop: "{{ molecule_verify_binaries.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Query the Prometheus health endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9090/-/healthy"
+        return_content: true
+      register: molecule_verify_healthy
+
+    - name: Assert Prometheus reports itself healthy
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_healthy.status == 200
+        fail_msg: "L'endpoint /-/healthy de Prometheus ne répond pas comme attendu."
+
+    - name: Query the Prometheus running config API
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9090/api/v1/status/config"
+        return_content: true
+      register: molecule_verify_config
+
+    - name: Assert the served config reflects our unreachable-target scrape job
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_config.status == 200
+          - "'unreachable-target' in molecule_verify_config.content"
+        fail_msg: "L'API /api/v1/status/config de Prometheus ne sert pas la config attendue."

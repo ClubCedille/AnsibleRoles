@@ -1,0 +1,16 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    # Cible de scrape fictive et injoignable : Prometheus doit rester up et
+    # se contenter de loguer des erreurs de scrape (comportement normal en
+    # prod pour une cible temporairement down), pas crasher (cf. AnsibleRoles#109).
+    # FQDN absolu (point final) : sans lui, le search domain des runners CI
+    # (mgmt.etsmtl.club) résout ce nom en wildcard et masque le NXDOMAIN attendu.
+    prometheus_scrape_configs:
+      - job_name: unreachable-target
+        targets:
+          - "something.invalid.:9999"
+  roles:
+    - role: cedille.monitoring.prometheus
