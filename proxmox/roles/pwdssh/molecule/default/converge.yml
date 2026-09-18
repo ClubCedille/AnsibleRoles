@@ -1,0 +1,20 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  pre_tasks:
+    # L'image de test ne fournit pas openssh-server, contrairement à une
+    # vraie VM cloud-init : le rôle a besoin du service ssh pour redémarrer.
+    - name: Install and start openssh-server
+      ansible.builtin.apt:
+        name: openssh-server
+        state: present
+        update_cache: true
+
+    - name: Ensure the ssh service is started and enabled
+      ansible.builtin.service:
+        name: ssh
+        state: started
+        enabled: true
+  roles:
+    - role: cedille.proxmox.pwdssh
