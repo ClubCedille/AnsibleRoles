@@ -52,6 +52,19 @@
   notify: Refresh APT cache
   become: true
 
+- name: Validate the selected channels/releases
+  ansible.builtin.assert:
+    that:
+      - not apt_sources_pve.enabled or apt_sources_pve.channel in apt_sources_pve_channels
+      - not apt_sources_pbs.enabled or apt_sources_pbs.channel in apt_sources_pbs_channels
+      - not apt_sources_ceph.enabled or apt_sources_ceph.channel in apt_sources_ceph_channels
+      - not apt_sources_ceph.enabled or apt_sources_ceph.release in apt_sources_ceph_releases
+    fail_msg: >-
+      Channel ou release invalide -- pve.channel/pbs.channel doivent être parmi
+      {{ apt_sources_pve_channels.keys() | list }}, ceph.channel parmi
+      {{ apt_sources_ceph_channels.keys() | list }}, ceph.release parmi
+      {{ apt_sources_ceph_releases }}.
+
 - name: Ensure the Grafana APT keyring directory exists
   ansible.builtin.file:
     path: "{{ apt_sources_grafana.key_path | dirname }}"
@@ -76,7 +89,41 @@
   ansible.builtin.set_fact:
     apt_sources_all_stanzas: >-
       {{
-        apt_sources_stanzas + ([{
+        ([{
+          'types': 'deb',
+          'uris': apt_sources_debian.mirror,
+          'suites': apt_sources_debian.version ~ ' ' ~ apt_sources_debian.version ~ '-updates',
+          'components': apt_sources_debian.components,
+          'signed_by': '/usr/share/keyrings/debian-archive-keyring.gpg',
+        }, {
+          'types': 'deb',
+          'uris': apt_sources_debian.security_mirror,
+          'suites': apt_sources_debian.version ~ '-security',
+          'components': apt_sources_debian.components,
+          'signed_by': '/usr/share/keyrings/debian-archive-keyring.gpg',
+        }] if apt_sources_debian.enabled else [])
+        + ([{
+          'types': 'deb',
+          'uris': apt_sources_pve_channels[apt_sources_pve.channel].uris,
+          'suites': apt_sources_pve.version,
+          'components': apt_sources_pve_channels[apt_sources_pve.channel].components,
+          'signed_by': '/usr/share/keyrings/proxmox-archive-keyring.gpg',
+        }] if apt_sources_pve.enabled else [])
+        + ([{
+          'types': 'deb',
+          'uris': apt_sources_pbs_channels[apt_sources_pbs.channel].uris,
+          'suites': apt_sources_pbs.version,
+          'components': apt_sources_pbs_channels[apt_sources_pbs.channel].components,
+          'signed_by': '/usr/share/keyrings/proxmox-archive-keyring.gpg',
+        }] if apt_sources_pbs.enabled else [])
+        + ([{
+          'types': 'deb',
+          'uris': apt_sources_ceph_channels[apt_sources_ceph.channel].host ~ '/ceph-' ~ apt_sources_ceph.release,
+          'suites': apt_sources_ceph.version,
+          'components': apt_sources_ceph_channels[apt_sources_ceph.channel].components,
+          'signed_by': '/usr/share/keyrings/proxmox-archive-keyring.gpg',
+        }] if apt_sources_ceph.enabled else [])
+        + ([{
           'types': 'deb',
           'uris': apt_sources_grafana.uris,
           'suites': apt_sources_grafana.suites,

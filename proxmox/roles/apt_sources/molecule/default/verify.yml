@@ -5,14 +5,14 @@
   tasks:
     - name: Stat the combined deb822 source file
       ansible.builtin.stat:
-        path: /etc/apt/sources.list.d/pve.sources
+        path: /etc/apt/sources.list.d/managed.sources
       register: molecule_verify_combined_file
 
     - name: Assert the combined file was written
       ansible.builtin.assert:
         that:
           - molecule_verify_combined_file.stat.exists
-        fail_msg: "pve.sources n'a pas été créé."
+        fail_msg: "managed.sources n'a pas été créé."
 
     - name: Assert the per-repo files it supersedes are gone
       ansible.builtin.stat:
@@ -23,30 +23,33 @@
         - ceph.sources
         - debian.sources
         - grafana.sources
+        - pbs.sources
+        - pve.sources
 
     - name: Assert no obsolete per-repo file remains
       ansible.builtin.assert:
         that:
           - not item.stat.exists
-        fail_msg: "{{ item.item }} aurait dû être supprimé (repris dans pve.sources)."
+        fail_msg: "{{ item.item }} aurait dû être supprimé (repris dans managed.sources)."
       loop: "{{ molecule_verify_obsolete_files.results }}"
       loop_control:
         label: "{{ item.item }}"
 
     - name: Read the rendered combined source file
       ansible.builtin.slurp:
-        src: /etc/apt/sources.list.d/pve.sources
+        src: /etc/apt/sources.list.d/managed.sources
       register: molecule_verify_combined_content
 
-    - name: Assert every repository (proxmox, ceph, debian, grafana) is present
+    - name: Assert every enabled repository block is present
       ansible.builtin.assert:
         that:
-          - "'download.proxmox.com/debian/pve' in (molecule_verify_combined_content.content | b64decode)"
-          - "'ceph-tentacle' in (molecule_verify_combined_content.content | b64decode)"
           - "'trixie trixie-updates' in (molecule_verify_combined_content.content | b64decode)"
           - "'trixie-security' in (molecule_verify_combined_content.content | b64decode)"
+          - "'download.proxmox.com/debian/pve' in (molecule_verify_combined_content.content | b64decode)"
+          - "'download.proxmox.com/debian/pbs' in (molecule_verify_combined_content.content | b64decode)"
+          - "'ceph-tentacle' in (molecule_verify_combined_content.content | b64decode)"
           - "'apt.grafana.com' in (molecule_verify_combined_content.content | b64decode)"
-        fail_msg: "Un des dépôts attendus est absent de pve.sources."
+        fail_msg: "Un des dépôts activés (converge.yml active ceph/pbs/grafana) est absent de managed.sources."
 
     - name: Stat the Grafana signing key
       ansible.builtin.stat:
@@ -62,7 +65,7 @@
     - name: Confirm apt can actually read every configured repository
       # Possible depuis AnsibleRoles#132 : prepare.yml installe le vrai
       # trousseau Proxmox (présent nativement sur tout hôte PVE réel),
-      # donc les 4 dépôts sont maintenant vérifiables signature comprise.
+      # donc les dépôts sont maintenant vérifiables signature comprise.
       ansible.builtin.command: apt-get update
       register: molecule_verify_apt_update
       changed_when: false
