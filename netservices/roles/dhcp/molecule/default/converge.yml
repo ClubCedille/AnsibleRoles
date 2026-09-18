@@ -2,5 +2,12 @@
 - name: Converge
   hosts: all
   become: true
+  pre_tasks:
+    # this-server-name doit être le nom d'un pair déclaré dans ha.peers
+    # (sinon Kea refuse la config HA) -- le défaut inventory_hostname ne
+    # correspond à aucun des deux pairs par défaut (AnsibleRoles#122).
+    - name: Align this-server-name with a configured HA peer name
+      ansible.builtin.set_fact:
+        netservices_dhcp: "{{ netservices_dhcp | combine({'ha': {'this_server_name': netservices_dhcp.ha.primary.name}}, recursive=True) }}"
   roles:
     - role: cedille.netservices.dhcp
