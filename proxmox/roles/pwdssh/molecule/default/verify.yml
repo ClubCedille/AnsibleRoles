@@ -1,0 +1,46 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Stat the cloud-init and pwdssh sshd drop-ins
+      ansible.builtin.stat:
+        path: "{{ item }}"
+      register: molecule_verify_dropins
+      loop:
+        - /etc/ssh/sshd_config.d/60-cloudimg-settings.conf
+        - /etc/ssh/sshd_config.d/99-pwdssh.conf
+
+    - name: Assert the cloud-init drop-in is absent
+      ansible.builtin.assert:
+        that:
+          - not molecule_verify_dropins.results[0].stat.exists
+        fail_msg: "Le drop-in cloud-init n'a pas été supprimé."
+
+    - name: Assert the pwdssh drop-in exists
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_dropins.results[1].stat.exists
+        fail_msg: "Le drop-in pwdssh n'a pas été créé."
+
+    - name: Slurp the pwdssh sshd drop-in
+      ansible.builtin.slurp:
+        src: /etc/ssh/sshd_config.d/99-pwdssh.conf
+      register: molecule_verify_pwdssh_content
+
+    - name: Assert the pwdssh drop-in enables KbdInteractiveAuthentication
+      ansible.builtin.assert:
+        that:
+          - "'KbdInteractiveAuthentication yes' in (molecule_verify_pwdssh_content.content | b64decode)"
+        fail_msg: "Le drop-in pwdssh ne contient pas KbdInteractiveAuthentication yes."
+
+    - name: Check that the ssh service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert ssh service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'ssh.service' in ansible_facts.services"
+          - ansible_facts.services['ssh.service'].state == 'running'
+          - ansible_facts.services['ssh.service'].status == 'enabled'
+        fail_msg: "Le service ssh n'est pas démarré/activé."

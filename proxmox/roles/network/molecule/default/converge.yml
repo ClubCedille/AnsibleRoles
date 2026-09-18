@@ -1,0 +1,16 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  # Le rôle ne fait que templater /etc/network/interfaces ; recharger l'état
+  # réseau n'est pas testable en conteneur, donc on stubbe ifreload en no-op.
+  pre_tasks:
+    - name: Stub ifreload so the "Restart networking" handler succeeds harmlessly
+      ansible.builtin.copy:
+        dest: /usr/local/bin/ifreload
+        content: |
+          #!/bin/sh
+          exit 0
+        mode: "0755"
+  roles:
+    - role: cedille.proxmox.network

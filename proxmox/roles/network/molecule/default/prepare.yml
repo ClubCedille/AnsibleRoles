@@ -1,0 +1,12 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    # debian:trixie officiel n'embarque ni interpréteur Python ni sudo — raw
+    # ne dépend pas d'un interpréteur distant, contrairement aux autres
+    # modules. ifupdown fournit le /etc/network/interfaces réel d'un hôte
+    # Proxmox (le rôle attend un fichier déjà existant à sauvegarder).
+    - name: Install Python, sudo and ifupdown (missing from the minimal debian:trixie image)
+      ansible.builtin.raw: apt-get update && apt-get install -y python3 sudo ifupdown
+      changed_when: true

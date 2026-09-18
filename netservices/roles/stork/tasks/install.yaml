@@ -5,6 +5,29 @@
   when: netservices_stork.install.update_cache | bool
   become: true
 
+- name: Ensure python3-debian is installed (required by deb822_repository)
+  ansible.builtin.apt:
+    name: python3-debian
+    state: present
+  become: true
+
+- name: Add the ISC Stork APT repository
+  ansible.builtin.deb822_repository:
+    name: isc-stork
+    types: deb
+    uris: "{{ netservices_stork.install.repository.uri }}"
+    suites: "{{ ansible_facts['distribution_release'] }}"
+    components: main
+    signed_by: "{{ netservices_stork.install.repository.key_url }}"
+  become: true
+  register: netservices_stork_repo
+
+- name: Refresh apt cache after adding the Stork repository
+  ansible.builtin.apt:
+    update_cache: true
+  when: netservices_stork_repo is changed
+  become: true
+
 - name: Install Stork packages
   ansible.builtin.apt:
     name: "{{ netservices_stork.install.packages }}"

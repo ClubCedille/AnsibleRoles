@@ -1,0 +1,50 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the Stork services are running
+      ansible.builtin.service_facts:
+
+    - name: Assert isc-stork-server and isc-stork-agent are active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'isc-stork-server.service' in ansible_facts.services"
+          - ansible_facts.services['isc-stork-server.service'].state == 'running'
+          - ansible_facts.services['isc-stork-server.service'].status == 'enabled'
+          - "'isc-stork-agent.service' in ansible_facts.services"
+          - ansible_facts.services['isc-stork-agent.service'].state == 'running'
+          - ansible_facts.services['isc-stork-agent.service'].status == 'enabled'
+        fail_msg: "Un service Stork n'est pas démarré/activé."
+
+    - name: Stat the Stork environment files
+      ansible.builtin.stat:
+        path: "/etc/stork/{{ item }}"
+      register: molecule_verify_envfiles
+      loop:
+        - server.env
+        - agent.env
+
+    - name: Assert the environment files were rendered
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Un fichier d'environnement Stork est manquant."
+      loop: "{{ molecule_verify_envfiles.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Query the Stork server REST API
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:8080/api/version"
+        return_content: true
+      register: molecule_verify_version
+
+    # PostgreSQL est provisionnée par converge.yml (Option A) : le serveur
+    # doit donc répondre normalement, pas seulement rester "up" en échec de DB.
+    - name: Assert the Stork server REST API reports a version
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_version.status == 200
+          - "'version' in (molecule_verify_version.content | from_json)"
+        fail_msg: "L'API REST de Stork server ne répond pas comme attendu."

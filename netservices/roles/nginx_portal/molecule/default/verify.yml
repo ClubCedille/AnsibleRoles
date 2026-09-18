@@ -1,0 +1,40 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the nginx service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert nginx service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'nginx.service' in ansible_facts.services"
+          - ansible_facts.services['nginx.service'].state == 'running'
+          - ansible_facts.services['nginx.service'].status == 'enabled'
+        fail_msg: "Le service nginx n'est pas démarré/activé."
+
+    - name: Slurp the deployed portal HTML file
+      ansible.builtin.slurp:
+        path: /var/www/html/index.html
+      register: molecule_verify_portal_file
+
+    - name: Assert the rendered template content is present
+      ansible.builtin.assert:
+        that:
+          - "'Portal Molecule Test' in (molecule_verify_portal_file.content | b64decode)"
+          - "ansible_hostname in (molecule_verify_portal_file.content | b64decode)"
+        fail_msg: "Le contenu du template Jinja2 n'a pas été rendu comme attendu."
+
+    - name: Query the portal over HTTP
+      ansible.builtin.uri:
+        url: "http://127.0.0.1/"
+        return_content: true
+      register: molecule_verify_http
+
+    - name: Assert the portal is served correctly
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_http.status == 200
+          - "'Portal Molecule Test' in molecule_verify_http.content"
+        fail_msg: "Le portail nginx ne sert pas la page attendue sur le port 80."

@@ -1,7 +1,7 @@
 namespace: "cedille"
 name: "netservices"
 description: "Collection de rôles Ansible pour gérer des services réseau"
-version: "1.0.1"
+version: "1.0.3"
 readme: "./docs/README.md"
 authors:
   - "Louis Raymond <lraymond@lanets.ca>"

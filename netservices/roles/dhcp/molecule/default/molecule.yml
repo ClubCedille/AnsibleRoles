@@ -1,0 +1,40 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: molecule/default/requirements.yml
+driver:
+  name: docker
+platforms:
+  # Nom = ha.primary.name par défaut du rôle : this-server-name (dérivé
+  # d'inventory_hostname) doit matcher un pair HA existant pour que Kea
+  # démarre (AnsibleRoles#122). Éviter un override par set_fact/combine du
+  # dict netservices_dhcp -- son propre rendu interne (auto-référence vers
+  # ha.this_server_name) fige alors une valeur obsolète.
+  - name: dhcp-primary
+    image: geerlingguy/docker-ubuntu2404-ansible:latest
+    privileged: true
+    cgroupns_mode: host
+    pre_build_image: true
+    # false : laisse l'image lancer systemd elle-même (cf. AnsibleRoles#95).
+    override_command: false
+    volumes:
+      - /sys/fs/cgroup:/sys/fs/cgroup:rw
+provisioner:
+  name: ansible
+  options:
+    diff: true
+  playbooks:
+    converge: converge.yml
+verifier:
+  name: ansible
+scenario:
+  test_sequence:
+    - dependency
+    - create
+    - prepare
+    - converge
+    - idempotence
+    - verify
+    - cleanup
+    - destroy

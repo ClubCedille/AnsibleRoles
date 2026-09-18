@@ -1,0 +1,10 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    # debian:bookworm officiel n'embarque aucun interpréteur Python — raw ne
+    # dépend pas d'un interpréteur distant, contrairement aux autres modules.
+    - name: Install Python (missing from the minimal debian:bookworm image)
+      ansible.builtin.raw: apt-get update && apt-get install -y python3
+      changed_when: true

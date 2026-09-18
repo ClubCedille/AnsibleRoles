@@ -8,12 +8,16 @@ netservices_stork:
     update_cache: true
     package_state: present
     packages:
-      - stork-server
-      - stork-agent
+      - isc-stork-server
+      - isc-stork-agent
+    repository:
+      # Dépôt Cloudsmith officiel ISC : les paquets stork-* ne sont pas dans Ubuntu (cf. PR AnsibleRoles).
+      uri: https://dl.cloudsmith.io/public/isc/stork/deb/ubuntu
+      key_url: https://dl.cloudsmith.io/public/isc/stork/gpg.key
 
   service:
-    server_name: stork-server
-    agent_name: stork-agent
+    server_name: isc-stork-server
+    agent_name: isc-stork-agent
     state: started
     enabled: true
 
@@ -26,7 +30,6 @@ netservices_stork:
     http_host: 0.0.0.0
     http_port: 8080
     database:
-      type: postgresql
       host: 127.0.0.1
       port: 5432
       name: stork
@@ -34,8 +37,8 @@ netservices_stork:
       password: ""
 
   agent:
+    # Déploiement mono-hôte par défaut (server + agent colocalisés) : port
+    # dédié pour éviter la collision avec le port REST du serveur (8080).
+    host: 127.0.0.1
+    port: 8081
     server_url: http://127.0.0.1:8080
-    token: ""
-    monitored_services:
-      - kea-dhcp4-server
-      - bind9
