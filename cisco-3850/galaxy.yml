@@ -1,7 +1,7 @@
 namespace: "cedille"
 name: "cisco-3850"
 description: "Collection de rôles Ansible pour gérer les switches Cisco 3850"
-version: "1.0.1"
+version: "1.0.2"
 readme: "./docs/README.md"
 authors:
   - "Louis Raymond <lraymond@lanets.ca>"

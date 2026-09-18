@@ -87,12 +87,16 @@
   register: pnp_server_backend_script_stat
   when: pnp_server_backend.enabled | bool
 
+# The git checkout and copy above fully support check_mode and are
+# simulated under --check, so the script genuinely doesn't exist yet on a
+# host that hasn't been provisioned for real — this would fail every
+# dry run regardless of whether the sync itself is correct.
 - name: Fail when backend script is missing after source sync
   ansible.builtin.assert:
     that:
       - pnp_server_backend_script_stat.stat.exists
     fail_msg: "backend script not found at {{ pnp_server_backend.script_path }} after source sync."
-  when: pnp_server_backend.enabled | bool
+  when: pnp_server_backend.enabled | bool and not ansible_check_mode
 
 - name: Create backend virtualenv
   ansible.builtin.command:
@@ -131,11 +135,16 @@
     path: "{{ pnp_server_http.device_map_path }}"
   register: pnp_server_device_map_stat
 
+# The device map is rendered by generate_day0.yaml's "Render Day-0 device
+# map" template task, which is check_mode-aware and simulated under
+# --check — the file genuinely doesn't exist yet on a fresh host, so this
+# would fail every dry run regardless of whether the render is correct.
 - name: Fail when device map source is missing
   ansible.builtin.assert:
     that:
       - pnp_server_device_map_stat.stat.exists
     fail_msg: "device map not found at {{ pnp_server_http.device_map_path }}."
+  when: not ansible_check_mode
 
 - name: Build backend config source map
   ansible.builtin.set_fact:
