@@ -1,11 +1,33 @@
+- name: Check if an APT sources list already exists
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list
+  register: apt_sources_existing_list
+  become: true
+
+- name: Read existing APT sources list content
+  # lookup('file', ...) lit sur le contrôleur Ansible, pas sur l'hôte géré :
+  # remplacé par slurp (rend aussi le rôle idempotent). Cf. AnsibleRoles#123.
+  ansible.builtin.slurp:
+    src: /etc/apt/sources.list
+  register: apt_sources_list_content
+  when: apt_sources_existing_list.stat.exists
+  become: true
+
 - name: Backup existing APT sources list
+  # remote_src: sans lui, "src" était lu sur le contrôleur Ansible au lieu
+  # de l'hôte géré ; when: uniquement si le contenu n'est pas déjà géré par
+  # Ansible, sinon une sauvegarde était refaite à chaque run. Cf. AnsibleRoles#123.
   ansible.builtin.copy:
+    remote_src: true
     src: /etc/apt/sources.list
     dest: /etc/apt/sources.list.bak
     backup: true
     mode: '0644'
-    user: root
+    owner: root
     group: root
+  when: >-
+    apt_sources_existing_list.stat.exists and
+    'ANSIBLE MANAGED' not in (apt_sources_list_content.content | b64decode)
   become: true
 
 - name: Ensure separate Proxmox sources list file do not exist
@@ -17,21 +39,33 @@
   become: true
 
 - name: Delete existing file if not managed by Ansible
-  # /etc/apt/sources.list peut être absent (ex. images trixie deb822 par
-  # défaut) : cf. AnsibleRoles#123 pour le lookup qui plantait sinon.
+  # Le marqueur réel est "# BEGIN/END ANSIBLE MANAGED ..." : chercher
+  # "# ANSIBLE MANAGED" ne matchait jamais. Cf. AnsibleRoles#123.
   ansible.builtin.file:
     path: /etc/apt/sources.list
     state: absent
-  when: "'# ANSIBLE MANAGED' not in (lookup('file', '/etc/apt/sources.list', errors='ignore') | default('', true))"
+  when: >-
+    apt_sources_existing_list.stat.exists and
+    'ANSIBLE MANAGED' not in (apt_sources_list_content.content | b64decode)
   become: true
 
 - name: Delete deb822 formatted APT source if not managed by Ansible
+  # Même risque de plantage que ci-dessus si le fichier est absent (cf.
+  # AnsibleRoles#123) : errors='ignore' seul renvoie None, pas ''.
   ansible.builtin.find:
     paths: /etc/apt/sources.list.d/
     patterns: 'debian.sources'
   register: deb822_sources
   become: true
-  when: "'# ANSIBLE MANAGED' not in lookup('file', '/etc/apt/sources.list.d/debian.sources', errors='ignore')"
+  when: "'ANSIBLE MANAGED' not in (lookup('file', '/etc/apt/sources.list.d/debian.sources', errors='ignore') | default('', true))"
+
+- name: Check if the APT sources list still exists
+  # state: touch marque toujours "changed", y compris sur un fichier déjà
+  # présent : un stat + when évite de casser l'idempotence. Cf. AnsibleRoles#123.
+  ansible.builtin.stat:
+    path: /etc/apt/sources.list
+  register: apt_sources_list_after_cleanup
+  become: true
 
 - name: Creating a blank APT sources list file if it does not exist
   ansible.builtin.file:
@@ -40,17 +74,17 @@
     owner: root
     group: root
     state: touch
+  when: not apt_sources_list_after_cleanup.stat.exists
   become: true
 
 - name: Add Proxmox APT sources list
+  # Format une-ligne classique : /etc/apt/sources.list n'accepte pas la
+  # syntaxe deb822 (Types:/URIs:/...), apt refusait de le parser. Cf.
+  # AnsibleRoles#123.
   ansible.builtin.blockinfile:
     path: /etc/apt/sources.list
     marker: "# {mark} ANSIBLE MANAGED PROXMOX APT SOURCES {{ item.description }}"
     block: |
-      Types: {{ item.type }}
-      URIs: {{ item.url }}
-      Suites: {{ item.suites }}
-      Components: {{ item.components }}
-      Signed-By: {{ item.cert_location }}
+      {{ item.type }} [signed-by={{ item.cert_location }}] {{ item.url }} {{ item.suites }} {{ item.components }}
   loop: "{{ apt_sources_repositories }}"
   become: true
