@@ -2,37 +2,57 @@
 - name: Verify
   hosts: all
   become: true
-  vars:
-    # Copie des descriptions de proxmox/roles/apt_sources/defaults/main.yml
-    # (les defaults du rôle ne sont pas dans le scope de ce playbook séparé).
-    molecule_verify_repo_descriptions:
-      - pve-no-subscription
-      - debian-base
-      - debian-updates
-      - debian-security
-      - proxmox-ceph
   tasks:
-    - name: Read the rendered APT sources list
-      ansible.builtin.slurp:
-        src: /etc/apt/sources.list
-      register: molecule_verify_sources
-
-    - name: Assert every configured repository block was written
-      ansible.builtin.assert:
-        that:
-          - "'# BEGIN ANSIBLE MANAGED PROXMOX APT SOURCES ' + item in (molecule_verify_sources.content | b64decode)"
-        fail_msg: "Le bloc {{ item }} est absent de /etc/apt/sources.list."
-      loop: "{{ molecule_verify_repo_descriptions }}"
-
-    - name: Stat the backed up sources list file
+    - name: Stat the managed deb822 source files
       ansible.builtin.stat:
-        path: /etc/apt/sources.list.bak
-      register: molecule_verify_backup
+        path: "/etc/apt/sources.list.d/{{ item }}"
+      register: molecule_verify_sources_files
+      loop:
+        - proxmox.sources
+        - ceph.sources
+        - debian.sources
 
-    - name: Assert no backup was made
-      # debian:trixie n'a pas de sources.list classique au départ ; une fois
-      # géré par Ansible, le rôle ne sauvegarde plus jamais (cf. AnsibleRoles#123).
+    - name: Assert every managed source file was written
       ansible.builtin.assert:
         that:
-          - not molecule_verify_backup.stat.exists
-        fail_msg: "/etc/apt/sources.list.bak existe alors qu'aucun contenu non géré n'a jamais existé."
+          - item.stat.exists
+        fail_msg: "{{ item.item }} n'a pas été créé sous /etc/apt/sources.list.d/."
+      loop: "{{ molecule_verify_sources_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Read the rendered deb822 sources
+      ansible.builtin.slurp:
+        src: "/etc/apt/sources.list.d/{{ item }}"
+      register: molecule_verify_sources_content
+      loop:
+        - proxmox.sources
+        - ceph.sources
+        - debian.sources
+
+    - name: Assert ceph.sources points at the configured ceph repository
+      ansible.builtin.assert:
+        that:
+          - "'ceph-tentacle' in (molecule_verify_sources_content.results[1].content | b64decode)"
+        fail_msg: "ceph.sources ne référence pas le dépôt ceph-tentacle attendu."
+
+    - name: Assert debian.sources has both the base+updates and security stanzas
+      ansible.builtin.assert:
+        that:
+          - "'trixie trixie-updates' in (molecule_verify_sources_content.results[2].content | b64decode)"
+          - "'trixie-security' in (molecule_verify_sources_content.results[2].content | b64decode)"
+        fail_msg: "debian.sources n'a pas les deux strophes attendues."
+
+    - name: Stat the legacy sources list
+      ansible.builtin.stat:
+        path: /etc/apt/sources.list
+      register: molecule_verify_legacy_list
+
+    - name: Assert the legacy sources list is absent or empty
+      # Le rôle n'y touche que s'il existait déjà avec du contenu non géré
+      # (AnsibleRoles#131) -- l'image debian:trixie de test ne l'embarque
+      # pas du tout, contrairement au parc réel qui le garde vide.
+      ansible.builtin.assert:
+        that:
+          - not molecule_verify_legacy_list.stat.exists or molecule_verify_legacy_list.stat.size == 0
+        fail_msg: "/etc/apt/sources.list ne devrait jamais contenir de contenu non géré."
