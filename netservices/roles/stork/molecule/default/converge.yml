@@ -1,0 +1,53 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  pre_tasks:
+    # Option A : vraie PostgreSQL locale pour un test honnête de bout en
+    # bout de stork-server (cf. AnsibleRoles PR netservices-stork-molecule-tests).
+    - name: Install PostgreSQL for the Stork server database
+      ansible.builtin.apt:
+        name:
+          - postgresql
+          - python3-psycopg2
+        state: present
+        update_cache: true
+
+    - name: Ensure PostgreSQL is started and enabled
+      ansible.builtin.service:
+        name: postgresql
+        state: started
+        enabled: true
+
+    - name: Create the stork database role (no password, trusted locally below)
+      community.postgresql.postgresql_user:
+        name: stork
+        state: present
+      become: true
+      become_user: postgres
+
+    - name: Create the stork database
+      community.postgresql.postgresql_db:
+        name: stork
+        owner: stork
+        state: present
+      become: true
+      become_user: postgres
+
+    - name: Trust local connections from the stork role on the stork database
+      community.postgresql.postgresql_pg_hba:
+        dest: /etc/postgresql/16/main/pg_hba.conf
+        contype: host
+        databases: stork
+        users: stork
+        address: 127.0.0.1/32
+        method: trust
+      register: netservices_stork_test_pg_hba
+
+    - name: Restart PostgreSQL to apply pg_hba changes
+      ansible.builtin.service:
+        name: postgresql
+        state: restarted
+      when: netservices_stork_test_pg_hba is changed
+  roles:
+    - role: cedille.netservices.stork
