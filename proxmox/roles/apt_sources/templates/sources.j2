@@ -1,0 +1,11 @@
+# {{ ansible_managed }}
+{% for stanza in item.stanzas %}
+Types: {{ stanza.types }}
+URIs: {{ stanza.uris }}
+Suites: {{ stanza.suites }}
+Components: {{ stanza.components }}
+Signed-By: {{ stanza.signed_by }}
+{% if not loop.last %}
+
+{% endif %}
+{% endfor %}

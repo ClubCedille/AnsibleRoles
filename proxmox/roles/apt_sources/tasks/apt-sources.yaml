@@ -1,22 +1,21 @@
-- name: Check if an APT sources list already exists
+- name: Check if a legacy APT sources list exists
   ansible.builtin.stat:
     path: /etc/apt/sources.list
   register: apt_sources_existing_list
   become: true
 
-- name: Read existing APT sources list content
+- name: Read legacy APT sources list content
   # lookup('file', ...) lit sur le contrôleur Ansible, pas sur l'hôte géré :
-  # remplacé par slurp (rend aussi le rôle idempotent). Cf. AnsibleRoles#129.
+  # slurp lit sur la cible et rend aussi le rôle idempotent. Cf. AnsibleRoles#129.
   ansible.builtin.slurp:
     src: /etc/apt/sources.list
   register: apt_sources_list_content
   when: apt_sources_existing_list.stat.exists
   become: true
 
-- name: Backup existing APT sources list
+- name: Backup legacy APT sources list before neutralizing it
   # remote_src: sans lui, "src" était lu sur le contrôleur Ansible au lieu
-  # de l'hôte géré ; when: uniquement si le contenu n'est pas déjà géré par
-  # Ansible, sinon une sauvegarde était refaite à chaque run. Cf. AnsibleRoles#129.
+  # de l'hôte géré. Cf. AnsibleRoles#129.
   ansible.builtin.copy:
     remote_src: true
     src: /etc/apt/sources.list
@@ -27,64 +26,32 @@
     group: root
   when: >-
     apt_sources_existing_list.stat.exists and
-    'ANSIBLE MANAGED' not in (apt_sources_list_content.content | b64decode)
+    (apt_sources_list_content.content | b64decode | trim | length > 0)
   become: true
 
-- name: Ensure separate Proxmox sources list file do not exist
-  ansible.builtin.file:
-    path: "{{ item }}"
-    state: absent
-  with_fileglob:
-    - /etc/apt/sources.list.d/*
-  become: true
-
-- name: Delete existing file if not managed by Ansible
-  # Le marqueur réel est "# BEGIN/END ANSIBLE MANAGED ..." : chercher
-  # "# ANSIBLE MANAGED" ne matchait jamais. Cf. AnsibleRoles#129.
-  ansible.builtin.file:
-    path: /etc/apt/sources.list
-    state: absent
-  when: >-
-    apt_sources_existing_list.stat.exists and
-    'ANSIBLE MANAGED' not in (apt_sources_list_content.content | b64decode)
-  become: true
-
-- name: Delete deb822 formatted APT source if not managed by Ansible
-  # Même risque de plantage que ci-dessus si le fichier est absent (cf.
-  # AnsibleRoles#129) : errors='ignore' seul renvoie None, pas ''.
-  ansible.builtin.find:
-    paths: /etc/apt/sources.list.d/
-    patterns: 'debian.sources'
-  register: deb822_sources
-  become: true
-  when: "'ANSIBLE MANAGED' not in (lookup('file', '/etc/apt/sources.list.d/debian.sources', errors='ignore') | default('', true))"
-
-- name: Check if the APT sources list still exists
-  # state: touch marque toujours "changed", y compris sur un fichier déjà
-  # présent : un stat + when évite de casser l'idempotence. Cf. AnsibleRoles#129.
-  ansible.builtin.stat:
-    path: /etc/apt/sources.list
-  register: apt_sources_list_after_cleanup
-  become: true
-
-- name: Creating a blank APT sources list file if it does not exist
-  ansible.builtin.file:
-    path: /etc/apt/sources.list
+- name: Empty the legacy APT sources list
+  # Les dépôts sont désormais gérés en deb822 (un fichier par dépôt sous
+  # sources.list.d/) -- du contenu classique ici dupliquerait ces sources
+  # (AnsibleRoles#131). Le parc réel a toujours ce fichier présent mais vide.
+  ansible.builtin.copy:
+    dest: /etc/apt/sources.list
+    content: ""
     mode: '0644'
     owner: root
     group: root
-    state: touch
-  when: not apt_sources_list_after_cleanup.stat.exists
+  when: >-
+    apt_sources_existing_list.stat.exists and
+    (apt_sources_list_content.content | b64decode | trim | length > 0)
   become: true
 
-- name: Add Proxmox APT sources list
-  # Format une-ligne classique : /etc/apt/sources.list n'accepte pas la
-  # syntaxe deb822 (Types:/URIs:/...), apt refusait de le parser. Cf.
-  # AnsibleRoles#129.
-  ansible.builtin.blockinfile:
-    path: /etc/apt/sources.list
-    marker: "# {mark} ANSIBLE MANAGED PROXMOX APT SOURCES {{ item.description }}"
-    block: |
-      {{ item.type }} [signed-by={{ item.cert_location }}] {{ item.url }} {{ item.suites }} {{ item.components }}
+- name: Write deb822 APT source files
+  ansible.builtin.template:
+    src: sources.j2
+    dest: "/etc/apt/sources.list.d/{{ item.filename }}"
+    owner: root
+    group: root
+    mode: '0644'
   loop: "{{ apt_sources_repositories }}"
+  loop_control:
+    label: "{{ item.filename }}"
   become: true
