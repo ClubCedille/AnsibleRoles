@@ -1,0 +1,56 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the pve_exporter service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert pve_exporter service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'pve_exporter.service' in ansible_facts.services"
+          - ansible_facts.services['pve_exporter.service'].state == 'running'
+          - ansible_facts.services['pve_exporter.service'].status == 'enabled'
+        fail_msg: "Le service pve_exporter n'est pas démarré/activé."
+
+    - name: Stat the pve_exporter binary in its virtualenv
+      ansible.builtin.stat:
+        path: /opt/pve_exporter/bin/pve_exporter
+      register: molecule_verify_binary
+
+    - name: Assert the pve_exporter binary is installed and executable
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_binary.stat.exists
+          - molecule_verify_binary.stat.executable
+        fail_msg: "Le binaire pve_exporter n'est pas installé ou pas exécutable."
+
+    - name: Query the exporter's own metrics endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9221/metrics"
+        return_content: true
+      register: molecule_verify_metrics
+
+    # Confirme que le process HTTP répond même sans credentials Proxmox valides
+    # (l'exporter ne se connecte à PVE qu'au moment du scrape /pve, pas au démarrage).
+    - name: Assert the metrics endpoint serves real Prometheus metrics
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_metrics.status == 200
+          - "'python_gc_objects_collected_total' in molecule_verify_metrics.content"
+        fail_msg: "L'endpoint /metrics de pve_exporter ne répond pas comme attendu."
+
+    # target factice : point final obligatoire pour éviter le wildcard DNS du CI (cf. AnsibleRoles#106).
+    - name: Query the /pve scrape endpoint with a fake Proxmox target
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9221/pve?target=pve-fake.invalid."
+        return_content: true
+        status_code: [500]
+      register: molecule_verify_pve
+
+    - name: Assert the /pve endpoint fails cleanly on an unreachable target
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_pve.status == 500
+        fail_msg: "L'endpoint /pve n'a pas répondu comme attendu pour un target Proxmox injoignable."

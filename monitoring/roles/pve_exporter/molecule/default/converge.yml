@@ -1,0 +1,9 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    monitoring_pve_api_user: "molecule@pve"
+    monitoring_pve_api_password: "molecule-fake-password"
+  roles:
+    - role: cedille.monitoring.pve_exporter
