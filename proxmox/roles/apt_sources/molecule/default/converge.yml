@@ -1,0 +1,13 @@
+---
+- name: Converge
+  hosts: all
+  # Image officielle minimale sans sudo ; le rôle a "become: true" en dur
+  # sur ses tâches, donc on l'installe avant plutôt que de le contourner.
+  # Pas de update_cache ici : à l'idempotence, le rôle a déjà remplacé les
+  # sources par des dépôts Proxmox sans clé, ce qui ferait échouer le refresh.
+  pre_tasks:
+    - name: Install sudo (missing from the minimal debian:trixie image)
+      ansible.builtin.apt:
+        name: sudo
+  roles:
+    - role: cedille.proxmox.apt_sources

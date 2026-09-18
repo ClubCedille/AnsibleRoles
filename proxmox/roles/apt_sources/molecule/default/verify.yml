@@ -1,0 +1,38 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  vars:
+    # Copie des descriptions de proxmox/roles/apt_sources/defaults/main.yml
+    # (les defaults du rôle ne sont pas dans le scope de ce playbook séparé).
+    molecule_verify_repo_descriptions:
+      - pve-no-subscription
+      - debian-base
+      - debian-updates
+      - debian-security
+      - proxmox-ceph
+  tasks:
+    - name: Read the rendered APT sources list
+      ansible.builtin.slurp:
+        src: /etc/apt/sources.list
+      register: molecule_verify_sources
+
+    - name: Assert every configured repository block was written
+      ansible.builtin.assert:
+        that:
+          - "'# BEGIN ANSIBLE MANAGED PROXMOX APT SOURCES ' + item in (molecule_verify_sources.content | b64decode)"
+        fail_msg: "Le bloc {{ item }} est absent de /etc/apt/sources.list."
+      loop: "{{ molecule_verify_repo_descriptions }}"
+
+    - name: Stat the backed up sources list file
+      ansible.builtin.stat:
+        path: /etc/apt/sources.list.bak
+      register: molecule_verify_backup
+
+    - name: Assert no backup was made
+      # debian:trixie n'a pas de sources.list classique au départ ; une fois
+      # géré par Ansible, le rôle ne sauvegarde plus jamais (cf. AnsibleRoles#123).
+      ansible.builtin.assert:
+        that:
+          - not molecule_verify_backup.stat.exists
+        fail_msg: "/etc/apt/sources.list.bak existe alors qu'aucun contenu non géré n'a jamais existé."
