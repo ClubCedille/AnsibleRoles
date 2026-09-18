@@ -1,0 +1,43 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the tftpd-hpa service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert tftpd-hpa service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'tftpd-hpa.service' in ansible_facts.services"
+          - ansible_facts.services['tftpd-hpa.service'].state == 'running'
+          - ansible_facts.services['tftpd-hpa.service'].status == 'enabled'
+        fail_msg: "Le service tftpd-hpa n'est pas démarré/activé."
+
+    - name: Stat the deployed iPXE boot files
+      ansible.builtin.stat:
+        path: "/srv/tftp/{{ item }}"
+      register: molecule_verify_files
+      loop:
+        - undionly.kpxe
+        - ipxe.efi
+
+    - name: Assert the iPXE boot files are deployed
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+        fail_msg: "Un fichier de boot iPXE est manquant dans le répertoire TFTP."
+      loop: "{{ molecule_verify_files.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Read the tftpd-hpa default configuration
+      ansible.builtin.slurp:
+        src: /etc/default/tftpd-hpa
+      register: molecule_verify_tftpd_defaults
+
+    - name: Assert the configured TFTP_DIRECTORY matches tftp_root
+      ansible.builtin.assert:
+        that:
+          - '"TFTP_DIRECTORY=\"/srv/tftp\"" in (molecule_verify_tftpd_defaults.content | b64decode)'
+        fail_msg: "TFTP_DIRECTORY dans /etc/default/tftpd-hpa ne correspond pas à tftp_root."
