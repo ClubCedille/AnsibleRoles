@@ -3,9 +3,11 @@
   hosts: all
   become: true
   vars:
-    # Connexion Forgejo fictive : suffit à passer l'assert de tasks/main.yaml,
-    # aucun appel réseau réel n'est fait au moment du run (config.yml statique).
-    forgejo_runner_instance_url: "https://forgejo.example.test"
+    # Connexion Forgejo fictive : suffit à passer l'assert de tasks/main.yaml.
+    # .invalid AVEC le point final (FQDN absolu) — sans le point final, le
+    # search domain de certains réseaux (ex: mgmt.etsmtl.club) résout N'IMPORTE
+    # QUEL nom en wildcard, .test y compris, masquant le NXDOMAIN attendu.
+    forgejo_runner_instance_url: "https://forgejo.invalid."
     forgejo_runner_uuid: "00000000-0000-0000-0000-000000000000"
     # forgejo-runner valide le charset du token (hex only, un tiret le rejette
     # avec "token contains invalid characters") — pas juste une chaîne libre.
