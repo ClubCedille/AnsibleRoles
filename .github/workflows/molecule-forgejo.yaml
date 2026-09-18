@@ -1,0 +1,82 @@
+---
+name: Molecule - forgejo.runner
+
+on:
+  pull_request:
+    paths:
+      - "forgejo/**"
+      - "docker/**"
+      - ".github/workflows/molecule-forgejo.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "forgejo/**"
+      - "docker/**"
+      - ".github/workflows/molecule-forgejo.yaml"
+
+concurrency:
+  group: molecule-forgejo-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  molecule:
+    name: Molecule test (forgejo.runner)
+    runs-on: [self-hosted, docker-dind]
+    defaults:
+      run:
+        working-directory: forgejo/roles/runner
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Molecule and dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          # Pas de plafond : community.docker/community.general le refusent (cf. AnsibleRoles#95).
+          pip install \
+            "ansible-core>=2.16.3" \
+            molecule \
+            "molecule-plugins[docker]" \
+            docker \
+            ansible-lint
+
+      # Runner persistant : un résidu d'un run précédent fait échouer
+      # ansible-galaxy avec "Cannot call rmtree on a symbolic link" (cf. AnsibleRoles#95).
+      - name: Clean up any leftover cedille collection installs
+        run: |
+          rm -rf ~/.ansible/collections/ansible_collections/cedille/forgejo
+          rm -rf ~/.ansible/collections/ansible_collections/cedille/docker
+
+      - name: Install required Ansible collections
+        run: |
+          ansible-galaxy collection install -r molecule/default/requirements.yml
+
+      # Molecule symlinke cedille.forgejo (collection sous test) tout seul ;
+      # cedille.docker est une dépendance croisée du même monorepo, absente
+      # de tout registre Galaxy, donc installée depuis le checkout local.
+      - name: Install cedille.docker from this monorepo checkout
+        run: ansible-galaxy collection install ../../../docker --force
+
+      - name: Molecule check (dry-run regression)
+        run: molecule check
+        env:
+          PY_COLOR: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+      - name: Molecule test
+        run: molecule test
+        env:
+          PY_COLOR: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+      - name: Clean up Molecule containers and images
+        if: always()
+        run: |
+          molecule destroy || true
+          docker rm -f forgejo-runner-ubuntu2204 2>/dev/null || true

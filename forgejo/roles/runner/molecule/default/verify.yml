@@ -1,0 +1,65 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check the forgejo-runner service is loaded and enabled
+      ansible.builtin.service_facts:
+
+    - name: Assert forgejo-runner service is loaded and enabled at boot
+      ansible.builtin.assert:
+        that:
+          - "'forgejo-runner.service' in ansible_facts.services"
+          - ansible_facts.services['forgejo-runner.service'].status == 'enabled'
+        fail_msg: "Le service forgejo-runner n'est pas chargé/activé."
+
+    # forgejo-runner appelle réellement Declare() sur le serveur configuré à
+    # chaque démarrage (pas juste un enregistrement statique inerte) : avec
+    # une URL fictive il tourne donc en crash-loop, ce qui est attendu ici.
+    # On vérifie plutôt que la config rendue a bien été lue et utilisée pour
+    # tenter la connexion au bon endpoint.
+    - name: Read the forgejo-runner startup log
+      ansible.builtin.command: journalctl -u forgejo-runner --no-pager -n 50
+      register: molecule_verify_journal
+      changed_when: false
+
+    - name: Assert forgejo-runner attempted to reach the configured instance
+      ansible.builtin.assert:
+        that:
+          - "'forgejo.example.test' in molecule_verify_journal.stdout"
+        fail_msg: "forgejo-runner n'a pas tenté de contacter l'URL configurée dans config.yml."
+
+    - name: Stat the forgejo-runner binary
+      ansible.builtin.stat:
+        path: /usr/local/bin/forgejo-runner
+      register: molecule_verify_binary
+
+    - name: Assert the forgejo-runner binary is installed and executable
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_binary.stat.exists
+          - molecule_verify_binary.stat.executable
+        fail_msg: "Le binaire forgejo-runner n'est pas installé ou pas exécutable."
+
+    - name: Read the deployed configuration
+      ansible.builtin.slurp:
+        src: /etc/forgejo-runner/config.yml
+      register: molecule_verify_config
+
+    - name: Assert the connection settings were rendered into config.yml
+      ansible.builtin.assert:
+        that:
+          - "'https://forgejo.example.test' in (molecule_verify_config.content | b64decode)"
+          - "'00000000-0000-0000-0000-000000000000' in (molecule_verify_config.content | b64decode)"
+        fail_msg: "config.yml ne contient pas les paramètres de connexion attendus."
+
+    - name: Check forgejo-runner's supplementary groups
+      ansible.builtin.command: id -nG forgejo-runner
+      register: molecule_verify_groups
+      changed_when: false
+
+    - name: Assert forgejo-runner user was added to the docker group
+      ansible.builtin.assert:
+        that:
+          - "'docker' in molecule_verify_groups.stdout.split()"
+        fail_msg: "L'utilisateur forgejo-runner n'est pas membre du groupe docker."
