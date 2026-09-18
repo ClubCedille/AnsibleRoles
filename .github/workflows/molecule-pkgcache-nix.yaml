@@ -1,0 +1,71 @@
+---
+name: Molecule - pkgcache.nix
+
+on:
+  pull_request:
+    paths:
+      - "pkgcache/roles/nix/**"
+      - ".github/workflows/molecule-pkgcache-nix.yaml"
+  push:
+    branches:
+      - main
+    paths:
+      - "pkgcache/roles/nix/**"
+      - ".github/workflows/molecule-pkgcache-nix.yaml"
+
+concurrency:
+  group: molecule-pkgcache-nix-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  molecule:
+    name: Molecule test (pkgcache.nix)
+    runs-on: [self-hosted, docker-dind]
+    defaults:
+      run:
+        working-directory: pkgcache/roles/nix
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Molecule and dependencies
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install \
+            "ansible-core>=2.16.3" \
+            molecule \
+            "molecule-plugins[docker]" \
+            docker \
+            ansible-lint
+
+      # Runner persistant : un résidu d'un run précédent fait échouer
+      # ansible-galaxy avec "Cannot call rmtree on a symbolic link" (cf. AnsibleRoles#95).
+      - name: Clean up any leftover cedille.pkgcache collection install
+        run: rm -rf ~/.ansible/collections/ansible_collections/cedille/pkgcache
+
+      - name: Install required Ansible collections
+        run: |
+          ansible-galaxy collection install -r molecule/default/requirements.yml
+
+      - name: Molecule check (dry-run regression)
+        run: molecule check
+        env:
+          PY_COLOR: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+      - name: Molecule test
+        run: molecule test
+        env:
+          PY_COLOR: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+
+      - name: Clean up Molecule containers and images
+        if: always()
+        run: |
+          molecule destroy || true
+          docker rm -f pkgcache-nix-ubuntu2404 2>/dev/null || true

@@ -1,0 +1,41 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Read the rendered nix.conf
+      ansible.builtin.slurp:
+        src: /etc/nix/nix.conf
+      register: molecule_verify_nix_conf
+
+    - name: Assert nix.conf carries the configured substituter, key and netrc-file
+      ansible.builtin.assert:
+        that:
+          - "'extra-substituters = https://nix-cache.pkg.etsmtl.club' in (molecule_verify_nix_conf.content | b64decode)"
+          - "'extra-trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY=' in (molecule_verify_nix_conf.content | b64decode)"
+          - "'netrc-file = /etc/nix/netrc-pkgcache' in (molecule_verify_nix_conf.content | b64decode)"
+        fail_msg: "Le nix.conf rendu ne correspond pas à ce qui est attendu."
+
+    - name: Stat the netrc file
+      ansible.builtin.stat:
+        path: /etc/nix/netrc-pkgcache
+      register: molecule_verify_netrc_stat
+
+    - name: Assert the netrc file has restrictive permissions
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_netrc_stat.stat.mode == "0600"
+        fail_msg: "Le netrc pkgcache n'a pas le mode 0600 attendu."
+
+    - name: Read the rendered netrc
+      ansible.builtin.slurp:
+        src: /etc/nix/netrc-pkgcache
+      register: molecule_verify_netrc
+
+    - name: Assert the netrc carries the configured machine and credentials
+      ansible.builtin.assert:
+        that:
+          - "'machine nix-cache.pkg.etsmtl.club' in (molecule_verify_netrc.content | b64decode)"
+          - "'login molecule' in (molecule_verify_netrc.content | b64decode)"
+          - "'password molecule' in (molecule_verify_netrc.content | b64decode)"
+        fail_msg: "Le netrc pkgcache rendu ne correspond pas à ce qui est attendu."

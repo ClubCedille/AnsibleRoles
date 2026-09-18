@@ -1,0 +1,37 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    # Dict complet (pas un override partiel) : Ansible ne fusionne pas les
+    # dicts de vars par défaut (hash_behaviour=replace, non configuré ici).
+    pkgcache_nix:
+      enabled: true
+      cache_host: nix-cache.pkg.etsmtl.club
+      credentials:
+        username: molecule
+        password: molecule
+      trusted_public_key: "cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+      nix_conf_path: /etc/nix/nix.conf
+      netrc_path: /etc/nix/netrc-pkgcache
+      # Nix n'est pas installé dans l'image de test (pas de nix-daemon
+      # systemd) : voir limitation dans la description de la PR.
+      manage_daemon_service: false
+  # Image officielle minimale sans sudo ni Nix ; le rôle a "become: true" en
+  # dur sur ses tâches, et /etc/nix n'existe pas tant que Nix n'est pas
+  # installé (blockinfile create:true échoue si le dossier parent manque).
+  pre_tasks:
+    - name: Install sudo (missing from the minimal ubuntu:24.04 image)
+      ansible.builtin.apt:
+        name: sudo
+        update_cache: true
+
+    - name: Create /etc/nix (normally provided by the Nix installer)
+      ansible.builtin.file:
+        path: /etc/nix
+        state: directory
+        owner: root
+        group: root
+        mode: "0755"
+      become: true
+  roles:
+    - role: cedille.pkgcache.nix

@@ -1,0 +1,11 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    # ubuntu:24.04 officiel n'embarque aucun interpréteur Python — raw ne
+    # dépend pas d'un interpréteur distant, contrairement à tous les autres
+    # modules Ansible.
+    - name: Install Python (missing from the minimal ubuntu:24.04 image)
+      ansible.builtin.raw: apt-get update && apt-get install -y python3
+      changed_when: true
