@@ -17,7 +17,6 @@
     networks:
       - name: "{{ forgejo_runner_dind_network }}"
     networks_cli_compatible: true
-    purge_networks: true
     restart_policy: always
     state: started
     comparisons:
