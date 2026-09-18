@@ -1,0 +1,22 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    # Hôtes fictifs et injoignables : Grafana provisionne ses datasources
+    # sans vérifier leur disponibilité au démarrage (best-effort).
+    grafana_datasources:
+      - name: Prometheus
+        type: prometheus
+        access: proxy
+        url: http://prometheus.molecule-grafana.invalid.:9090
+        is_default: true
+        editable: false
+      - name: Loki
+        type: loki
+        access: proxy
+        url: http://loki.molecule-grafana.invalid.:3100
+        is_default: false
+        editable: false
+  roles:
+    - role: cedille.monitoring.grafana

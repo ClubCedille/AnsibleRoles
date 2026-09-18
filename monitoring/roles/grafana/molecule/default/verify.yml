@@ -1,0 +1,41 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the grafana-server service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert grafana-server service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'grafana-server.service' in ansible_facts.services"
+          - ansible_facts.services['grafana-server.service'].state == 'running'
+          - ansible_facts.services['grafana-server.service'].status == 'enabled'
+        fail_msg: "Le service grafana-server n'est pas démarré/activé."
+
+    - name: Stat the provisioned datasources file
+      ansible.builtin.stat:
+        path: /etc/grafana/provisioning/datasources/monitoring-datasources.yml
+      register: molecule_verify_datasources_file
+
+    - name: Assert the datasources provisioning file was written
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_datasources_file.stat.exists
+        fail_msg: "Le fichier de provisioning des datasources est absent."
+
+    - name: Query the Grafana health endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:3000/api/health"
+        return_content: true
+      register: molecule_verify_health
+
+    # Confirme que le serveur HTTP + sa base répondent réellement, pas
+    # seulement que le process a démarré (datasources injoignables tolérées).
+    - name: Assert the health endpoint reports the database as ok
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_health.status == 200
+          - (molecule_verify_health.content | from_json).database == "ok"
+        fail_msg: "L'endpoint /api/health de Grafana ne répond pas comme attendu."
