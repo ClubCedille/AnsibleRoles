@@ -1,0 +1,32 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Read the rendered /etc/network/interfaces
+      ansible.builtin.slurp:
+        src: /etc/network/interfaces
+      register: molecule_verify_interfaces
+
+    - name: Assert every managed block marker is present
+      ansible.builtin.assert:
+        that:
+          - "'# BEGIN ANSIBLE MANAGED BLOCK FOR MGMT INTERFACE eth0' in content"
+          - "'# BEGIN ANSIBLE MANAGED BLOCK FOR MGMT BRIDGE vmbr0' in content"
+          - "'# BEGIN ANSIBLE MANAGED BLOCK FOR TRUNK INTERFACE eth1' in content"
+          - "'# BEGIN ANSIBLE MANAGED BLOCK FOR TRUNK INTERFACE eth2' in content"
+          - "'# BEGIN ANSIBLE MANAGED BLOCK FOR TRUNK BOND bond0' in content"
+          - "'# BEGIN ANSIBLE MANAGED BLOCK FOR TRUNK BRIDGE vmbr1' in content"
+          - "'# BEGIN ANSIBLE MANAGED BLOCK FOR TRUNK VLAN 10' in content"
+          - "'# BEGIN ANSIBLE MANAGED BLOCK FOR TRUNK VLAN 20' in content"
+        fail_msg: "Un ou plusieurs blocs gérés par le rôle sont absents de /etc/network/interfaces."
+      vars:
+        content: "{{ molecule_verify_interfaces.content | b64decode }}"
+
+    - name: Assert the trunk bridge VLAN interface carries its configured address
+      ansible.builtin.assert:
+        that:
+          - "'address 0.0.0.0/24' in content"
+        fail_msg: "L'adresse IP du VLAN 20 n'a pas été rendue dans /etc/network/interfaces."
+      vars:
+        content: "{{ molecule_verify_interfaces.content | b64decode }}"

@@ -34,6 +34,18 @@
   notify: Restart kea-ctrl-agent
   become: true
 
+- name: Write Kea control-agent API password file
+  # Requis par ConditionFileNotEmpty= du service packagé -- sans ce fichier
+  # kea-ctrl-agent est silencieusement "skipped" par systemd (AnsibleRoles#122).
+  ansible.builtin.copy:
+    dest: "{{ netservices_dhcp.paths.ctrl_agent_api_password }}"
+    content: "{{ netservices_dhcp.ctrl_agent.api_password }}"
+    owner: root
+    group: _kea
+    mode: "0640"
+  notify: Restart kea-ctrl-agent
+  become: true
+
 - name: Ensure Kea DHCPv4 service state
   ansible.builtin.service:
     name: "{{ netservices_dhcp.service.dhcp4_name }}"
