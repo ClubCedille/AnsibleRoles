@@ -5,6 +5,13 @@ dependency:
     requirements-file: molecule/default/requirements.yml
 driver:
   name: docker
+# Alpine volontairement absent : geerlingguy ne publie pas d'image
+# "docker-alpineXXX-ansible" (vérifié sur Docker Hub — son catalogue ne
+# couvre que les distros systemd). Alpine utilise OpenRC, qui n'a pas
+# d'équivalent prêt à l'emploi pour tourner comme PID 1 en conteneur
+# privilégié ; ça demanderait une image maison, hors scope ici. Le rôle
+# reste donc testé automatiquement sur Ubuntu seulement — la branche
+# Alpine (tasks/alpine.yaml) n'est pas couverte par ce scénario.
 platforms:
   - name: docker-install-ubuntu2204
     image: geerlingguy/docker-ubuntu2204-ansible:latest
@@ -13,10 +20,6 @@ platforms:
     pre_build_image: true
     volumes:
       - /sys/fs/cgroup:/sys/fs/cgroup:rw
-  - name: docker-install-alpine318
-    image: geerlingguy/docker-alpine318-ansible:latest
-    privileged: true
-    pre_build_image: true
 provisioner:
   name: ansible
   options:

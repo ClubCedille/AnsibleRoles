@@ -72,4 +72,4 @@ jobs:
         if: always()
         run: |
           molecule destroy || true
-          docker rm -f docker-install-ubuntu2204 docker-install-alpine318 2>/dev/null || true
+          docker rm -f docker-install-ubuntu2204 2>/dev/null || true
