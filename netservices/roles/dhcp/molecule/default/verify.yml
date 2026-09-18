@@ -1,0 +1,49 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the kea services are running
+      ansible.builtin.service_facts:
+
+    - name: Assert kea-dhcp4-server and kea-ctrl-agent are active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'kea-dhcp4-server.service' in ansible_facts.services"
+          - ansible_facts.services['kea-dhcp4-server.service'].state == 'running'
+          - ansible_facts.services['kea-dhcp4-server.service'].status == 'enabled'
+          - "'kea-ctrl-agent.service' in ansible_facts.services"
+          - ansible_facts.services['kea-ctrl-agent.service'].state == 'running'
+          - ansible_facts.services['kea-ctrl-agent.service'].status == 'enabled'
+        fail_msg: "Un service Kea n'est pas démarré/activé."
+
+    - name: Stat the DHCPv4 control socket
+      ansible.builtin.stat:
+        path: /run/kea/kea4-ctrl-socket
+      register: molecule_verify_socket
+
+    - name: Assert the control socket was created
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_socket.stat.exists
+          - molecule_verify_socket.stat.issock
+        fail_msg: "Le control socket kea-dhcp4 n'a pas été créé."
+
+    - name: Query the Kea control agent
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:8000/"
+        method: POST
+        body_format: json
+        body:
+          command: list-commands
+          service:
+            - dhcp4
+        return_content: true
+      register: molecule_verify_ca
+
+    - name: Assert the control agent answers for the dhcp4 service
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_ca.status == 200
+          - (molecule_verify_ca.json[0].result | int) == 0
+        fail_msg: "Le control agent Kea ne répond pas comme attendu pour dhcp4."

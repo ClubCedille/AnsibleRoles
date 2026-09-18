@@ -8,9 +8,10 @@ netservices_dhcp:
     update_cache: true
     package_state: present
     packages:
+      # libdhcp_ha.so et les autres hooks viennent de kea-common (dépendance
+      # transitive) -- "kea-hooks" n'existe pas comme paquet APT (AnsibleRoles#122).
       - kea-dhcp4-server
       - kea-ctrl-agent
-      - kea-hooks
 
   service:
     dhcp4_name: kea-dhcp4-server
@@ -22,6 +23,13 @@ netservices_dhcp:
     dhcp4_config: /etc/kea/kea-dhcp4.conf
     ctrl_agent_config: /etc/kea/kea-ctrl-agent.conf
     dhcp4_control_socket: /run/kea/kea4-ctrl-socket
+    # Requis par ConditionFileNotEmpty= du service packagé Ubuntu -- sans ce
+    # fichier kea-ctrl-agent ne démarre jamais (AnsibleRoles#122). Non branché
+    # sur une authentification HTTP réelle par ce rôle (voir kea_ctrl_agent_config).
+    ctrl_agent_api_password: /etc/kea/kea-api-password
+
+  ctrl_agent:
+    api_password: "please-change-me"
 
   ha:
     enabled: true
@@ -57,28 +65,33 @@ netservices_dhcp:
       subnet4: []
       option-data: []
       hooks-libraries:
+        # "high-availability" doit être une liste (une erreur de config sinon)
+        # et le rôle du 2e pair doit être "standby" pour le mode hot-standby --
+        # "secondary" n'est valide qu'en mode load-balancing (AnsibleRoles#122).
         - library: /usr/lib/x86_64-linux-gnu/kea/hooks/libdhcp_ha.so
           parameters:
             high-availability:
-              this-server-name: "{{ netservices_dhcp.ha.this_server_name }}"
-              mode: "{{ netservices_dhcp.ha.mode }}"
-              heartbeat-delay: 10000
-              max-response-delay: 60000
-              max-ack-delay: 5000
-              max-unacked-clients: 10
-              sync-page-limit: 10000
-              peers:
-                - name: "{{ netservices_dhcp.ha.primary.name }}"
-                  url: "{{ netservices_dhcp.ha.primary.url }}"
-                  role: primary
-                  auto-failover: true
-                - name: "{{ netservices_dhcp.ha.secondary.name }}"
-                  url: "{{ netservices_dhcp.ha.secondary.url }}"
-                  role: secondary
-                  auto-failover: true
+              - this-server-name: "{{ netservices_dhcp.ha.this_server_name }}"
+                mode: "{{ netservices_dhcp.ha.mode }}"
+                heartbeat-delay: 10000
+                max-response-delay: 60000
+                max-ack-delay: 5000
+                max-unacked-clients: 10
+                sync-page-limit: 10000
+                peers:
+                  - name: "{{ netservices_dhcp.ha.primary.name }}"
+                    url: "{{ netservices_dhcp.ha.primary.url }}"
+                    role: primary
+                    auto-failover: true
+                  - name: "{{ netservices_dhcp.ha.secondary.name }}"
+                    url: "{{ netservices_dhcp.ha.secondary.url }}"
+                    role: "{{ 'standby' if netservices_dhcp.ha.mode == 'hot-standby' else 'secondary' }}"
+                    auto-failover: true
       loggers:
+        # "output_options" (underscore) -- pas "output-options", contrairement
+        # aux autres clés Kea (AnsibleRoles#122).
         - name: kea-dhcp4
-          output-options:
+          output_options:
             - output: stdout
           severity: INFO
 
