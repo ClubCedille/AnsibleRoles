@@ -49,6 +49,10 @@
     group: "{{ forgejo_runner_service.group }}"
     mode: "0750"
 
+- name: Deploy DinD sidecar
+  ansible.builtin.include_tasks: dind_sidecar.yaml
+  when: forgejo_runner_dind_sidecar_enabled
+
 - name: Download forgejo-runner binary
   ansible.builtin.get_url:
     url: "https://code.forgejo.org/forgejo/runner/releases/download/v{{ forgejo_runner_version }}/forgejo-runner-{{ forgejo_runner_version }}-linux-{{ forgejo_runner_arch }}"
