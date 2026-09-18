@@ -1,0 +1,51 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the alloy service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert alloy service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'alloy.service' in ansible_facts.services"
+          - ansible_facts.services['alloy.service'].state == 'running'
+          - ansible_facts.services['alloy.service'].status == 'enabled'
+        fail_msg: "Le service alloy n'est pas démarré/activé."
+
+    - name: Stat the alloy config file
+      ansible.builtin.stat:
+        path: /etc/alloy/config.alloy
+      register: molecule_verify_config
+
+    - name: Assert the alloy config file is present
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_config.stat.exists
+        fail_msg: "Le fichier /etc/alloy/config.alloy n'est pas présent."
+
+    - name: Query the alloy readiness endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:12345/-/ready"
+        return_content: true
+      register: molecule_verify_ready
+
+    - name: Assert alloy reports itself ready
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_ready.status == 200
+        fail_msg: "L'endpoint /-/ready d'Alloy ne répond pas comme attendu."
+
+    - name: Query the alloy metrics endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:12345/metrics"
+        return_content: true
+      register: molecule_verify_metrics
+
+    - name: Assert the metrics endpoint serves real Alloy metrics
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_metrics.status == 200
+          - "'alloy_build_info' in molecule_verify_metrics.content"
+        fail_msg: "L'endpoint /metrics d'Alloy ne répond pas comme attendu."
