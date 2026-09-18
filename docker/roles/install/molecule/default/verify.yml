@@ -6,11 +6,20 @@
     - name: Check that the docker service is running
       ansible.builtin.service_facts:
 
+    # Nom d'unité différent selon l'init system : "docker.service" sous
+    # systemd (Ubuntu), "docker" sous OpenRC (Alpine, voir tasks/alpine.yaml).
+    - name: Determine the docker service name for this platform
+      ansible.builtin.set_fact:
+        _molecule_verify_docker_service: >-
+          {{ 'docker.service' if 'docker.service' in ansible_facts.services else 'docker' }}
+
     - name: Assert docker service is active
       ansible.builtin.assert:
         that:
-          - "'docker.service' in ansible_facts.services"
-          - ansible_facts.services['docker.service'].state == 'running'
+          - _molecule_verify_docker_service in ansible_facts.services
+          # "running" sous systemd, "started" sous OpenRC — mêmes valeurs
+          # que celles renvoyées par service_facts pour chaque source.
+          - ansible_facts.services[_molecule_verify_docker_service].state in ['running', 'started']
         fail_msg: "Le service docker n'est pas démarré."
 
     - name: Get docker compose version
