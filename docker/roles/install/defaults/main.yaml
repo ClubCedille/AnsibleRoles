@@ -1,5 +1,4 @@
 ---
-install_docker_users:
 install_docker_compose_source_type: none
 install_docker_compose_content: ""
 install_docker_compose_template_src: docker-compose.yml.j2
