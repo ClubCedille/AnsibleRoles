@@ -63,6 +63,9 @@
   changed_when: false
   become: true
 
+# command has no real check_mode support: under --check it never actually
+# runs (rc=0 placeholder, stdout empty), so this assert would fail on every
+# dry run regardless of real state. Confirmed in CI (AnsibleInfra #93).
 - name: Assert docker compose version command succeeds
   ansible.builtin.assert:
     that:
@@ -70,3 +73,4 @@
       - install_docker_compose_version.stdout is search('Docker Compose version')
     fail_msg: >-
       Docker Compose is not available after role execution.
+  when: not ansible_check_mode
