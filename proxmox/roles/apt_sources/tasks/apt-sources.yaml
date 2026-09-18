@@ -17,10 +17,12 @@
   become: true
 
 - name: Delete existing file if not managed by Ansible
+  # /etc/apt/sources.list peut être absent (ex. images trixie deb822 par
+  # défaut) : cf. AnsibleRoles#123 pour le lookup qui plantait sinon.
   ansible.builtin.file:
     path: /etc/apt/sources.list
     state: absent
-  when: "'# ANSIBLE MANAGED' not in lookup('file', '/etc/apt/sources.list')"
+  when: "'# ANSIBLE MANAGED' not in (lookup('file', '/etc/apt/sources.list', errors='ignore') | default('', true))"
   become: true
 
 - name: Delete deb822 formatted APT source if not managed by Ansible
