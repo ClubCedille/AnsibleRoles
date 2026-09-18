@@ -62,3 +62,14 @@ github_runner_extra_packages: []
 github_runner_containerized: false
 github_runner_container_image: "myoung34/github-runner:latest"
 github_runner_docker_in_docker: true
+
+# Répertoire de persistance dédié au mode containerized, volontairement
+# distinct de github_runner_paths.data_dir (utilisé par le mode bare-metal).
+# Un hôte qui bascule de bare-metal vers containerized a déjà une
+# installation actions-runner complète (binaire natif, .credentials, .runner)
+# dans data_dir — monter ce même répertoire dans le conteneur mélangerait ce
+# layout avec celui attendu par l'image, avec risque de double
+# enregistrement. Le passage bare-metal → containerized sur un hôte déjà
+# enregistré est une opération manuelle (désenregistrement propre côté
+# GitHub avant bascule), pas quelque chose que ce rôle automatise.
+github_runner_container_data_dir: /var/lib/github-runner-container

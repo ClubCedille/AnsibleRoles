@@ -20,15 +20,15 @@
       github_runner_group still has its placeholder value — set it per pool
       in inventories/infra/group_vars/github_runners_*.yaml.
 
-- name: Create github-runner data directory
+- name: Create github-runner container data directory
   ansible.builtin.file:
-    path: "{{ github_runner_paths.data_dir }}"
+    path: "{{ github_runner_container_data_dir }}"
     state: directory
     mode: "0750"
 
 - name: Check whether the runner container is already registered
   ansible.builtin.stat:
-    path: "{{ github_runner_paths.data_dir }}/.runner"
+    path: "{{ github_runner_container_data_dir }}/.runner"
   register: _github_runner_container_registered
 
 - name: Ensure the registration token is configured
@@ -39,9 +39,10 @@
       github_runner_registration_token still has its placeholder value. This
       token expires after 1h and must be fetched at playbook run time (see
       docs/README.md) — it cannot be a static vaulted value. Only needed for
-      the first registration: once {{ github_runner_paths.data_dir }}/.runner
-      exists (persisted via bind mount), later runs skip straight to
-      recreating the container against the existing registration.
+      the first registration: once
+      {{ github_runner_container_data_dir }}/.runner exists (persisted via
+      bind mount), later runs skip straight to recreating the container
+      against the existing registration.
   when: not _github_runner_container_registered.stat.exists
 
 - name: Deploy the containerized GitHub Actions runner (nested dockerd)
@@ -60,7 +61,7 @@
       DOCKER_IN_DOCKER: "{{ github_runner_docker_in_docker | string | lower }}"
       DISABLE_AUTO_UPDATE: "true"
     volumes:
-      - "{{ github_runner_paths.data_dir }}:/home/runner"
+      - "{{ github_runner_container_data_dir }}:/home/runner"
     state: started
     comparisons:
       "*": strict
