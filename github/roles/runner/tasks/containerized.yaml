@@ -20,16 +20,10 @@
       github_runner_group still has its placeholder value — set it per pool
       in inventories/infra/group_vars/github_runners_*.yaml.
 
-- name: Create github-runner container data directory
-  ansible.builtin.file:
-    path: "{{ github_runner_container_data_dir }}"
-    state: directory
-    mode: "0750"
-
-- name: Check whether the runner container is already registered
-  ansible.builtin.stat:
-    path: "{{ github_runner_container_data_dir }}/.runner"
-  register: _github_runner_container_registered
+- name: Check whether the runner container already exists
+  community.docker.docker_container_info:
+    name: "{{ github_runner_name }}"
+  register: _github_runner_container_info
 
 - name: Ensure the registration token is configured
   ansible.builtin.assert:
@@ -37,13 +31,13 @@
       - github_runner_registration_token != "REPLACE_WITH_RUNTIME_REGISTRATION_TOKEN"
     fail_msg: >-
       github_runner_registration_token still has its placeholder value. This
-      token expires after 1h and must be fetched at playbook run time (see
-      docs/README.md) — it cannot be a static vaulted value. Only needed for
-      the first registration: once
-      {{ github_runner_container_data_dir }}/.runner exists (persisted via
-      bind mount), later runs skip straight to recreating the container
-      against the existing registration.
-  when: not _github_runner_container_registered.stat.exists
+      token expires after 1h and must be fetched at playbook run time — it
+      cannot be a static vaulted value. Registration state lives inside the
+      container's own filesystem (image bakes runner binaries into
+      /actions-runner, so that path can't be bind-mounted without wiping
+      them) — recreating the container always needs a fresh token, so this
+      is only skipped when the container already exists unchanged.
+  when: not _github_runner_container_info.exists
 
 - name: Deploy the containerized GitHub Actions runner (nested dockerd)
   community.docker.docker_container:
@@ -60,9 +54,8 @@
       LABELS: "{{ github_runner_labels | join(',') }}"
       START_DOCKER_SERVICE: "{{ github_runner_docker_in_docker | string | lower }}"
       DISABLE_AUTO_UPDATE: "true"
-    volumes:
-      - "{{ github_runner_container_data_dir }}:/home/runner"
     state: started
     comparisons:
       "*": strict
+      env: ignore
   no_log: true

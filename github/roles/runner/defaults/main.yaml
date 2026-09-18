@@ -46,7 +46,3 @@ github_runner_extra_packages: []
 github_runner_containerized: false
 github_runner_container_image: "myoung34/github-runner:latest"
 github_runner_docker_in_docker: true
-
-# Distinct de data_dir (bare-metal) pour ne pas mélanger les deux layouts
-# sur un hôte migré — voir AnsibleRoles#102.
-github_runner_container_data_dir: /var/lib/github-runner-container
