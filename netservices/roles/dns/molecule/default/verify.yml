@@ -1,0 +1,39 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the named service is running
+      ansible.builtin.service_facts:
+
+    # Le paquet bind9 expose un service systemd nommé named.service ; bind9.service
+    # n'est qu'un alias et n'apparaît pas avec un state/status exploitable.
+    - name: Assert named service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'named.service' in ansible_facts.services"
+          - ansible_facts.services['named.service'].state == 'running'
+          - ansible_facts.services['named.service'].status == 'enabled'
+        fail_msg: "Le service named n'est pas démarré/activé."
+
+    - name: Validate BIND9 configuration
+      ansible.builtin.command: named-checkconf
+      changed_when: false
+
+    - name: Check that BIND9 is listening on port 53
+      ansible.builtin.wait_for:
+        host: 127.0.0.1
+        port: 53
+        timeout: 10
+
+    - name: Query BIND9 version over DNS (chaos class)
+      ansible.builtin.command:
+        cmd: dig +short @127.0.0.1 version.bind chaos txt
+      register: molecule_verify_dig
+      changed_when: false
+
+    - name: Assert BIND9 answered the query
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_dig.stdout | length > 0
+        fail_msg: "BIND9 n'a pas répondu à la requête DNS locale."
