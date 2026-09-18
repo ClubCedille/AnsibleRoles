@@ -1,7 +1,7 @@
 namespace: "cedille"
 name: "docker"
 description: "Collection de rôles Ansible pour gérer Docker"
-version: "1.0.2"
+version: "1.0.3"
 readme: "./docs/README.md"
 authors:
   - "Matei Martin <mmartin@lanets.ca>"

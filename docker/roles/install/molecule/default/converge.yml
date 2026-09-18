@@ -9,10 +9,6 @@
         sleep:
           image: busybox:latest
           command: sleep 3600
-    # Contournement temporaire : tasks/main.yaml:22 lit "docker_registry_mirror_enabled"
-    # (sans préfixe install_) au lieu de "install_docker_registry_mirror_enabled" défini
-    # dans defaults/main.yaml. Bug déjà tracké séparément, ne pas corriger ici.
-    docker_registry_mirror_enabled: false
     install_docker_registry_mirror_enabled: false
     # ansible_user (connexion SSH en usage réel) est absent ici, Molecule
     # se connecte via le driver docker (AnsibleRoles#95).

@@ -114,4 +114,4 @@
     groups: docker
     append: true
   become: true
-  when: install_docker_users is defined or ansible_user is defined
+  when: ansible_user is defined
