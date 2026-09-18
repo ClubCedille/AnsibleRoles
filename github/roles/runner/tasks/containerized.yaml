@@ -58,7 +58,7 @@
       RUNNER_TOKEN: "{{ github_runner_registration_token }}"
       RUNNER_GROUP: "{{ github_runner_group }}"
       LABELS: "{{ github_runner_labels | join(',') }}"
-      DOCKER_IN_DOCKER: "{{ github_runner_docker_in_docker | string | lower }}"
+      START_DOCKER_SERVICE: "{{ github_runner_docker_in_docker | string | lower }}"
       DISABLE_AUTO_UPDATE: "true"
     volumes:
       - "{{ github_runner_container_data_dir }}:/home/runner"
