@@ -1,0 +1,55 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the snmp_exporter service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert snmp_exporter service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'snmp_exporter.service' in ansible_facts.services"
+          - ansible_facts.services['snmp_exporter.service'].state == 'running'
+          - ansible_facts.services['snmp_exporter.service'].status == 'enabled'
+        fail_msg: "Le service snmp_exporter n'est pas démarré/activé."
+
+    - name: Stat the snmp_exporter binary
+      ansible.builtin.stat:
+        path: /usr/local/bin/snmp_exporter
+      register: molecule_verify_binary
+
+    - name: Assert the snmp_exporter binary is installed and executable
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_binary.stat.exists
+          - molecule_verify_binary.stat.executable
+        fail_msg: "Le binaire snmp_exporter n'est pas installé ou pas exécutable."
+
+    - name: Query the snmp_exporter metrics endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9116/metrics"
+        return_content: true
+      register: molecule_verify_metrics
+
+    # snmp_exporter ne scrute aucune cible SNMP au démarrage (il ne fait que
+    # servir /snmp à la demande de Prometheus) : ses propres métriques
+    # internes suffisent à prouver qu'il tourne réellement.
+    - name: Assert the metrics endpoint serves real Prometheus metrics
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_metrics.status == 200
+          - "'snmp_exporter_build_info' in molecule_verify_metrics.content"
+        fail_msg: "L'endpoint /metrics de snmp_exporter ne répond pas comme attendu."
+
+    - name: Read the deployed configuration
+      ansible.builtin.slurp:
+        src: /etc/snmp_exporter/snmp.yml
+      register: molecule_verify_config
+
+    - name: Assert the configured modules were rendered into snmp.yml
+      ansible.builtin.assert:
+        that:
+          - "'if_mib' in (molecule_verify_config.content | b64decode)"
+          - "'public' in (molecule_verify_config.content | b64decode)"
+        fail_msg: "snmp.yml ne contient pas les modules/auths attendus."
