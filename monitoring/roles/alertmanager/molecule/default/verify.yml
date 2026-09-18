@@ -1,0 +1,58 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the alertmanager service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert alertmanager service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'alertmanager.service' in ansible_facts.services"
+          - ansible_facts.services['alertmanager.service'].state == 'running'
+          - ansible_facts.services['alertmanager.service'].status == 'enabled'
+        fail_msg: "Le service alertmanager n'est pas démarré/activé."
+
+    - name: Stat the alertmanager and amtool binaries
+      ansible.builtin.stat:
+        path: "/usr/local/bin/{{ item }}"
+      register: molecule_verify_binaries
+      loop:
+        - alertmanager
+        - amtool
+
+    - name: Assert the binaries are installed and executable
+      ansible.builtin.assert:
+        that:
+          - item.stat.exists
+          - item.stat.executable
+        fail_msg: "Un binaire alertmanager attendu est absent ou non exécutable."
+      loop: "{{ molecule_verify_binaries.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    - name: Query the alertmanager health endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9093/-/healthy"
+        return_content: true
+      register: molecule_verify_healthy
+
+    - name: Assert the health endpoint reports OK
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_healthy.status == 200
+        fail_msg: "L'endpoint /-/healthy d'alertmanager ne répond pas comme attendu."
+
+    - name: Query the alertmanager status API
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:9093/api/v2/status"
+        return_content: true
+      register: molecule_verify_status
+
+    - name: Assert the status API reports real Alertmanager version info
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_status.status == 200
+          - (molecule_verify_status.content | from_json).versionInfo.version | length > 0
+        fail_msg: "L'API /api/v2/status d'alertmanager ne répond pas comme attendu."
