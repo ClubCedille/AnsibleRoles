@@ -3,45 +3,61 @@
   hosts: all
   become: true
   tasks:
-    - name: Stat the managed deb822 source files
+    - name: Stat the combined deb822 source file
+      ansible.builtin.stat:
+        path: /etc/apt/sources.list.d/pve.sources
+      register: molecule_verify_combined_file
+
+    - name: Assert the combined file was written
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_combined_file.stat.exists
+        fail_msg: "pve.sources n'a pas été créé."
+
+    - name: Assert the per-repo files it supersedes are gone
       ansible.builtin.stat:
         path: "/etc/apt/sources.list.d/{{ item }}"
-      register: molecule_verify_sources_files
+      register: molecule_verify_obsolete_files
       loop:
         - proxmox.sources
         - ceph.sources
         - debian.sources
+        - grafana.sources
 
-    - name: Assert every managed source file was written
+    - name: Assert no obsolete per-repo file remains
       ansible.builtin.assert:
         that:
-          - item.stat.exists
-        fail_msg: "{{ item.item }} n'a pas été créé sous /etc/apt/sources.list.d/."
-      loop: "{{ molecule_verify_sources_files.results }}"
+          - not item.stat.exists
+        fail_msg: "{{ item.item }} aurait dû être supprimé (repris dans pve.sources)."
+      loop: "{{ molecule_verify_obsolete_files.results }}"
       loop_control:
         label: "{{ item.item }}"
 
-    - name: Read the rendered deb822 sources
+    - name: Read the rendered combined source file
       ansible.builtin.slurp:
-        src: "/etc/apt/sources.list.d/{{ item }}"
-      register: molecule_verify_sources_content
-      loop:
-        - proxmox.sources
-        - ceph.sources
-        - debian.sources
+        src: /etc/apt/sources.list.d/pve.sources
+      register: molecule_verify_combined_content
 
-    - name: Assert ceph.sources points at the configured ceph repository
+    - name: Assert every repository (proxmox, ceph, debian, grafana) is present
       ansible.builtin.assert:
         that:
-          - "'ceph-tentacle' in (molecule_verify_sources_content.results[1].content | b64decode)"
-        fail_msg: "ceph.sources ne référence pas le dépôt ceph-tentacle attendu."
+          - "'download.proxmox.com/debian/pve' in (molecule_verify_combined_content.content | b64decode)"
+          - "'ceph-tentacle' in (molecule_verify_combined_content.content | b64decode)"
+          - "'trixie trixie-updates' in (molecule_verify_combined_content.content | b64decode)"
+          - "'trixie-security' in (molecule_verify_combined_content.content | b64decode)"
+          - "'apt.grafana.com' in (molecule_verify_combined_content.content | b64decode)"
+        fail_msg: "Un des dépôts attendus est absent de pve.sources."
 
-    - name: Assert debian.sources has both the base+updates and security stanzas
+    - name: Stat the Grafana signing key
+      ansible.builtin.stat:
+        path: /etc/apt/keyrings/grafana.asc
+      register: molecule_verify_grafana_key
+
+    - name: Assert the Grafana signing key was downloaded
       ansible.builtin.assert:
         that:
-          - "'trixie trixie-updates' in (molecule_verify_sources_content.results[2].content | b64decode)"
-          - "'trixie-security' in (molecule_verify_sources_content.results[2].content | b64decode)"
-        fail_msg: "debian.sources n'a pas les deux strophes attendues."
+          - molecule_verify_grafana_key.stat.exists
+        fail_msg: "La clé APT Grafana n'a pas été téléchargée."
 
     - name: Stat the legacy sources list
       ansible.builtin.stat:

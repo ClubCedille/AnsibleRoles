@@ -30,9 +30,9 @@
   become: true
 
 - name: Empty the legacy APT sources list
-  # Les dépôts sont désormais gérés en deb822 (un fichier par dépôt sous
-  # sources.list.d/) -- du contenu classique ici dupliquerait ces sources
-  # (AnsibleRoles#131). Le parc réel a toujours ce fichier présent mais vide.
+  # Les dépôts sont désormais gérés en deb822 dans apt_sources_output_file --
+  # du contenu classique ici le dupliquerait (AnsibleRoles#131). Le parc réel
+  # a toujours ce fichier présent mais vide.
   ansible.builtin.copy:
     dest: /etc/apt/sources.list
     content: ""
@@ -44,14 +44,51 @@
     (apt_sources_list_content.content | b64decode | trim | length > 0)
   become: true
 
-- name: Write deb822 APT source files
-  ansible.builtin.template:
-    src: sources.j2
-    dest: "/etc/apt/sources.list.d/{{ item.filename }}"
+- name: Remove per-repo source files superseded by apt_sources_output_file
+  ansible.builtin.file:
+    path: "/etc/apt/sources.list.d/{{ item }}"
+    state: absent
+  loop: "{{ apt_sources_obsolete_files }}"
+  become: true
+
+- name: Ensure the Grafana APT keyring directory exists
+  ansible.builtin.file:
+    path: "{{ apt_sources_grafana.key_path | dirname }}"
+    state: directory
+    owner: root
+    group: root
+    mode: '0755'
+  when: apt_sources_grafana.enabled | bool
+  become: true
+
+- name: Download the Grafana APT repository key
+  ansible.builtin.get_url:
+    url: "{{ apt_sources_grafana.key_url }}"
+    dest: "{{ apt_sources_grafana.key_path }}"
     owner: root
     group: root
     mode: '0644'
-  loop: "{{ apt_sources_repositories }}"
-  loop_control:
-    label: "{{ item.filename }}"
+  when: apt_sources_grafana.enabled | bool
+  become: true
+
+- name: Build the combined stanza list
+  ansible.builtin.set_fact:
+    apt_sources_all_stanzas: >-
+      {{
+        apt_sources_stanzas + ([{
+          'types': 'deb',
+          'uris': apt_sources_grafana.uris,
+          'suites': apt_sources_grafana.suites,
+          'components': apt_sources_grafana.components,
+          'signed_by': apt_sources_grafana.key_path,
+        }] if apt_sources_grafana.enabled else [])
+      }}
+
+- name: Write the combined deb822 APT source file
+  ansible.builtin.template:
+    src: sources.j2
+    dest: "{{ apt_sources_output_file }}"
+    owner: root
+    group: root
+    mode: '0644'
   become: true

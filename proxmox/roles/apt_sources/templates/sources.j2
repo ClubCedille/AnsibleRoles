@@ -1,5 +1,5 @@
 # {{ ansible_managed }}
-{% for stanza in item.stanzas %}
+{% for stanza in apt_sources_all_stanzas %}
 Types: {{ stanza.types }}
 URIs: {{ stanza.uris }}
 Suites: {{ stanza.suites }}

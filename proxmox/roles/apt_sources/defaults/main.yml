@@ -8,32 +8,51 @@ apt_sources_debian_mirror: http://deb.debian.org/debian/
 apt_sources_debian_security_mirror: http://security.debian.org/debian-security/
 apt_sources_debian_components: main contrib non-free-firmware
 
-# Un item = un fichier deb822 sous /etc/apt/sources.list.d/, avec une ou
-# plusieurs strophes (Types/URIs/Suites/Components/Signed-By).
-apt_sources_repositories:
-  - filename: proxmox.sources
-    stanzas:
-      - types: deb
-        uris: http://download.proxmox.com/debian/pve
-        suites: "{{ apt_sources_debian_version }}"
-        components: "pve-{{ apt_sources_pve_repository }}"
-        signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
-  - filename: ceph.sources
-    stanzas:
-      - types: deb
-        uris: "http://download.proxmox.com/debian/ceph-{{ apt_sources_ceph_repository }}"
-        suites: "{{ apt_sources_debian_version }}"
-        components: "{{ apt_sources_pve_repository }}"
-        signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
-  - filename: debian.sources
-    stanzas:
-      - types: deb
-        uris: "{{ apt_sources_debian_mirror }}"
-        suites: "{{ apt_sources_debian_version }} {{ apt_sources_debian_version }}-updates"
-        components: "{{ apt_sources_debian_components }}"
-        signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
-      - types: deb
-        uris: "{{ apt_sources_debian_security_mirror }}"
-        suites: "{{ apt_sources_debian_version }}-security"
-        components: "{{ apt_sources_debian_components }}"
-        signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
+# Fichier deb822 unique combinant tous les dépôts gérés par ce rôle
+# (proxmox, ceph, debian, grafana) -- AnsibleRoles#131.
+apt_sources_output_file: /etc/apt/sources.list.d/pve.sources
+
+# Dépôt Grafana (apt.grafana.com) : ce rôle en devient le seul propriétaire
+# sur pve -- désactiver alloy_install.repository.enabled côté consommateur
+# pour éviter que les deux rôles se disputent le même fichier.
+apt_sources_grafana:
+  enabled: true
+  key_url: https://apt.grafana.com/gpg-full.key
+  key_path: /etc/apt/keyrings/grafana.asc
+  uris: https://apt.grafana.com
+  suites: stable
+  components: main
+
+# Strophes deb822 (Types/URIs/Suites/Components/Signed-By) rendues dans
+# apt_sources_output_file, dans l'ordre. Le stanza grafana (si activé) est
+# ajouté après celles-ci par le rôle.
+apt_sources_stanzas:
+  - types: deb
+    uris: http://download.proxmox.com/debian/pve
+    suites: "{{ apt_sources_debian_version }}"
+    components: "pve-{{ apt_sources_pve_repository }}"
+    signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
+  - types: deb
+    uris: "http://download.proxmox.com/debian/ceph-{{ apt_sources_ceph_repository }}"
+    suites: "{{ apt_sources_debian_version }}"
+    components: "{{ apt_sources_pve_repository }}"
+    signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
+  - types: deb
+    uris: "{{ apt_sources_debian_mirror }}"
+    suites: "{{ apt_sources_debian_version }} {{ apt_sources_debian_version }}-updates"
+    components: "{{ apt_sources_debian_components }}"
+    signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
+  - types: deb
+    uris: "{{ apt_sources_debian_security_mirror }}"
+    suites: "{{ apt_sources_debian_version }}-security"
+    components: "{{ apt_sources_debian_components }}"
+    signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
+
+# Anciens fichiers par-dépôt supersédés par apt_sources_output_file (dont
+# grafana.sources, repris à cedille.monitoring.alloy) -- supprimés pour
+# éviter un dépôt dupliqué. AnsibleRoles#131.
+apt_sources_obsolete_files:
+  - proxmox.sources
+  - ceph.sources
+  - debian.sources
+  - grafana.sources
