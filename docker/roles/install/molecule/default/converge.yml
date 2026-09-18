@@ -1,0 +1,38 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    install_docker_compose_source_type: inline
+    install_docker_compose_content: |
+      services:
+        sleep:
+          image: busybox:latest
+          command: sleep 3600
+    # Contournement temporaire : tasks/main.yaml:22 lit "docker_registry_mirror_enabled"
+    # (sans préfixe install_) au lieu de "install_docker_registry_mirror_enabled" défini
+    # dans defaults/main.yaml. Bug déjà tracké séparément, ne pas corriger ici.
+    docker_registry_mirror_enabled: false
+    install_docker_registry_mirror_enabled: false
+    # ansible_user (connexion SSH en usage réel) est absent ici, Molecule
+    # se connecte via le driver docker (AnsibleRoles#95).
+    ansible_user: root
+  # vfs : le containerd du rôle ne peut pas empiler un overlayfs sur celui
+  # du conteneur de test lui-même (AnsibleRoles#95).
+  pre_tasks:
+    - name: Ensure /etc/docker exists
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: "0755"
+
+    - name: Force the vfs storage driver (nested overlay is unsupported here)
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "storage-driver": "vfs"
+          }
+        mode: "0644"
+  roles:
+    - role: cedille.docker.install

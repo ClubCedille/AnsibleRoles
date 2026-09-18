@@ -22,6 +22,8 @@
       - apt-transport-https
       - software-properties-common
       - python3-pip
+      # Requis par deb822_repository plus bas (AnsibleRoles#95).
+      - python3-debian
     state: present
   become: true
 
