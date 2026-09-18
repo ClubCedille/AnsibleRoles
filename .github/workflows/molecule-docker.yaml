@@ -52,14 +52,18 @@ jobs:
         run: |
           ansible-galaxy collection install -r molecule/default/requirements.yml
 
-      # converge.yml référence le rôle par son FQCN cedille.docker.install.
-      # Un simple checkout ne place pas le repo sous une arborescence
-      # ansible_collections/<namespace>/<name> : sans ce lien, Ansible ne
-      # résout pas la collection et échoue avec "role not found".
-      - name: Expose this checkout as the cedille.docker collection
-        run: |
-          mkdir -p ~/.ansible/collections/ansible_collections/cedille
-          ln -sfn "${{ github.workspace }}/docker" ~/.ansible/collections/ansible_collections/cedille/docker
+      # Molecule (via ansible-compat) installe lui-même la collection locale
+      # cedille.docker sous ~/.ansible/collections/... au démarrage de chaque
+      # sous-commande ("prerun" -> ansible-galaxy collection install --force
+      # ../.."), donc converge.yml peut référencer cedille.docker.install
+      # sans setup manuel. Ce runner self-hosted est persistant (pas
+      # éphémère) : on purge l'éventuel résidu d'un run précédent avant de
+      # laisser Molecule réinstaller proprement — un `--force` de
+      # ansible-galaxy plante sinon avec "Cannot call rmtree on a symbolic
+      # link" si le chemin cible est un vieux lien symbolique (ou tout autre
+      # état inattendu) laissé par une exécution antérieure.
+      - name: Clean up any leftover cedille.docker collection install
+        run: rm -rf ~/.ansible/collections/ansible_collections/cedille/docker
 
       - name: Molecule check (dry-run regression, PR #92)
         run: molecule check
