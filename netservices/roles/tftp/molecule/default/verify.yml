@@ -6,18 +6,14 @@
     - name: Check that the tftpd-hpa service is running
       ansible.builtin.service_facts:
 
-    - name: Debug tftpd-hpa service facts
-      ansible.builtin.debug:
-        var: ansible_facts.services['tftpd-hpa.service']
-
     - name: Assert tftpd-hpa service is active
       ansible.builtin.assert:
         that:
           - "'tftpd-hpa.service' in ansible_facts.services"
           - ansible_facts.services['tftpd-hpa.service'].state == 'running'
-          # Unit tftpd-hpa sans section [Install] : "enabled: true" est un
-          # no-op et service_facts rapporte "static", pas "enabled" (PR #124).
-          - ansible_facts.services['tftpd-hpa.service'].status in ['enabled', 'static']
+          # Unit générée depuis le script sysvinit (pas de [Install] natif) :
+          # status="generated", "enabled: true" est un no-op (PR #124).
+          - ansible_facts.services['tftpd-hpa.service'].status in ['enabled', 'static', 'generated']
         fail_msg: "Le service tftpd-hpa n'est pas démarré."
 
     - name: Stat the deployed iPXE boot files
