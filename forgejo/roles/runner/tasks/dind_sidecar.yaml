@@ -12,8 +12,14 @@
     name: "{{ forgejo_runner_dind_sidecar_name }}"
     image: "{{ forgejo_runner_dind_sidecar_image }}"
     privileged: true
-    # Pas de ports publiés vers l'hôte : le sidecar n'est joignable que par
-    # les conteneurs de job attachés au même réseau dédié.
+    env:
+      # L'image officielle docker:dind écoute en TLS sur :2376 par défaut
+      # (DOCKER_TLS_CERTDIR=/certs). On désactive le TLS (DOCKER_TLS_CERTDIR
+      # vide) pour qu'elle écoute en clair sur :2375, l'adresse déjà
+      # utilisée par forgejo_runner_dind_sidecar_name ci-dessus — acceptable
+      # ici : pas de port publié vers l'hôte, le sidecar n'est joignable que
+      # par les conteneurs de job attachés au même réseau Docker dédié.
+      DOCKER_TLS_CERTDIR: ""
     networks:
       - name: "{{ forgejo_runner_dind_network }}"
     networks_cli_compatible: true
