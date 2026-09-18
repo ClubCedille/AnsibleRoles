@@ -1,0 +1,44 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Check that the loki service is running
+      ansible.builtin.service_facts:
+
+    - name: Assert loki service is active and enabled
+      ansible.builtin.assert:
+        that:
+          - "'loki.service' in ansible_facts.services"
+          - ansible_facts.services['loki.service'].state == 'running'
+          - ansible_facts.services['loki.service'].status == 'enabled'
+        fail_msg: "Le service loki n'est pas démarré/activé."
+
+    # Loki refuse /ready pendant ~15s après démarrage (grâce interne de l'ingester).
+    - name: Query the loki readiness endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:3100/ready"
+        return_content: true
+      register: molecule_verify_ready
+      until: molecule_verify_ready.status == 200
+      retries: 10
+      delay: 3
+
+    - name: Assert loki reports ready
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_ready.status == 200
+        fail_msg: "L'endpoint /ready de loki ne répond pas comme attendu."
+
+    - name: Query the loki metrics endpoint
+      ansible.builtin.uri:
+        url: "http://127.0.0.1:3100/metrics"
+        return_content: true
+      register: molecule_verify_metrics
+
+    - name: Assert the metrics endpoint serves real Prometheus metrics
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_metrics.status == 200
+          - "'loki_build_info' in molecule_verify_metrics.content"
+        fail_msg: "L'endpoint /metrics de loki ne répond pas comme attendu."
