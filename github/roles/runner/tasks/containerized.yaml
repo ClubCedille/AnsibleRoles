@@ -1,0 +1,67 @@
+---
+# Runner GitHub Actions containerisé avec dockerd imbriqué — voir le
+# commentaire de github_runner_containerized dans defaults/main.yaml pour la
+# limite connue (isolation hôte garantie, isolation stricte job-à-job non
+# garantie tant que le conteneur n'est pas éphémère par job).
+
+- name: Ensure the GitHub org is configured
+  ansible.builtin.assert:
+    that:
+      - github_runner_org != "REPLACE_WITH_GITHUB_ORG"
+    fail_msg: >-
+      github_runner_org still has its placeholder value — set it in
+      inventories/infra/group_vars/github_runners.yaml before running this role.
+
+- name: Ensure the runner group is configured
+  ansible.builtin.assert:
+    that:
+      - github_runner_group != "REPLACE_WITH_RUNNER_GROUP"
+    fail_msg: >-
+      github_runner_group still has its placeholder value — set it per pool
+      in inventories/infra/group_vars/github_runners_*.yaml.
+
+- name: Create github-runner data directory
+  ansible.builtin.file:
+    path: "{{ github_runner_paths.data_dir }}"
+    state: directory
+    mode: "0750"
+
+- name: Check whether the runner container is already registered
+  ansible.builtin.stat:
+    path: "{{ github_runner_paths.data_dir }}/.runner"
+  register: _github_runner_container_registered
+
+- name: Ensure the registration token is configured
+  ansible.builtin.assert:
+    that:
+      - github_runner_registration_token != "REPLACE_WITH_RUNTIME_REGISTRATION_TOKEN"
+    fail_msg: >-
+      github_runner_registration_token still has its placeholder value. This
+      token expires after 1h and must be fetched at playbook run time (see
+      docs/README.md) — it cannot be a static vaulted value. Only needed for
+      the first registration: once {{ github_runner_paths.data_dir }}/.runner
+      exists (persisted via bind mount), later runs skip straight to
+      recreating the container against the existing registration.
+  when: not _github_runner_container_registered.stat.exists
+
+- name: Deploy the containerized GitHub Actions runner (nested dockerd)
+  community.docker.docker_container:
+    name: "{{ github_runner_name }}"
+    image: "{{ github_runner_container_image }}"
+    privileged: "{{ github_runner_docker_in_docker }}"
+    restart_policy: always
+    env:
+      RUNNER_NAME: "{{ github_runner_name }}"
+      RUNNER_SCOPE: "org"
+      ORG_NAME: "{{ github_runner_org }}"
+      RUNNER_TOKEN: "{{ github_runner_registration_token }}"
+      RUNNER_GROUP: "{{ github_runner_group }}"
+      LABELS: "{{ github_runner_labels | join(',') }}"
+      DOCKER_IN_DOCKER: "{{ github_runner_docker_in_docker | string | lower }}"
+      DISABLE_AUTO_UPDATE: "true"
+    volumes:
+      - "{{ github_runner_paths.data_dir }}:/home/runner"
+    state: started
+    comparisons:
+      "*": strict
+  no_log: true

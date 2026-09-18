@@ -26,9 +26,14 @@ cache:
   external_server: ""
 
 container:
-  network: ""
+  network: "{{ forgejo_runner_dind_network if forgejo_runner_dind_sidecar_enabled else '' }}"
+{% if forgejo_runner_dind_sidecar_enabled %}
+  privileged: false
+  docker_host: "tcp://{{ forgejo_runner_dind_sidecar_name }}:2375"
+{% else %}
   privileged: {{ forgejo_runner_container.privileged | lower }}
   docker_host: "{{ forgejo_runner_container.docker_host }}"
+{% endif -%}
   force_pull: {{ forgejo_runner_container.force_pull | lower }}
 
 host:

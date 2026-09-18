@@ -39,3 +39,26 @@ github_runner_replace_existing: true
 # natively on the host unless the workflow specifies its own container:.
 github_runner_extra_groups: []
 github_runner_extra_packages: []
+
+# Mode containerized : le runner tourne dans un conteneur Docker privilégié
+# avec son propre dockerd imbriqué (nested DinD), au lieu du binaire
+# actions-runner installé directement sur l'hôte (mode par défaut ci-dessus).
+# Les jobs continuent de s'exécuter comme des process natifs à l'intérieur de
+# ce conteneur (comportement standard actions-runner, inchangé), mais ce
+# conteneur — pas l'hôte — est la frontière d'isolation, et `docker build`
+# dans un job parle au dockerd imbriqué, jamais à celui de l'hôte.
+#
+# Limite connue : le conteneur est long-vécu (restart_policy: always) et non
+# éphémère par job — un vrai runner "un conteneur jetable par job" exigerait
+# de reminter un jeton d'enregistrement à chaque redémarrage, ce que ce rôle
+# ne fait pas encore. Isolation vis-à-vis de l'hôte garantie ; isolation
+# stricte job-à-job (jobs séquentiels sur le même runner) non garantie.
+#
+# À valider avant premier déploiement en prod : le comportement exact de
+# github_runner_container_image (démarrage du dockerd imbriqué via
+# DOCKER_IN_DOCKER, chemin de persistance de l'état d'enregistrement) dépend
+# de la version de l'image tierce — vérifier sa documentation actuelle avant
+# d'activer ce mode sur un pool de production.
+github_runner_containerized: false
+github_runner_container_image: "myoung34/github-runner:latest"
+github_runner_docker_in_docker: true
