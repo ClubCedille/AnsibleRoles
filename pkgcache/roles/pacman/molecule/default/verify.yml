@@ -1,0 +1,40 @@
+---
+- name: Verify
+  hosts: all
+  become: true
+  tasks:
+    - name: Read the rendered mirrorlist file
+      ansible.builtin.slurp:
+        src: /etc/pacman.d/pkgcache-mirrorlist
+      register: molecule_verify_mirrorlist
+
+    - name: Assert the mirrorlist embeds the configured cache host and credentials
+      ansible.builtin.assert:
+        that:
+          - "'https://molecule:molecule@geo.mirror.pkgbuild.com/$repo/os/$arch' in (molecule_verify_mirrorlist.content | b64decode)"
+        fail_msg: "Le Server= rendu dans le mirrorlist ne correspond pas à ce qui est attendu."
+
+    - name: Read the rendered pacman.conf file
+      ansible.builtin.slurp:
+        src: /etc/pacman.conf
+      register: molecule_verify_pacman_conf
+
+    - name: Assert pacman.conf includes the pkgcache mirrorlist for each repository
+      ansible.builtin.assert:
+        that:
+          - "'[core]' in (molecule_verify_pacman_conf.content | b64decode)"
+          - "'[extra]' in (molecule_verify_pacman_conf.content | b64decode)"
+          - "'Include = /etc/pacman.d/pkgcache-mirrorlist' in (molecule_verify_pacman_conf.content | b64decode)"
+        fail_msg: "pacman.conf n'inclut pas correctement le mirrorlist pkgcache."
+
+    - name: Confirm pacman can actually install a package through the mirror
+      community.general.pacman:
+        name: less
+        state: present
+      register: molecule_verify_install
+
+    - name: Assert the package installed successfully via the pkgcache mirror
+      ansible.builtin.assert:
+        that:
+          - molecule_verify_install is success
+        fail_msg: "L'installation d'un paquet via le mirror pkgcache a échoué."

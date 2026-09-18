@@ -1,0 +1,10 @@
+---
+- name: Prepare
+  hosts: all
+  gather_facts: false
+  tasks:
+    # archlinux:latest officiel n'embarque aucun interpréteur Python — raw ne
+    # dépend pas d'un interpréteur distant, contrairement aux autres modules.
+    - name: Install Python (missing from the minimal archlinux:latest image)
+      ansible.builtin.raw: pacman -Sy --noconfirm python
+      changed_when: true

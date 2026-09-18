@@ -1,0 +1,37 @@
+---
+- name: Converge
+  hosts: all
+  vars:
+    # Dict complet (pas un override partiel) : Ansible ne fusionne pas les
+    # dicts de vars par défaut (hash_behaviour=replace, non configuré ici).
+    pkgcache_pacman:
+      enabled: true
+      # Un vrai mirroir public ArchLinux tient lieu de "cache" ici : les
+      # identifiants fictifs sont envoyés en Basic Auth mais ignorés par un
+      # serveur qui n'en fait pas — ça permet un test bout-en-bout réel
+      # (pacman -Syy réussit vraiment) sans dépendre du cache interne
+      # Cedille, injoignable depuis un conteneur de test isolé.
+      cache_host: geo.mirror.pkgbuild.com
+      credentials:
+        username: molecule
+        password: molecule
+      mirror_path: $repo/os/$arch
+      mirrorlist_path: /etc/pacman.d/pkgcache-mirrorlist
+      mirrorlist_mode: "0600"
+      pacman_conf_path: /etc/pacman.conf
+      options:
+        Architecture: auto
+        ParallelDownloads: "5"
+      repositories:
+        - core
+        - extra
+  # Image officielle minimale sans sudo ; le rôle a "become: true" en dur
+  # sur ses tâches, donc on l'installe avant plutôt que de le contourner.
+  pre_tasks:
+    - name: Install sudo (missing from the minimal archlinux:latest image)
+      community.general.pacman:
+        name: sudo
+        state: present
+        update_cache: true
+  roles:
+    - role: cedille.pkgcache.pacman
