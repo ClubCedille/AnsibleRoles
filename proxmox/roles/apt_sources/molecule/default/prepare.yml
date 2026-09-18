@@ -8,3 +8,18 @@
     - name: Install Python (missing from the minimal debian:trixie image)
       ansible.builtin.raw: apt-get update && apt-get install -y python3
       changed_when: true
+
+    - name: Ensure the keyrings directory exists
+      ansible.builtin.file:
+        path: /usr/share/keyrings
+        state: directory
+        mode: '0755'
+
+    - name: Install the Proxmox release keyring
+      # Présent nativement sur tout hôte PVE réel (fourni par le paquet
+      # proxmox-archive-keyring, avant même le premier run Ansible) --
+      # l'image debian:trixie de test ne l'a pas, contrairement au parc réel.
+      ansible.builtin.get_url:
+        url: https://enterprise.proxmox.com/debian/proxmox-release-trixie.gpg
+        dest: /usr/share/keyrings/proxmox-archive-keyring.gpg
+        mode: '0644'

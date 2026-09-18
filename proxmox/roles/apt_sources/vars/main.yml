@@ -1,0 +1,42 @@
+---
+# Tables internes (non destinées à être surchargées) associant chaque
+# channel/release à son URL et ses components réels -- ce ne sont pas de
+# simples variations d'un même gabarit : enterprise pointe vers un hôte
+# différent, pas juste un component différent. AnsibleRoles#132.
+
+apt_sources_pve_channels:
+  no-subscription:
+    uris: http://download.proxmox.com/debian/pve
+    components: pve-no-subscription
+  test:
+    uris: http://download.proxmox.com/debian/pve
+    components: pvetest
+  enterprise:
+    uris: https://enterprise.proxmox.com/debian/pve
+    components: pve-enterprise
+
+apt_sources_pbs_channels:
+  no-subscription:
+    uris: http://download.proxmox.com/debian/pbs
+    components: pbs-no-subscription
+  test:
+    uris: http://download.proxmox.com/debian/pbs
+    components: pbstest
+  enterprise:
+    uris: https://enterprise.proxmox.com/debian/pbs
+    components: pbs-enterprise
+
+# Versions Ceph encore supportées sur les branches Proxmox actuelles.
+# Ajuster cette liste au rythme des dépréciations amont plutôt que
+# d'accepter silencieusement une release EOL. AnsibleRoles#132.
+apt_sources_ceph_releases:
+  - squid
+  - tentacle
+
+apt_sources_ceph_channels:
+  no-subscription:
+    host: http://download.proxmox.com/debian
+    components: no-subscription
+  enterprise:
+    host: https://enterprise.proxmox.com/debian
+    components: enterprise

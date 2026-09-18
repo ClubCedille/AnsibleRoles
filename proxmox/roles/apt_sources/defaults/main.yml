@@ -1,39 +1,54 @@
-apt_sources_debian_version: trixie
-apt_sources_pve_repository: no-subscription
+# Un seul fichier deb822 combinant tous les blocs activés ci-dessous.
+# Nom générique (pas "pve.sources") : ce rôle peut aussi cibler des hôtes
+# non-PVE (ex. Proxmox Backup Server sur nas01). AnsibleRoles#132.
+apt_sources_output_file: /etc/apt/sources.list.d/managed.sources
 
-# tentacle : le parc a migré depuis squid (constaté en prod, AnsibleRoles#131).
-apt_sources_ceph_repository: tentacle
+# --- Debian (activé par défaut) -----------------------------------------
+apt_sources_debian:
+  enabled: true
+  version: trixie
+  mirror: http://deb.debian.org/debian/
+  security_mirror: http://security.debian.org/debian-security/
+  components: main contrib non-free-firmware
 
-apt_sources_debian_mirror: http://deb.debian.org/debian/
-apt_sources_debian_security_mirror: http://security.debian.org/debian-security/
-apt_sources_debian_components: main contrib non-free-firmware
+# --- Proxmox VE (activé par défaut, no-subscription) ---------------------
+# channel: no-subscription | test | enterprise
+apt_sources_pve:
+  enabled: true
+  version: trixie
+  channel: no-subscription
 
-# Un item = un fichier deb822 sous /etc/apt/sources.list.d/, avec une ou
-# plusieurs strophes (Types/URIs/Suites/Components/Signed-By).
-apt_sources_repositories:
-  - filename: proxmox.sources
-    stanzas:
-      - types: deb
-        uris: http://download.proxmox.com/debian/pve
-        suites: "{{ apt_sources_debian_version }}"
-        components: "pve-{{ apt_sources_pve_repository }}"
-        signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
-  - filename: ceph.sources
-    stanzas:
-      - types: deb
-        uris: "http://download.proxmox.com/debian/ceph-{{ apt_sources_ceph_repository }}"
-        suites: "{{ apt_sources_debian_version }}"
-        components: "{{ apt_sources_pve_repository }}"
-        signed_by: /usr/share/keyrings/proxmox-archive-keyring.gpg
-  - filename: debian.sources
-    stanzas:
-      - types: deb
-        uris: "{{ apt_sources_debian_mirror }}"
-        suites: "{{ apt_sources_debian_version }} {{ apt_sources_debian_version }}-updates"
-        components: "{{ apt_sources_debian_components }}"
-        signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
-      - types: deb
-        uris: "{{ apt_sources_debian_security_mirror }}"
-        suites: "{{ apt_sources_debian_version }}-security"
-        components: "{{ apt_sources_debian_components }}"
-        signed_by: /usr/share/keyrings/debian-archive-keyring.gpg
+# --- Proxmox Backup Server (désactivé par défaut) -------------------------
+# channel: no-subscription | test | enterprise
+apt_sources_pbs:
+  enabled: false
+  version: trixie
+  channel: no-subscription
+
+# --- Ceph (désactivé par défaut, tentacle si activé) -----------------------
+# release : une des versions encore supportées, cf. apt_sources_ceph_releases
+# channel : no-subscription | enterprise
+apt_sources_ceph:
+  enabled: false
+  version: trixie
+  release: tentacle
+  channel: no-subscription
+
+# --- Grafana (désactivé par défaut) -----------------------------------------
+apt_sources_grafana:
+  enabled: false
+  key_url: https://apt.grafana.com/gpg-full.key
+  key_path: /etc/apt/keyrings/grafana.asc
+  uris: https://apt.grafana.com
+  suites: stable
+  components: main
+
+# Anciens fichiers par-dépôt supersédés par apt_sources_output_file, à
+# nettoyer explicitement pour éviter un dépôt dupliqué à la migration.
+apt_sources_obsolete_files:
+  - proxmox.sources
+  - ceph.sources
+  - debian.sources
+  - grafana.sources
+  - pbs.sources
+  - pve.sources
