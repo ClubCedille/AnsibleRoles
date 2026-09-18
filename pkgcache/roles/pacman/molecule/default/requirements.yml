@@ -1,0 +1,6 @@
+---
+collections:
+  # Requis par le driver docker de molecule-plugins lui-même (pas par le rôle).
+  - name: ansible.posix
+  # Module pacman idempotent pour les pre_tasks/verify.yml de ce scénario.
+  - name: community.general
