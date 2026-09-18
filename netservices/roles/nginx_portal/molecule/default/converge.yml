@@ -1,0 +1,8 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    nginx_portal_html_template: "{{ playbook_dir }}/test_portal.html.j2"
+  roles:
+    - role: cedille.netservices.nginx_portal
