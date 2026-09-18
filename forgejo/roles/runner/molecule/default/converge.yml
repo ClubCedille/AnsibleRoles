@@ -1,0 +1,46 @@
+---
+- name: Converge
+  hosts: all
+  become: true
+  vars:
+    # Connexion Forgejo fictive : suffit à passer l'assert de tasks/main.yaml.
+    # .invalid AVEC le point final (FQDN absolu) — sans le point final, le
+    # search domain de certains réseaux (ex: mgmt.etsmtl.club) résout N'IMPORTE
+    # QUEL nom en wildcard, .test y compris, masquant le NXDOMAIN attendu.
+    forgejo_runner_instance_url: "https://forgejo.invalid."
+    forgejo_runner_uuid: "00000000-0000-0000-0000-000000000000"
+    # forgejo-runner valide le charset du token (hex only, un tiret le rejette
+    # avec "token contains invalid characters") — pas juste une chaîne libre.
+    forgejo_runner_registration_token: "a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2"
+    install_docker_compose_source_type: inline
+    install_docker_compose_content: |
+      services:
+        sleep:
+          image: busybox:latest
+          command: sleep 3600
+    install_docker_registry_mirror_enabled: false
+    # ansible_user (connexion SSH en usage réel) est absent ici, Molecule
+    # se connecte via le driver docker (cf. AnsibleRoles#95).
+    ansible_user: root
+  # vfs : le containerd de cedille.docker.install ne peut pas empiler un
+  # overlayfs sur celui du conteneur de test lui-même (cf. AnsibleRoles#95).
+  pre_tasks:
+    - name: Ensure /etc/docker exists
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: "0755"
+
+    - name: Force the vfs storage driver (nested overlay is unsupported here)
+      ansible.builtin.copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "storage-driver": "vfs"
+          }
+        mode: "0644"
+  roles:
+    # forgejo-runner.service requiert docker.service (unit systemd du rôle)
+    # et le user forgejo-runner doit rejoindre le groupe docker (README).
+    - role: cedille.docker.install
+    - role: cedille.forgejo.runner
