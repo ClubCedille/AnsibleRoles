@@ -1,7 +1,7 @@
 namespace: "cedille"
 name: "github"
 description: "Collection de rôles Ansible pour déployer des runners GitHub Actions self-hosted"
-version: "0.1.1"
+version: "0.1.2"
 readme: "./docs/README.md"
 authors:
   - "Louis Raymond <lraymond@lanets.ca>"
