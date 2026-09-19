@@ -1,0 +1,222 @@
+---
+# Upgrade Talos OS pour UN SEUL node (talosctl upgrade est par nature une
+# opération par-machine, contrairement à talosctl upgrade-k8s qui est par
+# cluster — cf. rôle update_k8s). Ce rôle ne cordonne/décordonne jamais lui-
+# même : il vérifie juste que c'est déjà fait (rôle cordon en amont) et
+# échoue sinon, pour forcer le respect de l'ordre des étapes du runbook.
+#
+# ATTENTION — non vérifié en direct (auth Omni expirée / mismatch de version
+# omnictl au moment de l'écriture) : les noms de champs exacts retournés par
+# `omnictl get machinestatus -o yaml` (adresse IP, version Talos installée)
+# sont un best-effort basé sur le format déjà observé dans
+# playbooks/omni/k8s-shared-cluster.yaml (labels omni.sidero.dev/*, champ
+# hostname). À valider contre une sortie réelle au premier test — si le parsing
+# échoue, la task dédiée fait échouer explicitement avec la sortie brute plutôt
+# que de deviner.
+- name: Vérifier les variables requises
+  ansible.builtin.assert:
+    that:
+      - talos_omni_endpoint is defined and talos_omni_endpoint | length > 0
+      - talos_omni_cluster is defined and talos_omni_cluster | length > 0
+      - talos_omni_service_account_key is defined and talos_omni_service_account_key | length > 0
+      - talos_node_hostname is defined and talos_node_hostname | length > 0
+      - talos_target_version is defined and talos_target_version | length > 0
+      - talos_schematic_id is defined and talos_schematic_id | length > 0
+    fail_msg: >-
+      talos_omni_endpoint, talos_omni_cluster, talos_omni_service_account_key,
+      talos_node_hostname, talos_target_version et talos_schematic_id sont requis.
+    quiet: true
+
+- name: Récupérer le MachineStatus du cluster
+  ansible.builtin.command:
+    argv:
+      - omnictl
+      - get
+      - machinestatus
+      - "-o"
+      - yaml
+  environment:
+    OMNI_ENDPOINT: "{{ talos_omni_endpoint }}"
+    OMNI_SERVICE_ACCOUNT_KEY: "{{ talos_omni_service_account_key }}"
+  register: _talos_machinestatus_raw
+  changed_when: false
+  check_mode: false
+
+- name: Extraire l'IP et la version Talos installée pour ce node
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      python3 -c "
+      import sys, re, json
+      content = sys.stdin.read()
+      docs = content.split('\n---\n')
+      target_cluster = '{{ talos_omni_cluster }}'
+      target_hostname = '{{ talos_node_hostname }}'
+      for doc in docs:
+          if not re.search(r'omni\.sidero\.dev/cluster:\s*' + re.escape(target_cluster) + r'\b', doc):
+              continue
+          host_m = re.search(r'^\s+hostname:\s+(\S+)', doc, re.MULTILINE)
+          if not host_m or host_m.group(1) != target_hostname:
+              continue
+          addr_m = re.search(r'^\s+addresses:\s*\n\s+-\s+(\S+)', doc, re.MULTILINE)
+          version_m = re.search(r'^\s+talosversion:\s+(\S+)', doc, re.MULTILINE | re.IGNORECASE)
+          print(json.dumps({
+              'found': True,
+              'address': addr_m.group(1).split('/')[0] if addr_m else None,
+              'version': version_m.group(1) if version_m else None,
+          }))
+          sys.exit(0)
+      print(json.dumps({'found': False}))
+      "
+    executable: /bin/sh
+  args:
+    stdin: "{{ _talos_machinestatus_raw.stdout }}"
+  register: _talos_node_info_raw
+  changed_when: false
+  check_mode: false
+
+- name: Décoder les informations du node
+  ansible.builtin.set_fact:
+    _talos_node_info: "{{ _talos_node_info_raw.stdout | from_json }}"
+
+- name: Échouer si le node ou ses informations sont introuvables
+  ansible.builtin.fail:
+    msg: >-
+      Impossible de retrouver {{ talos_node_hostname }} (cluster
+      {{ talos_omni_cluster }}) dans `omnictl get machinestatus`, ou son IP/
+      version Talos n'a pas pu être extraite. Vérifier manuellement
+      (`omnictl get machinestatus -o yaml`) et ajuster le parsing dans ce
+      rôle si le format a changé. Sortie brute :
+      {{ _talos_machinestatus_raw.stdout }}
+  when: >-
+    not _talos_node_info.found | default(false)
+    or not _talos_node_info.address | default(false)
+    or not _talos_node_info.version | default(false)
+
+- name: Échouer si le node est déjà à la version cible
+  ansible.builtin.fail:
+    msg: >-
+      {{ talos_node_hostname }} est déjà en Talos {{ _talos_node_info.version }}
+      — rien à faire. Si c'est inattendu, vérifie talos_target_version.
+  when: _talos_node_info.version == talos_target_version
+
+- name: Vérifier que le node est cordonné (précondition, lecture seule)
+  block:
+    - name: Créer un répertoire temporaire pour le kubeconfig éphémère
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: talos-update-precheck
+      register: _talos_update_tmpdir
+      changed_when: false
+      check_mode: false
+
+    - name: Récupérer un kubeconfig éphémère en lecture seule
+      ansible.builtin.command:
+        argv:
+          - omnictl
+          - kubeconfig
+          - "{{ _talos_update_tmpdir.path }}/kubeconfig"
+          - "--cluster={{ talos_omni_cluster }}"
+          - --service-account
+          - "--user={{ talos_cordon_kubeconfig_user }}"
+          - "--groups={{ talos_cordon_k8s_group }}"
+          - "--ttl={{ talos_cordon_kubeconfig_ttl }}"
+          - --merge=false
+          - --force
+      environment:
+        OMNI_ENDPOINT: "{{ talos_omni_endpoint }}"
+        OMNI_SERVICE_ACCOUNT_KEY: "{{ talos_omni_service_account_key }}"
+      changed_when: false
+      check_mode: false
+      no_log: true
+
+    - name: Lire l'état de scheduling du node
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - "--kubeconfig={{ _talos_update_tmpdir.path }}/kubeconfig"
+          - get
+          - node
+          - "{{ talos_node_hostname }}"
+          - -o
+          - "jsonpath={.spec.unschedulable}"
+      register: _talos_update_cordon_check
+      changed_when: false
+      check_mode: false
+
+    - name: Échouer si le node n'est pas cordonné
+      ansible.builtin.fail:
+        msg: >-
+          {{ talos_node_hostname }} n'est pas cordonné. Lancer d'abord
+          `make omni/cordon-node LIMIT={{ talos_node_hostname }}` et vider les
+          workloads stuck avant de relancer cette étape.
+      when: (_talos_update_cordon_check.stdout | trim) != 'true'
+  always:
+    - name: Supprimer le kubeconfig éphémère
+      ansible.builtin.file:
+        path: "{{ _talos_update_tmpdir.path }}"
+        state: absent
+      when: _talos_update_tmpdir is defined and _talos_update_tmpdir.path is defined
+      changed_when: false
+      check_mode: false
+
+- name: Upgrader Talos sur {{ talos_node_hostname }}
+  block:
+    - name: Récupérer un talosconfig admin éphémère
+      ansible.builtin.tempfile:
+        state: file
+        suffix: talosconfig
+      register: _talos_admin_config
+      changed_when: false
+      check_mode: false
+
+    - name: Télécharger le talosconfig admin
+      ansible.builtin.command:
+        argv:
+          - omnictl
+          - talosconfig
+          - "{{ _talos_admin_config.path }}"
+          - "--cluster={{ talos_omni_cluster }}"
+          - --force
+      environment:
+        OMNI_ENDPOINT: "{{ talos_omni_endpoint }}"
+        OMNI_SERVICE_ACCOUNT_KEY: "{{ talos_omni_service_account_key }}"
+      changed_when: false
+      check_mode: false
+      no_log: true
+
+    - name: Lancer talosctl upgrade
+      ansible.builtin.command:
+        argv:
+          - talosctl
+          - upgrade
+          - "--talosconfig={{ _talos_admin_config.path }}"
+          - "--nodes={{ _talos_node_info.address }}"
+          - "--image={{ talos_installer_image }}"
+          - "--timeout={{ talos_upgrade_timeout }}"
+          - "--drain={{ talos_upgrade_drain | string | lower }}"
+          - "--drain-timeout={{ talos_upgrade_drain_timeout }}"
+          - --wait
+
+    - name: Attendre la convergence vers la version cible
+      ansible.builtin.command:
+        argv:
+          - talosctl
+          - version
+          - "--talosconfig={{ _talos_admin_config.path }}"
+          - "--nodes={{ _talos_node_info.address }}"
+          - --short
+      register: _talos_version_poll
+      changed_when: false
+      check_mode: false
+      until: talos_target_version in _talos_version_poll.stdout
+      retries: "{{ talos_update_poll_retries }}"
+      delay: "{{ talos_update_poll_interval_seconds }}"
+  always:
+    - name: Supprimer le talosconfig éphémère
+      ansible.builtin.file:
+        path: "{{ _talos_admin_config.path }}"
+        state: absent
+      when: _talos_admin_config is defined and _talos_admin_config.path is defined
+      changed_when: false
+      check_mode: false

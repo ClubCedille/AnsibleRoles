@@ -1,0 +1,16 @@
+---
+# Hostname du node tel que connu de Kubernetes (nom du Node object) — par défaut
+# le nom d'hôte Ansible de l'exécution (utiliser --limit pour cibler un node).
+talos_node_hostname: "{{ inventory_hostname }}"
+
+# cordoned | uncordoned — requis, pas de défaut volontairement absent : ce sont
+# playbooks/omni/cordon-node.yaml et uncordon-node.yaml qui le fixent, jamais
+# l'opérateur directement.
+talos_cordon_state: null
+
+# Groupe RBAC k8s auquel le kubeconfig éphémère s'identifie. Doit correspondre
+# à un ClusterRoleBinding pré-existant dans le cluster cible (bootstrap one-shot,
+# voir docs/README.md) scopé à get/list/patch sur nodes uniquement.
+talos_cordon_k8s_group: "cedille:talos-cordon"
+talos_cordon_kubeconfig_user: "github-actions-talos"
+talos_cordon_kubeconfig_ttl: "1h"

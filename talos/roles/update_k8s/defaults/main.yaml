@@ -1,0 +1,11 @@
+---
+# Requis — version Kubernetes cible pour le cluster entier, ex: "1.34.1".
+talos_target_kubernetes_version: null
+
+# Requis — version Talos que TOUS les nodes du cluster doivent déjà avoir
+# (précondition : chaque node a été passé par le rôle update_talos avant).
+talos_expected_version: null
+
+# Non encore branché (talosctl upgrade-k8s n'a pas de flag --timeout natif) —
+# réservé pour une éventuelle enveloppe async Ansible si besoin.
+talos_upgrade_k8s_timeout: "30m"

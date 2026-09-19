@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Cedille
+  description: >
+    Upgrade Kubernetes (control plane + kubelets) d'un cluster Talos géré par
+    Omni via talosctl upgrade-k8s — opération par cluster entier (pas par
+    node, contrairement au rôle update_talos). Échoue si un seul node du
+    cluster n'est pas encore à talos_expected_version.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+dependencies: []

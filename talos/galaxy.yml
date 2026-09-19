@@ -1,0 +1,15 @@
+namespace: "cedille"
+name: "talos"
+description: "Collection de rôles Ansible pour la maintenance mécanique (cordon/uncordon, upgrade Talos, upgrade Kubernetes) de clusters Talos gérés par Omni"
+version: "0.1.0"
+readme: "./docs/README.md"
+authors:
+  - "Louis Raymond <lraymond@lanets.ca>"
+dependencies: {}
+license:
+  - "GPL-3.0-or-later"
+tags:
+  - "omni"
+  - "talos"
+  - "kubernetes"
+repository: "https://github.com/ClubCedille/AnsibleRoles.git"

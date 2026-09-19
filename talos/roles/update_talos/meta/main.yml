@@ -1,0 +1,15 @@
+---
+galaxy_info:
+  author: Cedille
+  description: >
+    Upgrade Talos OS d'un node unique d'un cluster géré par Omni, via
+    talosctl upgrade et un talosconfig admin éphémère (SA Omni). Échoue si le
+    node n'est pas déjà cordonné ou déjà à la version cible — ne devine jamais
+    l'état, ne fait jamais de cordon/drain lui-même (cf. rôle cordon).
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+dependencies: []
