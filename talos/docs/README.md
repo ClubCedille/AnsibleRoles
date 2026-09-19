@@ -4,9 +4,14 @@
 
 La collection `cedille.talos` regroupe les rôles nécessaires pour mettre à
 jour Talos et Kubernetes sur des clusters gérés par Omni
-(`cedille.na-west-1.omni.siderolabs.io` pour k8s-shared et
-k8s-cedille-production-v2 — voir mémoire `project_omni_two_instances`, pas
-`omni.etsmtl.club` qui gère uniquement k8s-poc).
+(`cedille.na-west-1.omni.siderolabs.io` pour k8s-shared — voir mémoire
+`project_omni_two_instances`, pas `omni.etsmtl.club` qui gère uniquement
+k8s-poc).
+
+k8s-cedille-production-v2 est aussi géré par cette instance cloud mais est
+volontairement **hors scope** : son repo GitHub est archivé (lecture seule
+depuis le 2026-08-19) et ses ressources sont en cours de suppression — voir
+mémoire `project_talos_collection_github_sa`.
 
 Volontairement **purement mécanique** : ces rôles ne décident jamais eux-mêmes
 qu'un node peut être cordonné/upgradé — ils vérifient une précondition
@@ -33,7 +38,7 @@ collection, uniquement get/list/patch sur `nodes`.
 
 ### 1. Service account Omni
 
-Un seul SA pour les deux clusters (même instance Omni cloud) :
+Un seul SA, déjà créé (2026-09-19) :
 
 ```bash
 omnictl config context cedille-shared
