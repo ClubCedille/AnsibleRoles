@@ -1,7 +1,7 @@
 namespace: "cedille"
 name: "omni"
 description: "Collection de rôles Ansible pour déployer Sidero Omni (gestionnaire de clusters Talos Kubernetes)"
-version: "0.1.0"
+version: "0.1.1"
 readme: "./docs/README.md"
 authors:
   - "Louis Raymond <lraymond@lanets.ca>"
