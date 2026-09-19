@@ -1,0 +1,104 @@
+---
+# Cordonne ou décordonne un node via un kubeconfig éphémère obtenu du SA Omni
+# (--service-account, groupe scopé, TTL court) — jamais de kubeconfig stocké.
+# Nécessite qu'un ClusterRole/ClusterRoleBinding lié à talos_cordon_k8s_group
+# existe déjà dans le cluster (bootstrap one-shot, voir docs/README.md) : ce
+# rôle ne les crée pas lui-même (il n'a par design aucun accès k8s plus large
+# que get/list/patch sur nodes pour le créer).
+- name: Vérifier les variables requises
+  ansible.builtin.assert:
+    that:
+      - talos_omni_endpoint is defined and talos_omni_endpoint | length > 0
+      - talos_omni_cluster is defined and talos_omni_cluster | length > 0
+      - talos_omni_service_account_key is defined and talos_omni_service_account_key | length > 0
+      - talos_cordon_state in ['cordoned', 'uncordoned']
+      - talos_node_hostname is defined and talos_node_hostname | length > 0
+    fail_msg: >-
+      talos_omni_endpoint, talos_omni_cluster, talos_omni_service_account_key,
+      talos_node_hostname et talos_cordon_state (cordoned|uncordoned) sont requis.
+    quiet: true
+
+- name: Cordonner/décordonner {{ talos_node_hostname }}
+  block:
+    - name: Créer un répertoire temporaire pour le kubeconfig éphémère
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: talos-cordon
+      register: _talos_cordon_tmpdir
+      changed_when: false
+      check_mode: false
+
+    - name: Récupérer un kubeconfig éphémère scopé au groupe de cordon
+      ansible.builtin.command:
+        argv:
+          - omnictl
+          - kubeconfig
+          - "{{ _talos_cordon_tmpdir.path }}/kubeconfig"
+          - "--cluster={{ talos_omni_cluster }}"
+          - --service-account
+          - "--user={{ talos_cordon_kubeconfig_user }}"
+          - "--groups={{ talos_cordon_k8s_group }}"
+          - "--ttl={{ talos_cordon_kubeconfig_ttl }}"
+          - --merge=false
+          - --force
+      environment:
+        OMNI_ENDPOINT: "{{ talos_omni_endpoint }}"
+        OMNI_SERVICE_ACCOUNT_KEY: "{{ talos_omni_service_account_key }}"
+      changed_when: false
+      check_mode: false
+      no_log: true
+
+    - name: Lire l'état de scheduling actuel du node
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - "--kubeconfig={{ _talos_cordon_tmpdir.path }}/kubeconfig"
+          - get
+          - node
+          - "{{ talos_node_hostname }}"
+          - -o
+          - "jsonpath={.spec.unschedulable}"
+      register: _talos_cordon_current
+      changed_when: false
+      check_mode: false
+
+    - name: Déterminer l'état de cordon actuel
+      ansible.builtin.set_fact:
+        _talos_cordon_is_cordoned: "{{ (_talos_cordon_current.stdout | trim) == 'true' }}"
+
+    - name: Refuser d'exécuter hors séquence
+      ansible.builtin.fail:
+        msg: >-
+          {{ talos_node_hostname }} est déjà {{ talos_cordon_state }} — étape
+          sautée pour ne pas exécuter la procédure de maintenance hors séquence.
+          Vérifie où en est la procédure (voir le runbook) avant de relancer
+          cette target.
+      when: >-
+        (talos_cordon_state == 'cordoned' and _talos_cordon_is_cordoned | bool) or
+        (talos_cordon_state == 'uncordoned' and not (_talos_cordon_is_cordoned | bool))
+
+    - name: Cordonner le node
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - "--kubeconfig={{ _talos_cordon_tmpdir.path }}/kubeconfig"
+          - cordon
+          - "{{ talos_node_hostname }}"
+      when: talos_cordon_state == 'cordoned'
+
+    - name: Décordonner le node
+      ansible.builtin.command:
+        argv:
+          - kubectl
+          - "--kubeconfig={{ _talos_cordon_tmpdir.path }}/kubeconfig"
+          - uncordon
+          - "{{ talos_node_hostname }}"
+      when: talos_cordon_state == 'uncordoned'
+  always:
+    - name: Supprimer le kubeconfig éphémère
+      ansible.builtin.file:
+        path: "{{ _talos_cordon_tmpdir.path }}"
+        state: absent
+      when: _talos_cordon_tmpdir is defined and _talos_cordon_tmpdir.path is defined
+      changed_when: false
+      check_mode: false

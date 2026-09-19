@@ -1,0 +1,149 @@
+---
+# Upgrade Kubernetes pour tout le cluster en une fois (talosctl upgrade-k8s
+# orchestre lui-même control plane + kubelets, contrairement à `talosctl
+# upgrade` qui est par node — cf. rôle update_talos). Se lance une seule fois
+# par cluster, sans LIMIT par node.
+#
+# ATTENTION — mêmes réserves que le rôle update_talos sur le parsing de
+# `omnictl get machinestatus -o yaml` (non vérifié en direct à l'écriture) :
+# le label utilisé ici pour repérer les control planes
+# (omni.sidero.dev/role-controlplane) est une supposition basée sur la
+# convention de nommage déjà observée (omni.sidero.dev/cluster,
+# omni.sidero.dev/cores) — à confirmer contre une sortie réelle au premier
+# test. Échec explicite avec sortie brute si rien n'est trouvé, plutôt que de
+# deviner une IP.
+- name: Vérifier les variables requises
+  ansible.builtin.assert:
+    that:
+      - talos_omni_endpoint is defined and talos_omni_endpoint | length > 0
+      - talos_omni_cluster is defined and talos_omni_cluster | length > 0
+      - talos_omni_service_account_key is defined and talos_omni_service_account_key | length > 0
+      - talos_target_kubernetes_version is defined and talos_target_kubernetes_version | length > 0
+      - talos_expected_version is defined and talos_expected_version | length > 0
+    fail_msg: >-
+      talos_omni_endpoint, talos_omni_cluster, talos_omni_service_account_key,
+      talos_target_kubernetes_version et talos_expected_version sont requis.
+    quiet: true
+
+- name: Récupérer le MachineStatus du cluster
+  ansible.builtin.command:
+    argv:
+      - omnictl
+      - get
+      - machinestatus
+      - "-o"
+      - yaml
+  environment:
+    OMNI_ENDPOINT: "{{ talos_omni_endpoint }}"
+    OMNI_SERVICE_ACCOUNT_KEY: "{{ talos_omni_service_account_key }}"
+  register: _talos_machinestatus_raw
+  changed_when: false
+  check_mode: false
+
+- name: Lister les nodes du cluster (version, IP, rôle control-plane)
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      python3 -c "
+      import sys, re, json
+      content = sys.stdin.read()
+      docs = content.split('\n---\n')
+      target_cluster = '{{ talos_omni_cluster }}'
+      nodes = []
+      for doc in docs:
+          if not re.search(r'omni\.sidero\.dev/cluster:\s*' + re.escape(target_cluster) + r'\b', doc):
+              continue
+          host_m = re.search(r'^\s+hostname:\s+(\S+)', doc, re.MULTILINE)
+          addr_m = re.search(r'^\s+addresses:\s*\n\s+-\s+(\S+)', doc, re.MULTILINE)
+          version_m = re.search(r'^\s+talosversion:\s+(\S+)', doc, re.MULTILINE | re.IGNORECASE)
+          is_cp = bool(re.search(r'omni\.sidero\.dev/role-controlplane', doc))
+          nodes.append({
+              'hostname': host_m.group(1) if host_m else None,
+              'address': addr_m.group(1).split('/')[0] if addr_m else None,
+              'version': version_m.group(1) if version_m else None,
+              'controlplane': is_cp,
+          })
+      print(json.dumps(nodes))
+      "
+    executable: /bin/sh
+  args:
+    stdin: "{{ _talos_machinestatus_raw.stdout }}"
+  register: _talos_cluster_nodes_raw
+  changed_when: false
+  check_mode: false
+
+- name: Décoder la liste des nodes
+  ansible.builtin.set_fact:
+    _talos_cluster_nodes: "{{ _talos_cluster_nodes_raw.stdout | from_json }}"
+
+- name: Échouer si aucun node ou control plane introuvable
+  ansible.builtin.fail:
+    msg: >-
+      Aucun node (ou aucun control plane) trouvé pour le cluster
+      {{ talos_omni_cluster }} dans `omnictl get machinestatus`. Vérifier le
+      label utilisé (omni.sidero.dev/role-controlplane) contre une sortie
+      réelle et ajuster ce rôle si besoin. Sortie brute :
+      {{ _talos_machinestatus_raw.stdout }}
+  when: >-
+    (_talos_cluster_nodes | length == 0)
+    or (_talos_cluster_nodes | selectattr('controlplane', 'equalto', true) | list | length == 0)
+
+- name: Échouer si un node n'est pas encore à talos_expected_version
+  ansible.builtin.fail:
+    msg: >-
+      Ces nodes de {{ talos_omni_cluster }} ne sont pas encore en Talos
+      {{ talos_expected_version }} : {{ _talos_stragglers | map(attribute='hostname') | list }}.
+      Terminer la séquence cordon/update-talos/uncordon sur chacun avant de
+      lancer update-k8s.
+  vars:
+    _talos_stragglers: "{{ _talos_cluster_nodes | rejectattr('version', 'equalto', talos_expected_version) | list }}"
+  when: _talos_stragglers | length > 0
+
+- name: Upgrader Kubernetes sur {{ talos_omni_cluster }}
+  vars:
+    _talos_cp_addresses: "{{ _talos_cluster_nodes | selectattr('controlplane', 'equalto', true) | map(attribute='address') | join(',') }}"
+  block:
+    - name: Récupérer un talosconfig admin éphémère
+      ansible.builtin.tempfile:
+        state: file
+        suffix: talosconfig
+      register: _talos_admin_config
+      changed_when: false
+      check_mode: false
+
+    - name: Télécharger le talosconfig admin
+      ansible.builtin.command:
+        argv:
+          - omnictl
+          - talosconfig
+          - "{{ _talos_admin_config.path }}"
+          - "--cluster={{ talos_omni_cluster }}"
+          - --force
+      environment:
+        OMNI_ENDPOINT: "{{ talos_omni_endpoint }}"
+        OMNI_SERVICE_ACCOUNT_KEY: "{{ talos_omni_service_account_key }}"
+      changed_when: false
+      check_mode: false
+      no_log: true
+
+    # talosctl upgrade-k8s n'expose pas de flag --timeout (cf. --help) ; il
+    # bloque jusqu'à la fin de la séquence complète qu'il orchestre lui-même.
+    # talos_upgrade_k8s_timeout n'est donc pas branché ici pour l'instant —
+    # à revisiter (async Ansible) si un run réel dépasse la durée par défaut
+    # du runner CI.
+    - name: Lancer talosctl upgrade-k8s
+      ansible.builtin.command:
+        argv:
+          - talosctl
+          - upgrade-k8s
+          - "--talosconfig={{ _talos_admin_config.path }}"
+          - "--nodes={{ _talos_cp_addresses }}"
+          - "--to={{ talos_target_kubernetes_version }}"
+  always:
+    - name: Supprimer le talosconfig éphémère
+      ansible.builtin.file:
+        path: "{{ _talos_admin_config.path }}"
+        state: absent
+      when: _talos_admin_config is defined and _talos_admin_config.path is defined
+      changed_when: false
+      check_mode: false

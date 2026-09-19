@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Cedille
+  description: >
+    Cordonne ou décordonne un node Kubernetes d'un cluster Talos géré par Omni,
+    via un kubeconfig éphémère (service account Omni, scope RBAC minimal
+    get/list/patch sur nodes) — aucun credential Kubernetes persistant.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+dependencies: []

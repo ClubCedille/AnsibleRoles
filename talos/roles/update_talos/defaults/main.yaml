@@ -1,0 +1,26 @@
+---
+talos_node_hostname: "{{ inventory_hostname }}"
+
+# Requis — version Talos cible pour ce node, ex: "1.13.8".
+talos_target_version: null
+
+# Schematic Omni du node (cf. vm_talos_schematic_id dans les group_vars
+# Proxmox existants) — utilisé pour construire talos_installer_image par
+# défaut. Surcharger talos_installer_image directement si besoin d'une image
+# différente du schematic courant.
+talos_schematic_id: null
+talos_installer_image: "factory.talos.dev/installer/{{ talos_schematic_id }}:v{{ talos_target_version }}"
+
+talos_upgrade_drain: true
+talos_upgrade_drain_timeout: "5m"
+talos_upgrade_timeout: "30m"
+
+# Bornes du polling de convergence après le lancement de l'upgrade.
+talos_update_poll_interval_seconds: 30
+talos_update_poll_retries: 40   # 40 * 30s = 20 min
+
+# Même mécanisme de kubeconfig éphémère que le rôle cordon, utilisé ici en
+# lecture seule pour vérifier que le node est bien cordonné avant upgrade.
+talos_cordon_k8s_group: "cedille:talos-cordon"
+talos_cordon_kubeconfig_user: "github-actions-talos"
+talos_cordon_kubeconfig_ttl: "10m"
