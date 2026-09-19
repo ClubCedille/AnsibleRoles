@@ -18,8 +18,11 @@
       - talos_omni_endpoint is defined and talos_omni_endpoint | length > 0
       - talos_omni_cluster is defined and talos_omni_cluster | length > 0
       - talos_omni_service_account_key is defined and talos_omni_service_account_key | length > 0
-      - talos_target_kubernetes_version is defined and talos_target_kubernetes_version | length > 0
-      - talos_expected_version is defined and talos_expected_version | length > 0
+      # default('', true) plutôt que "is defined" : ces deux vars ont un
+      # défaut null dans defaults/main.yaml, donc toujours "defined" (avec
+      # la valeur None) — "is defined and X | length" plante sur None.
+      - talos_target_kubernetes_version | default('', true) | length > 0
+      - talos_expected_version | default('', true) | length > 0
     fail_msg: >-
       talos_omni_endpoint, talos_omni_cluster, talos_omni_service_account_key,
       talos_target_kubernetes_version et talos_expected_version sont requis.
