@@ -18,8 +18,11 @@
       DOCKER_TLS_CERTDIR: ""
     networks:
       - name: "{{ forgejo_runner_dind_network }}"
+    ports:
+      - "127.0.0.1:2375:2375"
     networks_cli_compatible: true
     restart_policy: always
+    force_kill: true
     state: started
     comparisons:
       "*": strict
