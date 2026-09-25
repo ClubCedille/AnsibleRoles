@@ -38,3 +38,8 @@ container:
 
 host:
   workdir_parent: ""
+
+metrics:
+  enabled: {{ forgejo_runner_metrics_enabled | lower | default('false') }}
+  listen_address: "{{ forgejo_runner_metrics_listen_address | default('0.0.0.0') }}"
+  listen_port: "{{ forgejo_runner_metrics_listen_port | default(9455) }}"
