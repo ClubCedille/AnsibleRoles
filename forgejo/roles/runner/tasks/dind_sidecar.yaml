@@ -26,3 +26,10 @@
     state: started
     comparisons:
       "*": strict
+
+- name: Ensure the runner internal network exists inside DinD
+  community.docker.docker_network:
+    name: "{{ forgejo_runner_dind_network }}"
+    driver: bridge
+    docker_host: "tcp://127.0.0.1:2375"
+    state: present
