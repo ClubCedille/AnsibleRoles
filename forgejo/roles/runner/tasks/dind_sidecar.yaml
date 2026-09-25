@@ -2,11 +2,6 @@
 # Sidecar Docker-in-Docker réel pour les jobs de build d'images — voir le
 # commentaire de forgejo_runner_dind_sidecar_enabled dans defaults/main.yaml.
 
-- name: Create dedicated Docker network for the DinD sidecar
-  community.docker.docker_network:
-    name: "{{ forgejo_runner_dind_network }}"
-    state: present
-
 - name: Deploy the DinD sidecar container
   community.docker.docker_container:
     name: "{{ forgejo_runner_dind_sidecar_name }}"
@@ -16,11 +11,8 @@
       # docker:dind écoute en TLS sur :2376 par défaut ; on désactive pour
       # écouter en clair sur :2375 — réseau interne dédié, non exposé.
       DOCKER_TLS_CERTDIR: ""
-    networks:
-      - name: "{{ forgejo_runner_dind_network }}"
     ports:
       - "127.0.0.1:2375:2375"
-    networks_cli_compatible: true
     restart_policy: always
     force_kill: true
     state: started

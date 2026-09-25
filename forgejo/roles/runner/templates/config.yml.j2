@@ -10,7 +10,12 @@ server:
 
 runner:
   capacity: {{ forgejo_runner_capacity }}
+{% if forgejo_runner_dind_sidecar_enabled %}
+  envs:
+    DOCKER_HOST: "tcp://{{ forgejo_runner_dind_gateway_alias }}:2375"
+{% else %}
   envs: {}
+{% endif %}
   env_file: ""
   timeout: {{ forgejo_runner_timeout }}
   insecure: false
@@ -30,6 +35,7 @@ container:
 {% if forgejo_runner_dind_sidecar_enabled %}
   privileged: false
   docker_host: "tcp://127.0.0.1:2375"
+  options: "--add-host={{ forgejo_runner_dind_gateway_alias }}:host-gateway"
 {% else %}
   privileged: {{ forgejo_runner_container.privileged | lower }}
   docker_host: "{{ forgejo_runner_container.docker_host }}"

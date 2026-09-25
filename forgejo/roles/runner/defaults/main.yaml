@@ -41,6 +41,7 @@ forgejo_runner_dind_sidecar_enabled: false
 forgejo_runner_dind_sidecar_image: "docker:27-dind"
 forgejo_runner_dind_sidecar_name: "{{ forgejo_runner_service.name }}-dind"
 forgejo_runner_dind_network: "{{ forgejo_runner_service.name }}-dind-net"
+forgejo_runner_dind_gateway_alias: "dind.internal"
 
 # Extra system groups (e.g. "kvm") and apt packages (e.g. qemu-system-x86)
 # for runners that execute jobs natively on the host instead of in Docker
