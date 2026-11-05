@@ -1,0 +1,22 @@
+---
+# noqa: var-naming[no-role-prefix]
+- name: Build destination NAT commands
+  ansible.builtin.set_fact:
+    _dest_nat_commands: >-
+      {{
+        _dest_nat_commands | default([]) +
+        [
+          'set nat destination rule ' ~ item.rule_number ~ ' inbound-interface ' ~ item.inbound_interface,
+          'set nat destination rule ' ~ item.rule_number ~ ' protocol ' ~ item.protocol,
+          'set nat destination rule ' ~ item.rule_number ~ ' destination port ' ~ item.destination_port,
+          'set nat destination rule ' ~ item.rule_number ~ ' translation address ' ~ item.translation_address
+        ] +
+        (['set nat destination rule ' ~ item.rule_number ~ ' translation port ' ~ item.translation_port] if item.translation_port is defined else []) +
+        (['set nat destination rule ' ~ item.rule_number ~ ' description ' ~ item.description] if item.description is defined else [])
+      }}
+  loop: "{{ nat_destination_rules }}"
+
+- name: Apply destination NAT configuration
+  vyos.vyos.vyos_config:
+    lines: "{{ _dest_nat_commands }}"
+  notify: Save VyOS configuration

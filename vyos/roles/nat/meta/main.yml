@@ -1,0 +1,12 @@
+---
+galaxy_info:
+  author: Cedille
+  description: >
+    Rôle Ansible gérant la configuration NAT sur un routeur VyOS.
+  license: GPL-3.0-or-later
+  min_ansible_version: "2.15"
+  platforms:
+    - name: GenericLinux
+      versions:
+        - all
+dependencies: []
