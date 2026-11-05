@@ -1,0 +1,25 @@
+---
+- name: Verify
+  hosts: vyos
+  gather_facts: false
+  tasks:
+    - name: Gather NAT facts
+      vyos.vyos.vyos_facts:
+        gather_subset: config
+        gather_network_resources:
+          - nat
+      register: nat_facts
+
+    - name: Assert source NAT rule is configured
+      ansible.builtin.assert:
+        that:
+          - nat_facts.ansible_network_resources.nat.source[0].rule_number == 100
+          - nat_facts.ansible_network_resources.nat.source[0].outbound_interface == 'eth0'
+          - nat_facts.ansible_network_resources.nat.source[0].translation.address == 'masquerade'
+
+    - name: Assert destination NAT rule is configured
+      ansible.builtin.assert:
+        that:
+          - nat_facts.ansible_network_resources.nat.destination[0].rule_number == 10
+          - nat_facts.ansible_network_resources.nat.destination[0].protocol == 'tcp'
+          - nat_facts.ansible_network_resources.nat.destination[0].destination.port == 80

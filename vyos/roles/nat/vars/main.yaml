@@ -1,0 +1,4 @@
+---
+# VyOS NAT rule defaults
+nat_default_protocol: tcp
+nat_default_outbound_interface: eth0
