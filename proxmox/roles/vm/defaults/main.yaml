@@ -4,6 +4,13 @@ vm_proxmox_api:
   user: "root"
   password:
   host:
+  # Les nœuds Proxmox utilisent couramment un certificat auto-signé ou émis
+  # pour leur hostname, alors que l'API est souvent jointe par IP:8006 (ex.
+  # 10.0.21.51:8006). La vérification TLS stricte échoue donc avec
+  # "IP address mismatch" avant même l'authentification. Désactivée par
+  # défaut pour que les modules community.proxmox fonctionnent ; repasser à
+  # true (ou fournir ca_path) si l'API est servie par un certificat valide.
+  validate_certs: false
 
 vm_id:
 vm_name:

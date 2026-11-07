@@ -20,6 +20,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     vmid: "{{ vm_id }}"
     node: "{{ vm_proxmox_node }}"
     cores: "{{ vm_cpu_cores }}"
