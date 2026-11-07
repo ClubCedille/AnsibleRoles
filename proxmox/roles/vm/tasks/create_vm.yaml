@@ -78,8 +78,11 @@
       }) }}
     _vm_ipconfig_map: >-
       {{ (_vm_ipconfig_map | default({})) | combine(
-           {('ipconfig' ~ idx): ('ip=' ~ item.ip ~ '/' ~ item.netmask ~ ',gw=' ~ item.gateway)}
-           if (item.ip | default('')) | length > 0 else {}
+           {('ipconfig' ~ idx): (
+             'ip=' ~ item.ip ~ '/' ~ item.netmask
+             ~ (',gw=' ~ item.gateway if (item.gateway | default('', true) | length > 0) else '')
+           )}
+           if (item.ip | default('', true)) | length > 0 else {}
       ) }}
   loop: "{{ _vm_net_list }}"
   loop_control:

@@ -23,7 +23,7 @@ vm_net:
   mac:
   ip:
   netmask:
-  gateway:
+  gateway: # optionnelle ; si vide, aucun `gw=` n'est ajouté à l'ipconfig
   nameservers: "1.1.1.1,8.8.8.8"
   search_domain: "localdomain"
 
@@ -32,6 +32,10 @@ vm_net:
 # Prend le pas sur vm_net pour la définition des NICs si non vide -- mais
 # vm_net.nameservers/search_domain restent lus dans tous les cas (réglages
 # cloud-init globaux à la VM, pas par NIC côté Proxmox).
+#
+# gateway est optionnelle. Si elle est omise, vide ou null, l'ipconfig de la
+# NIC est générée sans `gw=` (ex. `ip=10.100.110.10/24`) : utile pour les
+# NICs sur des réseaux additionnels qui ne portent pas la route par défaut.
 vm_nets: []
 
 vm_user: localadmin
