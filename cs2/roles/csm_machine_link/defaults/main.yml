@@ -1,0 +1,5 @@
+---
+csm_user: cs2
+csm_home: "/home/{{ csm_user }}"
+csm_binary_path: /usr/local/bin/csm
+csm_link_marker: "{{ csm_home }}/.ansible-csm-linked"
