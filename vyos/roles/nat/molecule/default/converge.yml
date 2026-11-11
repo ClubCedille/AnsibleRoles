@@ -1,0 +1,23 @@
+---
+- name: Converge
+  hosts: vyos
+  gather_facts: false
+  tasks:
+    - name: Include vyos_nat role
+      ansible.builtin.include_role:
+        name: nat
+      vars:
+        nat_source_rules:
+          - rule_number: 100
+            outbound_interface: eth0
+            source_address: 192.168.0.0/24
+            translation_address: masquerade
+            description: "SNAT for LAN"
+        nat_destination_rules:
+          - rule_number: 10
+            inbound_interface: eth0
+            protocol: tcp
+            destination_port: 80
+            translation_address: 192.168.0.100
+            translation_port: 80
+            description: "Port Forward HTTP"

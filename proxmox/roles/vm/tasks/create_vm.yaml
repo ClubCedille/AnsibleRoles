@@ -7,6 +7,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     # VM identification
     vmid: "{{ vm_id }}"
     # Delete the VM
@@ -21,6 +22,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     # VM identification
     vmid: "{{ vm_id }}"
     # Delete the VM
@@ -78,8 +80,11 @@
       }) }}
     _vm_ipconfig_map: >-
       {{ (_vm_ipconfig_map | default({})) | combine(
-           {('ipconfig' ~ idx): ('ip=' ~ item.ip ~ '/' ~ item.netmask ~ ',gw=' ~ item.gateway)}
-           if (item.ip | default('')) | length > 0 else {}
+           {('ipconfig' ~ idx): (
+             'ip=' ~ item.ip ~ '/' ~ item.netmask
+             ~ (',gw=' ~ item.gateway if (item.gateway | default('', true) | length > 0) else '')
+           )}
+           if (item.ip | default('', true)) | length > 0 else {}
       ) }}
   loop: "{{ _vm_net_list }}"
   loop_control:
@@ -92,6 +97,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     poolid: "{{ vm_pool }}"
     comment: "{{ vm_pool_comment | default(omit) }}"
     state: present
@@ -106,6 +112,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     # VM identification
     vmid: "{{ vm_id }}"
     name: "{{ vm_name }}"
@@ -148,6 +155,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     # VM identification
     vmid: "{{ vm_id }}"
     # Disk configuration
@@ -185,6 +193,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     poolid: "{{ vm_pool }}"
     members:
       - vm: "{{ vm_id }}"
@@ -209,6 +218,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     vmid: "{{ vm_id }}"
     node: "{{ vm_proxmox_node }}"
     tags: "{{ vm_tags }}"
@@ -223,6 +233,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     # VM identification
     vmid: "{{ vm_id }}"
     # Disk resizing
@@ -238,6 +249,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     # VM identification
     vmid: "{{ vm_id }}"
     node: "{{ vm_proxmox_node }}"
@@ -253,6 +265,7 @@
     api_user: "{{ vm_proxmox_api.user }}"
     api_password: "{{ vm_proxmox_api.password }}"
     api_host: "{{ vm_proxmox_api.host }}"
+    validate_certs: "{{ vm_proxmox_api.validate_certs | default(false) }}"
     # VM identification
     vmid: "{{ vm_id }}"
     # Start the VM

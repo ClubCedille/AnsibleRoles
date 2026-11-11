@@ -1,0 +1,20 @@
+---
+# noqa: var-naming[no-role-prefix]
+- name: Build source NAT commands
+  ansible.builtin.set_fact:
+    _source_nat_commands: >-
+      {{
+        _source_nat_commands | default([]) +
+        [
+          'set nat source rule ' ~ item.rule_number ~ ' outbound-interface ' ~ item.outbound_interface,
+          'set nat source rule ' ~ item.rule_number ~ ' source address ' ~ item.source_address,
+          'set nat source rule ' ~ item.rule_number ~ ' translation address ' ~ item.translation_address
+        ] +
+        (['set nat source rule ' ~ item.rule_number ~ ' description ' ~ item.description] if item.description is defined else [])
+      }}
+  loop: "{{ nat_source_rules }}"
+
+- name: Apply source NAT configuration
+  vyos.vyos.vyos_config:
+    lines: "{{ _source_nat_commands }}"
+  notify: Save VyOS configuration

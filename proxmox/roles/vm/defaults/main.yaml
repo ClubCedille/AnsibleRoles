@@ -4,6 +4,13 @@ vm_proxmox_api:
   user: "root"
   password:
   host:
+  # Les nœuds Proxmox utilisent couramment un certificat auto-signé ou émis
+  # pour leur hostname, alors que l'API est souvent jointe par IP:8006 (ex.
+  # 10.0.21.51:8006). La vérification TLS stricte échoue donc avec
+  # "IP address mismatch" avant même l'authentification. Désactivée par
+  # défaut pour que les modules community.proxmox fonctionnent ; repasser à
+  # true (ou fournir ca_path) si l'API est servie par un certificat valide.
+  validate_certs: false
 
 vm_id:
 vm_name:
@@ -23,7 +30,7 @@ vm_net:
   mac:
   ip:
   netmask:
-  gateway:
+  gateway: # optionnelle ; si vide, aucun `gw=` n'est ajouté à l'ipconfig
   nameservers: "1.1.1.1,8.8.8.8"
   search_domain: "localdomain"
 
@@ -32,6 +39,10 @@ vm_net:
 # Prend le pas sur vm_net pour la définition des NICs si non vide -- mais
 # vm_net.nameservers/search_domain restent lus dans tous les cas (réglages
 # cloud-init globaux à la VM, pas par NIC côté Proxmox).
+#
+# gateway est optionnelle. Si elle est omise, vide ou null, l'ipconfig de la
+# NIC est générée sans `gw=` (ex. `ip=10.100.110.10/24`) : utile pour les
+# NICs sur des réseaux additionnels qui ne portent pas la route par défaut.
 vm_nets: []
 
 vm_user: localadmin

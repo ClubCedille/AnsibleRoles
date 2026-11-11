@@ -1,0 +1,17 @@
+---
+- name: Validate required variables
+  ansible.builtin.assert:
+    that:
+      - nat_source_rules is defined or nat_destination_rules is defined or nat_static_rules is defined
+    fail_msg: "At least one NAT rule type must be defined."
+
+- name: Configure source NAT rules
+  ansible.builtin.include_tasks: source_nat.yml
+  when: nat_source_rules | length > 0
+
+- name: Configure destination NAT rules
+  ansible.builtin.include_tasks: destination_nat.yml
+  when: nat_destination_rules | length > 0
+
+- name: Save configuration if changes were made
+  ansible.builtin.meta: flush_handlers
