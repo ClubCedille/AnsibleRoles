@@ -23,5 +23,7 @@ def generate_mac() -> str:
 
 
 if __name__ == "__main__":
-    print(generate_mac())
+    count = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    for i in range(count):
+        print(generate_mac())
     sys.exit(0)
