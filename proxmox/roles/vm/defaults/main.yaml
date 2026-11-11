@@ -26,7 +26,9 @@ vm_memory_mb: 4096
 # scripts/gen_mac.py de ce rôle.
 vm_net:
   bridge: "vmbr1" # Management bridge is vmbr0; trunk bridge is vmbr1
-  vlan: 1
+  # VLAN tag optionnel : omis, vide ou null => NIC tagless (aucun `tag=`
+  # dans le net<N>). Avant 3.0.4, l'omission rendait tag=1.
+  vlan:
   mac:
   ip:
   netmask:
@@ -43,6 +45,10 @@ vm_net:
 # gateway est optionnelle. Si elle est omise, vide ou null, l'ipconfig de la
 # NIC est générée sans `gw=` (ex. `ip=10.100.110.10/24`) : utile pour les
 # NICs sur des réseaux additionnels qui ne portent pas la route par défaut.
+#
+# vlan est optionnel. S'il est omis, vide ou null, la NIC est créée tagless
+# (aucun `tag=` dans le net<N>) : le comportement attendu sur un bridge non
+# trunk.
 vm_nets: []
 
 vm_user: localadmin
