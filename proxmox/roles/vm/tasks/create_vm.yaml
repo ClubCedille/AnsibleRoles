@@ -73,7 +73,7 @@
       {{ (_vm_net_map | default({})) | combine({
            ('net' ~ idx): (
              (item.device | default('virtio')) ~ ',bridge=' ~ item.bridge
-             ~ ',tag=' ~ (item.vlan | default('1'))
+             ~ (',tag=' ~ item.vlan if (item.vlan | default('', true) | string | length > 0) else '')
              ~ ',mtu=' ~ (item.mtu | default(1500))
              ~ ',macaddr=' ~ item.mac
            )
