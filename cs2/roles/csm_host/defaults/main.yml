@@ -1,0 +1,9 @@
+---
+csm_user: cs2
+csm_home: "/home/{{ csm_user }}"
+csm_binary_path: /usr/local/bin/csm
+csm_version: "1.27.6"
+csm_instance_backend: instances
+csm_release_checksums:
+  x86_64: 747f45c70a58c615b29f6957fdaaa3dbd6a396aedc2d184c9e17d3ef5a54dd5d
+  aarch64: 931c9fedc77a8cb1374740e321f466cc1032f3e0cc9e3961891c8a503bd47015

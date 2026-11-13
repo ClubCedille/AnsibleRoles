@@ -1,0 +1,79 @@
+---
+- name: Verify CSM host operating system, architecture and kernel
+  ansible.builtin.assert:
+    that:
+      - ansible_distribution in ['Debian', 'Ubuntu']
+      - ansible_architecture in ['x86_64', 'aarch64']
+      - ansible_kernel is version('5.11', '>=')
+    fail_msg: CSM instance mode needs Debian/Ubuntu, x86_64/arm64 and Linux 5.11 or newer.
+
+- name: Install sudo required by CSM host setup
+  ansible.builtin.apt:
+    name: sudo
+    state: present
+    update_cache: false
+  become: true
+
+- name: Create the unprivileged CSM service account
+  ansible.builtin.user:
+    name: "{{ csm_user }}"
+    home: "{{ csm_home }}"
+    shell: /bin/bash
+    system: true
+    create_home: true
+    password_lock: true
+    state: present
+  become: true
+
+- name: Select the official CSM release asset for this CPU
+  ansible.builtin.set_fact:
+    csm_release_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64'}[ansible_architecture] }}"
+
+- name: Install the pinned CSM release
+  ansible.builtin.get_url:
+    url: "https://github.com/Auto-Tournament/cs2-server-manager/releases/download/v{{ csm_version }}/csm-linux-{{ csm_release_arch }}"
+    dest: "{{ csm_binary_path }}"
+    checksum: "sha256:{{ csm_release_checksums[ansible_architecture] }}"
+    owner: root
+    group: root
+    mode: "0755"
+    force: false
+  become: true
+
+- name: Allow the CSM account to run only CSM's documented sudo commands
+  ansible.builtin.copy:
+    dest: /etc/sudoers.d/csm
+    content: |
+      {{ csm_user }} ALL=(root) NOPASSWD: {{ csm_binary_path }} setup-host, {{ csm_binary_path }} install-deps, {{ csm_binary_path }} self-update
+    owner: root
+    group: root
+    mode: "0440"
+    validate: /usr/sbin/visudo -cf %s
+  become: true
+
+- name: Run the safe, repeatable CSM host setup as its owner
+  ansible.builtin.command:
+    argv:
+      - sudo
+      - -n
+      - "{{ csm_binary_path }}"
+      - setup-host
+  become: true
+  become_user: "{{ csm_user }}"
+  environment:
+    HOME: "{{ csm_home }}"
+  changed_when: false
+
+- name: Configure CSM to use instance mode for platform-managed servers
+  ansible.builtin.command:
+    argv:
+      - "{{ csm_binary_path }}"
+      - instance
+      - config
+      - backend
+      - "{{ csm_instance_backend }}"
+  become: true
+  become_user: "{{ csm_user }}"
+  environment:
+    HOME: "{{ csm_home }}"
+  changed_when: false

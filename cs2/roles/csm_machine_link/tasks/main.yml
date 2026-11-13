@@ -1,0 +1,53 @@
+---
+- name: Check whether this host was already linked by Ansible
+  ansible.builtin.stat:
+    path: "{{ csm_link_marker }}"
+  become: true
+  become_user: "{{ csm_user }}"
+  register: csm_link_state
+
+- name: Require a platform URL and single-use code for a new link
+  ansible.builtin.assert:
+    that:
+      - csm_platform_url is defined
+      - csm_platform_url | length > 0
+      - csm_machine_link_code is defined
+      - csm_machine_link_code | length > 0
+    fail_msg: Supply the Auto Tournament URL and this machine's unused link code.
+  when: not csm_link_state.stat.exists
+
+- name: Link this CSM host to Auto Tournament
+  ansible.builtin.command:
+    argv:
+      - "{{ csm_binary_path }}"
+      - link
+      - "{{ csm_platform_url }}"
+      - "{{ csm_machine_link_code }}"
+  become: true
+  become_user: "{{ csm_user }}"
+  environment:
+    HOME: "{{ csm_home }}"
+  when: not csm_link_state.stat.exists
+  no_log: true
+
+- name: Record successful linking without storing the one-time code
+  ansible.builtin.copy:
+    dest: "{{ csm_link_marker }}"
+    content: "linked: true\n"
+    owner: "{{ csm_user }}"
+    group: "{{ csm_user }}"
+    mode: "0600"
+  become: true
+  when: not csm_link_state.stat.exists
+
+- name: Install or refresh the CSM user agent service
+  ansible.builtin.command:
+    argv:
+      - "{{ csm_binary_path }}"
+      - agent
+      - install
+  become: true
+  become_user: "{{ csm_user }}"
+  environment:
+    HOME: "{{ csm_home }}"
+  changed_when: false

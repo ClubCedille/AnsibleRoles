@@ -1,7 +1,0 @@
----
-- name: Stopper le serveur de jeu CS2
-  ansible.builtin.systemd:
-    name: cs2
-    state: stopped
-  become: true
-  tags: cs2
