@@ -32,3 +32,8 @@ permissions_roles: []
 # La liste est autoritaire pour ses propres entrées seulement : aucune purge
 # implicite des ACL non listées (ex. groupes Monitoring, kumulus-admin).
 permissions_acls: []
+
+# En --check, le rôle rapporte l'écart entre l'état désiré et l'état courant
+# sans échouer. Passer à true pour exiger une convergence stricte (utile en
+# validation manuelle, mais bloque le dry-run CI pendant une migration).
+permissions_verify_strict: false
