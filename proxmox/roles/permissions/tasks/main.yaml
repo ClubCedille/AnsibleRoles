@@ -5,8 +5,8 @@
       - permissions_proxmox_api.host is defined and permissions_proxmox_api.host | length > 0
       - permissions_proxmox_api.user is defined and permissions_proxmox_api.user | length > 0
       - permissions_proxmox_api.password is defined and permissions_proxmox_api.password | length > 0
-      - permissions_acls is defined and permissions_acls is a sequence
-      - permissions_roles is defined and permissions_roles is a sequence
+      - permissions_acls is defined and permissions_acls is sequence
+      - permissions_roles is defined and permissions_roles is sequence
       - permissions_roles | selectattr('roleid', 'defined') | list | length == permissions_roles | length
       - permissions_acls | selectattr('path', 'defined') | list | length == permissions_acls | length
       - permissions_acls | selectattr('roleid', 'defined') | list | length == permissions_acls | length

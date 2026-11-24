@@ -56,7 +56,7 @@
     fail_msg: >-
       ACL absente de Proxmox: {{ item.path }} {{ item.ugid }} -> {{ item.roleid }}
     quiet: true
-  loop: "{{ permissions_acls | rejectattr('state', 'equalto', 'absent') | list }}"
+  loop: '{{ permissions_acls | json_query("[?state!=''absent'']") | list }}'
   loop_control:
     label: "{{ item.path }}: {{ item.ugid }}"
 
@@ -68,6 +68,6 @@
       ACL encore présente sur Proxmox alors qu'elle est marquée absent:
       {{ item.path }} {{ item.ugid }} -> {{ item.roleid }}
     quiet: true
-  loop: "{{ permissions_acls | selectattr('state', 'equalto', 'absent') | list }}"
+  loop: '{{ permissions_acls | json_query("[?state==''absent'']") | list }}'
   loop_control:
     label: "{{ item.path }}: {{ item.ugid }}"
