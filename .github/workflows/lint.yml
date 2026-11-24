@@ -1,0 +1,85 @@
+---
+name: Lint
+
+# Lint général : sur PR, seuls les rôles modifiés sont vérifiés (le dépôt a des
+# violations préexistantes dans certains rôles, un lint global stricte serait
+# rouge en permanence). Sur push main, même logique avec le commit précédent.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+concurrency:
+  group: lint-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint changed roles
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+
+      - name: Determine changed roles
+        id: changed
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            git fetch --depth=1 origin "${{ github.event.pull_request.base.ref }}"
+            range="origin/${{ github.event.pull_request.base.ref }}...HEAD"
+          else
+            range="HEAD~1..HEAD"
+          fi
+
+          mapfile -t roles < <(
+            git diff --name-only --diff-filter=ACMR "$range" -- '*/roles/*' \
+              | awk -F/ 'NF >= 3 {print $1 "/" $2 "/" $3}' \
+              | sort -u
+          )
+
+          if [[ ${#roles[@]} -eq 0 ]]; then
+            echo "roles=" >> "$GITHUB_OUTPUT"
+          else
+            printf '%s\n' "${roles[@]}" > /tmp/changed-roles.txt
+            printf -v joined '%s,' "${roles[@]}"
+            echo "roles=${joined%,}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Install Ansible and lint tooling
+        if: steps.changed.outputs.roles != ''
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install "ansible-core>=2.16.3" ansible-lint
+          ansible-galaxy collection install \
+            community.proxmox community.general community.crypto \
+            community.docker community.postgresql ansible.netcommon \
+            ansible.posix oxlorg.opnsense netbox.netbox
+
+      - name: ansible-lint (changed roles)
+        if: steps.changed.outputs.roles != ''
+        shell: bash
+        env:
+          ROLES: ${{ steps.changed.outputs.roles }}
+          PY_COLOR: "1"
+          ANSIBLE_FORCE_COLOR: "1"
+        run: |
+          set -euo pipefail
+          IFS=',' read -ra roles <<< "$ROLES"
+          ansible-lint "${roles[@]}"
+
+      - name: Ansible syntax check (all playbooks)
+        run: make syntax-check-all
+
+      - name: No role changed
+        if: steps.changed.outputs.roles == ''
+        run: echo "Aucun rôle modifié — ansible-lint ignoré."

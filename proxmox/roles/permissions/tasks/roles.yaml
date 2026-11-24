@@ -1,0 +1,17 @@
+---
+- name: Ensure custom Proxmox roles are in desired state
+  community.proxmox.proxmox_role:
+    api_user: "{{ permissions_proxmox_api.user }}"
+    api_password: "{{ permissions_proxmox_api.password }}"
+    api_host: "{{ permissions_proxmox_api.host }}"
+    api_port: "{{ permissions_proxmox_api.port | default(8006) }}"
+    validate_certs: "{{ permissions_proxmox_api.validate_certs | default(false) }}"
+    roleid: "{{ item.roleid }}"
+    privs: "{{ item.privs }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ permissions_roles }}"
+  loop_control:
+    label: "{{ item.roleid }}"
+  throttle: 1
+  delegate_to: localhost
+  no_log: true

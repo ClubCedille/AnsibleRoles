@@ -1,0 +1,20 @@
+---
+- name: Ensure Proxmox ACLs match the desired state
+  community.proxmox.proxmox_access_acl:
+    api_user: "{{ permissions_proxmox_api.user }}"
+    api_password: "{{ permissions_proxmox_api.password }}"
+    api_host: "{{ permissions_proxmox_api.host }}"
+    api_port: "{{ permissions_proxmox_api.port | default(8006) }}"
+    validate_certs: "{{ permissions_proxmox_api.validate_certs | default(false) }}"
+    path: "{{ item.path }}"
+    roleid: "{{ item.roleid }}"
+    type: "{{ item.type | default('group') }}"
+    ugid: "{{ item.ugid }}"
+    propagate: "{{ item.propagate | default(true) | bool }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ permissions_acls }}"
+  loop_control:
+    label: "{{ item.path }}: {{ item.ugid }} -> {{ item.roleid }}"
+  throttle: 1
+  delegate_to: localhost
+  no_log: true
