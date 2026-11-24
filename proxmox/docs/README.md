@@ -83,5 +83,6 @@ réécrits ; `permissions_manage_roles: true` + `permissions_roles` permettent d
 déclarer des rôles custom.
 
 `community.proxmox.proxmox_access_acl` ne supporte pas `--check` : en mode
-dry-run, le rôle lit l'API en lecture seule et échoue si l'état désiré n'est pas
-déjà appliqué.
+dry-run, le rôle lit l'API en lecture seule et **rapporte** les ACL à créer ou
+à révoquer, sans échouer. `permissions_verify_strict: true` rend le dry-run
+strict si une convergence doit être exigée.

@@ -1,8 +1,8 @@
 ---
 # community.proxmox.proxmox_access_acl et ansible.builtin.uri ne supportent pas
 # check_mode. Les lectures ci-dessous sont donc forcées avec `check_mode: false`
-# (elles ne modifient pas l'état Proxmox) pour que le dry-run de CI compare
-# réellement l'état désiré à l'état courant.
+# (elles ne modifient pas l'état Proxmox) pour que le dry-run puisse rapporter
+# l'écart entre l'état désiré et l'état courant.
 
 - name: Get a Proxmox API ticket for read-only verification
   ansible.builtin.uri:
@@ -49,25 +49,46 @@
   loop_control:
     label: "{{ item.path }}"
 
-- name: Check desired ACLs are present
-  ansible.builtin.assert:
-    that:
-      - (item.path ~ '|' ~ item.roleid ~ '|' ~ (item.type | default('group')) ~ '|' ~ item.ugid) in permissions_current_keys
-    fail_msg: >-
-      ACL absente de Proxmox: {{ item.path }} {{ item.ugid }} -> {{ item.roleid }}
-    quiet: true
+- name: Initialize drift lists
+  ansible.builtin.set_fact:
+    permissions_missing_acls: []
+    permissions_stale_acls: []
+
+- name: Collect desired ACLs missing from Proxmox
+  ansible.builtin.set_fact:
+    permissions_missing_acls: "{{ permissions_missing_acls + [item] }}"
   loop: '{{ permissions_acls | json_query("[?state!=''absent'']") | list }}'
   loop_control:
     label: "{{ item.path }}: {{ item.ugid }}"
+  when: >-
+    (item.path ~ '|' ~ item.roleid ~ '|'
+     ~ (item.type | default('group')) ~ '|' ~ item.ugid)
+    not in permissions_current_keys
 
-- name: Check ACLs marked absent are gone
-  ansible.builtin.assert:
-    that:
-      - (item.path ~ '|' ~ item.roleid ~ '|' ~ (item.type | default('group')) ~ '|' ~ item.ugid) not in permissions_current_keys
-    fail_msg: >-
-      ACL encore présente sur Proxmox alors qu'elle est marquée absent:
-      {{ item.path }} {{ item.ugid }} -> {{ item.roleid }}
-    quiet: true
+- name: Collect ACLs still present though marked absent
+  ansible.builtin.set_fact:
+    permissions_stale_acls: "{{ permissions_stale_acls + [item] }}"
   loop: '{{ permissions_acls | json_query("[?state==''absent'']") | list }}'
   loop_control:
     label: "{{ item.path }}: {{ item.ugid }}"
+  when: >-
+    (item.path ~ '|' ~ item.roleid ~ '|'
+     ~ (item.type | default('group')) ~ '|' ~ item.ugid)
+    in permissions_current_keys
+
+- name: Report drift between desired and current ACLs
+  ansible.builtin.debug:
+    msg:
+      - "{{ permissions_missing_acls | length }} ACL absentes (seraient créées)"
+      - "{{ permissions_missing_acls | map(attribute='ugid') | list }}"
+      - "{{ permissions_stale_acls | length }} ACL à révoquer (seraient supprimées)"
+      - "{{ permissions_stale_acls | map(attribute='ugid') | list }}"
+  when: permissions_missing_acls | length > 0 or permissions_stale_acls | length > 0
+
+- name: Fail on drift when strict verification is requested
+  ansible.builtin.assert:
+    that:
+      - permissions_missing_acls | length == 0
+      - permissions_stale_acls | length == 0
+    fail_msg: "L'état Proxmox ne correspond pas aux ACL désirées."
+  when: permissions_verify_strict | bool
