@@ -1,0 +1,41 @@
+---
+- name: Validate Proxmox permissions inputs
+  ansible.builtin.assert:
+    that:
+      - permissions_proxmox_api.host is defined and permissions_proxmox_api.host | length > 0
+      - permissions_proxmox_api.user is defined and permissions_proxmox_api.user | length > 0
+      - permissions_proxmox_api.password is defined and permissions_proxmox_api.password | length > 0
+      - permissions_acls is defined and permissions_acls is a sequence
+      - permissions_roles is defined and permissions_roles is a sequence
+      - permissions_roles | selectattr('roleid', 'defined') | list | length == permissions_roles | length
+      - permissions_acls | selectattr('path', 'defined') | list | length == permissions_acls | length
+      - permissions_acls | selectattr('roleid', 'defined') | list | length == permissions_acls | length
+      - permissions_acls | selectattr('ugid', 'defined') | list | length == permissions_acls | length
+    fail_msg: >-
+      permissions_proxmox_api.host/user/password et les listes permissions_acls
+      /permissions_roles (avec path, roleid et ugid pour les ACL) sont requis.
+
+- name: Refuse to manage Proxmox built-in roles
+  ansible.builtin.assert:
+    that:
+      - item.roleid not in ['Administrator', 'NoAccess']
+      - not item.roleid is match('^PVE')
+    fail_msg: "Rôle Proxmox intégré ou réservé: {{ item.roleid }}"
+  loop: "{{ permissions_roles }}"
+  loop_control:
+    label: "{{ item.roleid }}"
+  when: permissions_manage_roles | bool
+
+- name: Manage custom Proxmox roles
+  ansible.builtin.include_tasks: roles.yaml
+  when: permissions_manage_roles | bool
+
+# community.proxmox.proxmox_access_acl ne supporte pas check_mode : en
+# dry-run on se contente de comparer l'état réel via l'API en lecture seule.
+- name: Apply desired ACLs
+  ansible.builtin.include_tasks: acls.yaml
+  when: not ansible_check_mode | bool
+
+- name: Verify desired ACLs in check mode
+  ansible.builtin.include_tasks: verify.yaml
+  when: ansible_check_mode | bool

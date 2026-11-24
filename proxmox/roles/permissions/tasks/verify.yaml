@@ -1,0 +1,73 @@
+---
+# community.proxmox.proxmox_access_acl et ansible.builtin.uri ne supportent pas
+# check_mode. Les lectures ci-dessous sont donc forcées avec `check_mode: false`
+# (elles ne modifient pas l'état Proxmox) pour que le dry-run de CI compare
+# réellement l'état désiré à l'état courant.
+
+- name: Get a Proxmox API ticket for read-only verification
+  ansible.builtin.uri:
+    url: "https://{{ permissions_proxmox_api.host }}:{{ permissions_proxmox_api.port | default(8006) }}/api2/json/access/ticket"
+    method: POST
+    body_format: form-urlencoded
+    body:
+      username: "{{ permissions_proxmox_api.user }}"
+      password: "{{ permissions_proxmox_api.password }}"
+    validate_certs: "{{ permissions_proxmox_api.validate_certs | default(false) | bool }}"
+    status_code: 200
+    return_content: true
+  register: permissions_api_ticket
+  changed_when: false
+  no_log: true
+  check_mode: false
+  delegate_to: localhost
+
+- name: Read current ACLs from Proxmox API
+  ansible.builtin.uri:
+    url: "https://{{ permissions_proxmox_api.host }}:{{ permissions_proxmox_api.port | default(8006) }}/api2/json/access/acl"
+    method: GET
+    headers:
+      Cookie: "PVEAuthCookie={{ permissions_api_ticket.json.data.ticket }}"
+    validate_certs: "{{ permissions_proxmox_api.validate_certs | default(false) | bool }}"
+    status_code: 200
+    return_content: true
+  register: permissions_current_acls
+  changed_when: false
+  no_log: true
+  check_mode: false
+  delegate_to: localhost
+
+- name: Initialize current ACL key index
+  ansible.builtin.set_fact:
+    permissions_current_keys: []
+
+- name: Build current ACL key index
+  ansible.builtin.set_fact:
+    permissions_current_keys: >-
+      {{ permissions_current_keys + [item.path ~ '|' ~ item.roleid ~ '|'
+         ~ item.type ~ '|' ~ item.ugid] }}
+  loop: "{{ permissions_current_acls.json.data }}"
+  loop_control:
+    label: "{{ item.path }}"
+
+- name: Check desired ACLs are present
+  ansible.builtin.assert:
+    that:
+      - (item.path ~ '|' ~ item.roleid ~ '|' ~ (item.type | default('group')) ~ '|' ~ item.ugid) in permissions_current_keys
+    fail_msg: >-
+      ACL absente de Proxmox: {{ item.path }} {{ item.ugid }} -> {{ item.roleid }}
+    quiet: true
+  loop: "{{ permissions_acls | rejectattr('state', 'equalto', 'absent') | list }}"
+  loop_control:
+    label: "{{ item.path }}: {{ item.ugid }}"
+
+- name: Check ACLs marked absent are gone
+  ansible.builtin.assert:
+    that:
+      - (item.path ~ '|' ~ item.roleid ~ '|' ~ (item.type | default('group')) ~ '|' ~ item.ugid) not in permissions_current_keys
+    fail_msg: >-
+      ACL encore présente sur Proxmox alors qu'elle est marquée absent:
+      {{ item.path }} {{ item.ugid }} -> {{ item.roleid }}
+    quiet: true
+  loop: "{{ permissions_acls | selectattr('state', 'equalto', 'absent') | list }}"
+  loop_control:
+    label: "{{ item.path }}: {{ item.ugid }}"

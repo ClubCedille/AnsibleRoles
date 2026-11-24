@@ -1,0 +1,10 @@
+---
+# Playbook minimal pour `ansible-playbook --syntax-check` en CI : pas de tâche
+# exécutée, seulement la validation de la structure du rôle.
+- name: Syntax check for cedille.proxmox.permissions
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Include the role under test  # noqa: role-name[path]
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}/.."

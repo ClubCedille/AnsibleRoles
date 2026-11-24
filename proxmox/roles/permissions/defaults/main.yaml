@@ -1,0 +1,34 @@
+---
+
+# Connexion à l'API Proxmox. Même forme que vm_proxmox_api (rôle cedille.proxmox.vm)
+# pour pouvoir réutiliser les credentials déjà vaultés dans l'inventaire appelant.
+# Les modules community.proxmox sont toujours exécutés en delegate_to: localhost.
+permissions_proxmox_api:
+  user: "root@pam"
+  password:
+  host:
+  port: 8006
+  # Certificat souvent auto-signé ou émis pour le hostname alors que l'API est
+  # jointe par IP : la validation stricte échoue avant l'authentification.
+  validate_certs: false
+
+# Les rôles Proxmox intégrés (PVEVMAdmin, PVEVMUser, PVEAuditor, ...) sont
+# fournis par Proxmox : ne pas les redéclarer. Activer uniquement pour créer
+# des rôles custom explicitement listés dans permissions_roles.
+permissions_manage_roles: false
+
+# Liste de {roleid, privs, state} — state: present|absent (défaut present).
+# Les roleid réservés par Proxmox (Administrator, NoAccess, PVE*) sont refusés.
+permissions_roles: []
+
+# Liste des ACL désirées, une entrée par (path, roleid, type, ugid) :
+#   - path:      "/pool/Management" (ou /vms/..., /storage/..., /nodes/...)
+#   - roleid:    "PVEVMAdmin"
+#   - type:      "group" | "user" | "token" (défaut group)
+#   - ugid:      "k8s-pmx-shared-admin" (nom du groupe synchronisé)
+#   - propagate: true (défaut)
+#   - state:     "present" (défaut) | "absent" pour révoquer explicitement
+#
+# La liste est autoritaire pour ses propres entrées seulement : aucune purge
+# implicite des ACL non listées (ex. groupes Monitoring, kumulus-admin).
+permissions_acls: []
