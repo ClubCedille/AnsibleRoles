@@ -73,11 +73,11 @@ sdn_proxmox_api:
   validate_certs: false
 
 sdn_zones:
-  - { zone: LanEvents, type: vlan, bridge: vmbr1, ipam: pve, mtu: 1500 }
+  - { zone: LanEvent, type: vlan, bridge: vmbr1, ipam: pve, mtu: 1500 }
 sdn_vnets:
-  - { vnet: event-client, zone: LanEvents, tag: 66, alias: "Event client" }
+  - { vnet: event-client, zone: LanEvent, tag: 66, alias: "Event client" }
 sdn_subnets:
-  - { subnet: "10.66.0.0/16", vnet: event-client, zone: LanEvents, gateway: "10.66.0.1", snat: false }
+  - { subnet: "10.66.0.0/16", vnet: event-client, zone: LanEvent, gateway: "10.66.0.1", snat: false }
 ```
 
 `zones`, `vnets` et `subnets` portent le nom complet des objets SDN, écrits
