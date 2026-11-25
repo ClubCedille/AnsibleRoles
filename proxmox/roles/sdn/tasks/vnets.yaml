@@ -1,0 +1,19 @@
+---
+- name: Ensure SDN vnets are in desired state
+  community.proxmox.proxmox_vnet:
+    api_user: "{{ sdn_proxmox_api.user }}"
+    api_password: "{{ sdn_proxmox_api.password }}"
+    api_host: "{{ sdn_proxmox_api.host }}"
+    api_port: "{{ sdn_proxmox_api.port | default(8006) }}"
+    validate_certs: "{{ sdn_proxmox_api.validate_certs | default(false) }}"
+    vnet: "{{ item.vnet }}"
+    zone: "{{ item.zone }}"
+    tag: "{{ item.tag | default(omit) }}"
+    alias: "{{ item.alias | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ sdn_vnets }}"
+  loop_control:
+    label: "{{ item.zone }}/{{ item.vnet }}"
+  throttle: 1
+  delegate_to: localhost
+  no_log: true

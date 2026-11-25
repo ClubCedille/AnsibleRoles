@@ -1,0 +1,20 @@
+---
+- name: Ensure SDN zones are in desired state
+  community.proxmox.proxmox_zone:
+    api_user: "{{ sdn_proxmox_api.user }}"
+    api_password: "{{ sdn_proxmox_api.password }}"
+    api_host: "{{ sdn_proxmox_api.host }}"
+    api_port: "{{ sdn_proxmox_api.port | default(8006) }}"
+    validate_certs: "{{ sdn_proxmox_api.validate_certs | default(false) }}"
+    zone: "{{ item.zone }}"
+    type: "{{ item.type }}"
+    bridge: "{{ item.bridge | default(omit) }}"
+    mtu: "{{ item.mtu | default(omit) }}"
+    ipam: "{{ item.ipam | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ sdn_zones }}"
+  loop_control:
+    label: "{{ item.zone }}"
+  throttle: 1
+  delegate_to: localhost
+  no_log: true

@@ -1,0 +1,8 @@
+---
+- name: Syntax check for cedille.proxmox.sdn
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Include the role under test  # noqa: role-name[path]
+      ansible.builtin.include_role:
+        name: "{{ playbook_dir }}/.."

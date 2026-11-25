@@ -1,0 +1,22 @@
+---
+
+# API Proxmox. Mêmes clés que les autres rôles de la collection.
+sdn_proxmox_api:
+  user: "root@pam"
+  password:
+  host:
+  port: 8006
+  validate_certs: false
+
+# Zones SDN : [{zone, type, bridge, mtu, ipam, state}]
+sdn_zones: []
+
+# VNets : [{vnet, zone, tag, alias, state}]
+sdn_vnets: []
+
+# Subnets : [{subnet, vnet, zone, gateway, snat, state}]
+sdn_subnets: []
+
+# Les modules SDN community.proxmox ne supportent pas check_mode : en
+# dry-run le rôle lit l'état courant et rapporte les écarts sans échouer.
+sdn_verify_strict: false

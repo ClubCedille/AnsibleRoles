@@ -1,0 +1,26 @@
+---
+galaxy_info:
+  author: "Louis Raymond <lraymond@lanets.ca>"
+  description: >
+    Rôle Ansible pour gérer les zones, vnets et subnets SDN d'un cluster
+    Proxmox via community.proxmox.
+  company: "Cedille"
+  license: "GPL-3.0-or-later"
+  min_ansible_version: "2.15"
+  platforms:
+    - name: Debian
+      versions:
+        - bullseye
+        - bookworm
+        - trixie
+    - name: Ubuntu
+      versions:
+        - jammy
+        - noble
+  galaxy_tags:
+    - proxmox
+    - sdn
+    - vlan
+    - network
+
+dependencies: []

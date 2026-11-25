@@ -24,7 +24,8 @@ La collection Proxmox comprend les rôles suivants :
 - `network` : Rôle pour configurer les interfaces réseau, les bridges, bonds et VLANs sur des hôtes Proxmox
 - `pull_disk` : Rôle pour télécharger une image disque à utiliser pour les VM Proxmox
 - `pwdssh` : Rôle pour réactiver l'authentification SSH par mot de passe sur Ubuntu en retirant le drop-in cloud-init et en activant KbdInteractiveAuthentication
-- `permissions` : Rôle pour gérer le RBAC Proxmox (rôles custom et ACL sur les chemins `/pool`, `/vms`, `/nodes`, `/storage`) via l'API. Les identités sont fournies par le realm Authentik (OIDC) : le rôle ne crée ni utilisateurs ni groupes Proxmox.
+- `permissions` : Rôle pour gérer le RBAC Proxmox (rôles custom et ACL sur les chemins `/pool`, `/vms`, `/nodes`, `/storage`, `/sdn`) via l'API. Les identités sont fournies par le realm Authentik (OIDC) : le rôle ne crée ni utilisateurs ni groupes Proxmox.
+- `sdn` : Rôle pour gérer les zones, vnets et subnets SDN de Proxmox (`proxmox_zone`, `proxmox_vnet`, `proxmox_subnet`).
 - `vm` : Rôle pour créer/configurer des VMs Proxmox (pools et tags inclus)
 
 ## Utilisation
@@ -54,7 +55,36 @@ Pour utiliser les rôles de la collection Proxmox dans vos playbooks Ansible, vo
   gather_facts: false
   roles:
     - cedille.proxmox.permissions
+- name: Gérer les objets SDN Proxmox
+  hosts: pve01.mgmt.etsmtl.club
+  connection: local
+  gather_facts: false
+  roles:
+    - cedille.proxmox.sdn
 ```
+
+### Rôle `sdn`
+
+```yaml
+sdn_proxmox_api:
+  user: "root@pam"
+  password: "{{ pve_api_password }}"
+  host: "10.0.21.51"
+  validate_certs: false
+
+sdn_zones:
+  - { zone: LanEvents, type: vlan, bridge: vmbr1, ipam: pve, mtu: 1500 }
+sdn_vnets:
+  - { vnet: event-client, zone: LanEvents, tag: 66, alias: "Event client" }
+sdn_subnets:
+  - { subnet: "10.66.0.0/16", vnet: event-client, zone: LanEvents, gateway: "10.66.0.1", snat: false }
+```
+
+`zones`, `vnets` et `subnets` portent le nom complet des objets SDN, écrits
+explicitement. Seules les entrées listées sont gérées (`state: absent` pour
+supprimer). Les modules SDN community.proxmox ne supportent pas `--check` : en
+dry-run, le rôle lit l'état courant et rapporte les écarts sans échouer ;
+`sdn_verify_strict: true` rend la vérification stricte.
 
 ### Rôle `permissions`
 

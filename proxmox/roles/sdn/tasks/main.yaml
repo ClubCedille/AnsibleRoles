@@ -1,0 +1,33 @@
+---
+- name: Validate Proxmox SDN inputs
+  ansible.builtin.assert:
+    that:
+      - sdn_proxmox_api.host is defined and sdn_proxmox_api.host | length > 0
+      - sdn_proxmox_api.user is defined and sdn_proxmox_api.user | length > 0
+      - sdn_proxmox_api.password is defined and sdn_proxmox_api.password | length > 0
+      - sdn_zones is defined and sdn_zones is sequence
+      - sdn_vnets is defined and sdn_vnets is sequence
+      - sdn_subnets is defined and sdn_subnets is sequence
+      - sdn_zones | selectattr('zone', 'defined') | list | length == sdn_zones | length
+      - sdn_vnets | selectattr('vnet', 'defined') | list | length == sdn_vnets | length
+      - sdn_vnets | selectattr('zone', 'defined') | list | length == sdn_vnets | length
+      - sdn_subnets | selectattr('subnet', 'defined') | list | length == sdn_subnets | length
+      - sdn_subnets | selectattr('vnet', 'defined') | list | length == sdn_subnets | length
+      - sdn_subnets | selectattr('zone', 'defined') | list | length == sdn_subnets | length
+    fail_msg: "sdn_proxmox_api et les listes sdn_zones/sdn_vnets/sdn_subnets sont requis."
+
+- name: Manage SDN zones
+  ansible.builtin.include_tasks: zones.yaml
+  when: not ansible_check_mode | bool
+
+- name: Manage SDN vnets
+  ansible.builtin.include_tasks: vnets.yaml
+  when: not ansible_check_mode | bool
+
+- name: Manage SDN subnets
+  ansible.builtin.include_tasks: subnets.yaml
+  when: not ansible_check_mode | bool
+
+- name: Verify SDN objects in check mode
+  ansible.builtin.include_tasks: verify.yaml
+  when: ansible_check_mode | bool
