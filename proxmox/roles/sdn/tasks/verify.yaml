@@ -1,0 +1,131 @@
+---
+# Les modules SDN community.proxmox ne supportent pas check_mode. Les lectures
+# ci-dessous sont forcées (elles ne modifient rien) pour rapporter l'écart.
+
+- name: Read current SDN zones
+  community.proxmox.proxmox_zone_info:
+    api_user: "{{ sdn_proxmox_api.user }}"
+    api_password: "{{ sdn_proxmox_api.password }}"
+    api_host: "{{ sdn_proxmox_api.host }}"
+    api_port: "{{ sdn_proxmox_api.port | default(8006) }}"
+    validate_certs: "{{ sdn_proxmox_api.validate_certs | default(false) }}"
+  register: sdn_current_zones
+  changed_when: false
+  check_mode: false
+  delegate_to: localhost
+  no_log: true
+
+- name: Read current SDN vnets
+  community.proxmox.proxmox_vnet_info:
+    api_user: "{{ sdn_proxmox_api.user }}"
+    api_password: "{{ sdn_proxmox_api.password }}"
+    api_host: "{{ sdn_proxmox_api.host }}"
+    api_port: "{{ sdn_proxmox_api.port | default(8006) }}"
+    validate_certs: "{{ sdn_proxmox_api.validate_certs | default(false) }}"
+  register: sdn_current_vnets
+  changed_when: false
+  check_mode: false
+  delegate_to: localhost
+  no_log: true
+
+- name: Initialize SDN indexes and drift lists
+  ansible.builtin.set_fact:
+    sdn_current_zone_keys: []
+    sdn_current_vnet_keys: []
+    sdn_current_subnet_keys: []
+    sdn_missing_zones: []
+    sdn_missing_vnets: []
+    sdn_missing_subnets: []
+    sdn_stale_zones: []
+    sdn_stale_vnets: []
+    sdn_stale_subnets: []
+
+- name: Build current zone index
+  ansible.builtin.set_fact:
+    sdn_current_zone_keys: "{{ sdn_current_zone_keys + [item.zone] }}"
+  loop: "{{ sdn_current_zones.zones }}"
+  loop_control:
+    label: "{{ item.zone }}"
+
+- name: Build current vnet index
+  ansible.builtin.set_fact:
+    sdn_current_vnet_keys: >-
+      {{ sdn_current_vnet_keys
+         + [item.zone ~ '/' ~ item.vnet ~ '=' ~ (item.tag | string)] }}
+  loop: "{{ sdn_current_vnets.vnets }}"
+  loop_control:
+    label: "{{ item.zone }}/{{ item.vnet }}"
+
+- name: Build current subnet index
+  ansible.builtin.set_fact:
+    sdn_current_subnet_keys: >-
+      {{ sdn_current_subnet_keys
+         + [item[0].zone ~ '/' ~ item[0].vnet ~ ':' ~ item[1].cidr] }}
+  loop: "{{ sdn_current_vnets.vnets | subelements('subnets', skip_missing=True) }}"
+  loop_control:
+    label: "{{ item[0].vnet }}:{{ item[1].cidr }}"
+
+- name: Collect missing zones
+  ansible.builtin.set_fact:
+    sdn_missing_zones: "{{ sdn_missing_zones + [item] }}"
+  loop: '{{ sdn_zones | json_query("[?state!=''absent'']") | list }}'
+  when: item.zone not in sdn_current_zone_keys
+
+- name: Collect missing vnets
+  ansible.builtin.set_fact:
+    sdn_missing_vnets: "{{ sdn_missing_vnets + [item] }}"
+  loop: '{{ sdn_vnets | json_query("[?state!=''absent'']") | list }}'
+  when: >-
+    (item.zone ~ '/' ~ item.vnet ~ '=' ~ (item.tag | string))
+    not in sdn_current_vnet_keys
+
+- name: Collect missing subnets
+  ansible.builtin.set_fact:
+    sdn_missing_subnets: "{{ sdn_missing_subnets + [item] }}"
+  loop: '{{ sdn_subnets | json_query("[?state!=''absent'']") | list }}'
+  when: >-
+    (item.zone ~ '/' ~ item.vnet ~ ':' ~ item.subnet)
+    not in sdn_current_subnet_keys
+
+- name: Collect zones marked absent that still exist
+  ansible.builtin.set_fact:
+    sdn_stale_zones: "{{ sdn_stale_zones + [item] }}"
+  loop: '{{ sdn_zones | json_query("[?state==''absent'']") | list }}'
+  when: item.zone in sdn_current_zone_keys
+
+- name: Collect vnets marked absent that still exist
+  ansible.builtin.set_fact:
+    sdn_stale_vnets: "{{ sdn_stale_vnets + [item] }}"
+  loop: '{{ sdn_vnets | json_query("[?state==''absent'']") | list }}'
+  when: >-
+    (item.zone ~ '/' ~ item.vnet) in
+    (sdn_current_vnet_keys | map('regex_replace', '=.*$', '') | list)
+
+- name: Collect subnets marked absent that still exist
+  ansible.builtin.set_fact:
+    sdn_stale_subnets: "{{ sdn_stale_subnets + [item] }}"
+  loop: '{{ sdn_subnets | json_query("[?state==''absent'']") | list }}'
+  when: >-
+    (item.zone ~ '/' ~ item.vnet ~ ':' ~ item.subnet) in sdn_current_subnet_keys
+
+- name: Report SDN drift
+  ansible.builtin.debug:
+    msg:
+      - "zones manquantes: {{ sdn_missing_zones | map(attribute='zone') | list }}"
+      - "vnets manquants: {{ sdn_missing_vnets | map(attribute='vnet') | list }}"
+      - "subnets manquants: {{ sdn_missing_subnets | map(attribute='subnet') | list }}"
+      - "zones à supprimer: {{ sdn_stale_zones | map(attribute='zone') | list }}"
+      - "vnets à supprimer: {{ sdn_stale_vnets | map(attribute='vnet') | list }}"
+      - "subnets à supprimer: {{ sdn_stale_subnets | map(attribute='subnet') | list }}"
+
+- name: Fail on SDN drift when strict verification is requested
+  ansible.builtin.assert:
+    that:
+      - sdn_missing_zones | length == 0
+      - sdn_missing_vnets | length == 0
+      - sdn_missing_subnets | length == 0
+      - sdn_stale_zones | length == 0
+      - sdn_stale_vnets | length == 0
+      - sdn_stale_subnets | length == 0
+    fail_msg: "L'état SDN ne correspond pas aux objets désirés."
+  when: sdn_verify_strict | bool
